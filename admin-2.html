@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel | SSC Hustlers</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Poppins',sans-serif; background:#f5f6fa; color:#1a1a2e; }
+
+/* LOCK SCREEN */
+.lock-screen { display:flex; align-items:center; justify-content:center; min-height:100vh; background:linear-gradient(135deg,#1a1a2e,#16213e); }
+.lock-box { background:#fff; border-radius:20px; padding:44px 40px; width:90%; max-width:380px; text-align:center; }
+.lock-icon { font-size:3rem; margin-bottom:16px; }
+.lock-box h2 { font-size:1.4rem; font-weight:800; color:#1a1a2e; margin-bottom:4px; }
+.lock-box p { font-size:0.82rem; color:#888; margin-bottom:28px; }
+.form-group { margin-bottom:16px; text-align:left; }
+.form-group label { font-size:0.82rem; font-weight:600; color:#333; display:block; margin-bottom:6px; }
+.form-group input { width:100%; padding:11px 14px; border:2px solid #e8e8e8; border-radius:10px; font-size:0.9rem; font-family:inherit; outline:none; transition:border 0.2s; }
+.form-group input:focus { border-color:#e63946; }
+.btn-enter { width:100%; background:#e63946; color:#fff; border:none; padding:13px; border-radius:10px; font-size:0.95rem; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.2s; }
+.btn-enter:hover { background:#c1121f; }
+.error-msg { background:#fff0f0; border:1px solid #ffcccc; color:#cc0000; padding:10px 14px; border-radius:8px; font-size:0.82rem; margin-bottom:12px; display:none; }
+.error-msg.show { display:block; }
+
+/* ADMIN PANEL */
+.admin-panel { display:none; }
+nav { background:#1a1a2e; padding:0 5%; height:64px; display:flex; align-items:center; justify-content:space-between; }
+.logo { font-size:1.2rem; font-weight:800; color:#e63946; }
+.logo span { color:#fff; }
+.admin-badge { background:rgba(230,57,70,0.2); color:#e63946; padding:4px 12px; border-radius:50px; font-size:0.75rem; font-weight:700; border:1px solid rgba(230,57,70,0.3); }
+.btn-logout { background:transparent; color:rgba(255,255,255,0.6); border:1px solid rgba(255,255,255,0.2); padding:7px 16px; border-radius:8px; font-size:0.82rem; cursor:pointer; font-family:inherit; }
+
+.container { max-width:1000px; margin:0 auto; padding:32px 5%; }
+.page-title { font-size:1.4rem; font-weight:700; margin-bottom:24px; }
+.page-title span { color:#e63946; }
+
+/* STATS ROW */
+.admin-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:28px; }
+.a-stat { background:#fff; border-radius:12px; padding:18px; border:1px solid #e8e8e8; }
+.a-stat-val { font-size:1.6rem; font-weight:800; color:#e63946; }
+.a-stat-label { font-size:0.75rem; color:#888; margin-top:2px; }
+
+/* QUIZ FORM */
+.card { background:#fff; border-radius:16px; padding:28px; border:1px solid #e8e8e8; margin-bottom:24px; }
+.card-title { font-size:1rem; font-weight:700; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid #f0f0f0; display:flex; align-items:center; gap:8px; }
+
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+.form-full { margin-bottom:16px; }
+.form-full label, .form-group-admin label { font-size:0.82rem; font-weight:600; color:#333; display:block; margin-bottom:6px; }
+.form-full input, .form-full select, .form-full textarea,
+.form-group-admin input, .form-group-admin select { width:100%; padding:10px 14px; border:2px solid #e8e8e8; border-radius:10px; font-size:0.88rem; font-family:inherit; outline:none; transition:border 0.2s; }
+.form-full input:focus, .form-full select:focus, .form-full textarea:focus,
+.form-group-admin input:focus { border-color:#e63946; }
+.form-full textarea { resize:vertical; min-height:80px; }
+.form-group-admin { margin-bottom:0; }
+
+.options-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+.opt-input { position:relative; }
+.opt-label { position:absolute; left:12px; top:50%; transform:translateY(-50%); font-weight:700; color:#888; font-size:0.82rem; }
+.opt-input input { padding-left:32px !important; }
+.opt-input.correct-opt input { border-color:#00c853; background:#f0fff4; }
+
+.correct-select { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.correct-btn { padding:8px 16px; border:2px solid #e8e8e8; border-radius:8px; font-size:0.82rem; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.2s; background:#fff; }
+.correct-btn.selected { border-color:#00c853; background:#f0fff4; color:#00c853; }
+
+.btn-add-quiz { background:#e63946; color:#fff; border:none; padding:12px 28px; border-radius:10px; font-size:0.92rem; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.2s; }
+.btn-add-quiz:hover { background:#c1121f; }
+.btn-clear { background:#f5f5f5; color:#666; border:1px solid #e8e8e8; padding:12px 20px; border-radius:10px; font-size:0.92rem; font-weight:600; cursor:pointer; font-family:inherit; margin-right:10px; }
+
+/* QUIZ LIST */
+.quiz-item { background:#f9f9f9; border-radius:10px; padding:16px; border:1px solid #f0f0f0; margin-bottom:10px; }
+.quiz-item-header { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.quiz-q { font-size:0.88rem; font-weight:600; flex:1; }
+.quiz-meta-row { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+.q-tag { padding:3px 10px; border-radius:50px; font-size:0.72rem; font-weight:700; }
+.tag-subject { background:#e8f0fe; color:#1a73e8; }
+.tag-type { background:#fce8e6; color:#d93025; }
+.tag-diff { background:#fef7e0; color:#f29900; }
+.btn-delete { background:#ffebee; color:#e63946; border:1px solid #ffcccc; padding:5px 12px; border-radius:6px; font-size:0.75rem; font-weight:700; cursor:pointer; font-family:inherit; flex-shrink:0; }
+.btn-delete:hover { background:#ffd6d6; }
+
+.success-msg { background:#f0fff4; border:1px solid #b7f0c8; color:#00a040; padding:12px 16px; border-radius:8px; font-size:0.85rem; font-weight:600; margin-bottom:16px; display:none; }
+.success-msg.show { display:block; }
+
+@media(max-width:600px) { .form-row{grid-template-columns:1fr;} .options-grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-box">
+    <div class="lock-icon">🔐</div>
+    <h2>Admin Panel</h2>
+    <p>SSC Hustlers Admin Access Only</p>
+    <div class="error-msg" id="lockError">Wrong password! Try again.</div>
+    <div class="form-group">
+      <label>Admin Email</label>
+      <input type="email" id="adminEmail" placeholder="Admin email">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="adminPassword" placeholder="Admin password" onkeydown="if(event.key==='Enter')checkAdmin()">
+    </div>
+    <button class="btn-enter" onclick="checkAdmin()">🔓 Enter Admin Panel</button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="admin-panel" id="adminPanel">
+  <nav>
+    <div class="logo">SSC <span>HUSTLERS</span> <span class="admin-badge">ADMIN</span></div>
+    <button class="btn-logout" onclick="adminLogout()">Logout</button>
+  </nav>
+
+  <div class="container">
+    <div class="page-title">Admin <span>Dashboard</span> 🛠️</div>
+
+    <!-- STATS -->
+    <div class="admin-stats">
+      <div class="a-stat"><div class="a-stat-val" id="totalQuizzes">0</div><div class="a-stat-label">Total Quizzes</div></div>
+      <div class="a-stat"><div class="a-stat-val" id="totalUsers">0</div><div class="a-stat-label">Registered Users</div></div>
+      <div class="a-stat"><div class="a-stat-val" id="totalAttempts">0</div><div class="a-stat-label">Total Attempts</div></div>
+      <div class="a-stat"><div class="a-stat-val" id="todayAttempts">0</div><div class="a-stat-label">Today's Attempts</div></div>
+    </div>
+
+    <!-- ADD QUIZ FORM -->
+    <div class="card">
+      <div class="card-title">➕ Naya Quiz Question Add Karo</div>
+      <div class="success-msg" id="successMsg">✅ Question successfully add ho gaya!</div>
+
+      <div class="form-row">
+        <div class="form-group-admin">
+          <label>Subject</label>
+          <select id="qSubject">
+            <option value="maths">Quantitative Aptitude (Maths)</option>
+            <option value="reasoning">Reasoning</option>
+            <option value="english">English</option>
+            <option value="ga">General Awareness</option>
+            <option value="current_affairs">Current Affairs</option>
+          </select>
+        </div>
+        <div class="form-group-admin">
+          <label>Exam Type</label>
+          <select id="qExam">
+            <option value="ssc_cgl">SSC CGL</option>
+            <option value="ssc_chsl">SSC CHSL</option>
+            <option value="ssc_mts">SSC MTS</option>
+            <option value="ssc_gd">SSC GD</option>
+            <option value="ntpc">SSC NTPC</option>
+            <option value="railway">Railway RRB</option>
+            <option value="banking">Banking</option>
+            <option value="all">All Exams</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group-admin">
+          <label>Difficulty</label>
+          <select id="qDiff">
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+        <div class="form-group-admin">
+          <label>Language</label>
+          <select id="qLang">
+            <option value="both">Hindi + English</option>
+            <option value="hindi">Hindi Only</option>
+            <option value="english">English Only</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-full">
+        <label>Question Text *</label>
+        <textarea id="qText" placeholder="Question yahan likho..."></textarea>
+      </div>
+
+      <div class="options-grid">
+        <div class="opt-input" id="opt-A">
+          <span class="opt-label">A</span>
+          <input type="text" id="optA" placeholder="Option A">
+        </div>
+        <div class="opt-input" id="opt-B">
+          <span class="opt-label">B</span>
+          <input type="text" id="optB" placeholder="Option B">
+        </div>
+        <div class="opt-input" id="opt-C">
+          <span class="opt-label">C</span>
+          <input type="text" id="optC" placeholder="Option C">
+        </div>
+        <div class="opt-input" id="opt-D">
+          <span class="opt-label">D</span>
+          <input type="text" id="optD" placeholder="Option D">
+        </div>
+      </div>
+
+      <div class="form-full">
+        <label>Correct Answer Select Karo *</label>
+        <div class="correct-select">
+          <button class="correct-btn" onclick="selectCorrect('A')">A</button>
+          <button class="correct-btn" onclick="selectCorrect('B')">B</button>
+          <button class="correct-btn" onclick="selectCorrect('C')">C</button>
+          <button class="correct-btn" onclick="selectCorrect('D')">D</button>
+        </div>
+      </div>
+
+      <div class="form-full">
+        <label>Explanation (Optional)</label>
+        <textarea id="qExplanation" placeholder="Answer ki explanation likho..." style="min-height:60px;"></textarea>
+      </div>
+
+      <div>
+        <button class="btn-clear" onclick="clearForm()">🗑️ Clear</button>
+        <button class="btn-add-quiz" onclick="addQuiz()">✅ Question Add Karo</button>
+      </div>
+    </div>
+
+    <!-- QUIZ LIST -->
+    <div class="card">
+      <div class="card-title">📋 All Questions (<span id="qCount">0</span>)</div>
+      <div id="quizList"><div style="text-align:center;padding:30px;color:#888;">Loading...</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================
+const SUPABASE_URL = 'https://wwfhoyxqlversdkdqcgd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3ZmhveXhxbHZlcnNka2RxY2dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDAwMTMsImV4cCI6MjA4ODQ3NjAxM30.qaQp8LJXGxN6EfOoNPOgdhdNqY7M0nC2aR8fBSYejrw';
+const ADMIN_EMAIL = 'anshul200160@gmail.com';
+// ============================================
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let correctAnswer = null;
+
+async function checkAdmin() {
+  const email = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPassword').value;
+
+  if (!email || !password) {
+    document.getElementById('lockError').classList.add('show');
+    document.getElementById('lockError').textContent = 'Email aur password daalo!';
+    return;
+  }
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error || data.user.email !== ADMIN_EMAIL) {
+    await sb.auth.signOut();
+    document.getElementById('lockError').classList.add('show');
+    document.getElementById('lockError').textContent = 'Access denied! Admin only.';
+    return;
+  }
+
+  document.getElementById('lockScreen').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'block';
+  loadAdminData();
+}
+
+async function loadAdminData() {
+  const { count: qCount } = await sb.from('quizzes').select('*', { count: 'exact', head: true });
+  const { count: uCount } = await sb.from('profiles').select('*', { count: 'exact', head: true });
+  const { count: aCount } = await sb.from('test_attempts').select('*', { count: 'exact', head: true });
+
+  document.getElementById('totalQuizzes').textContent = qCount || 0;
+  document.getElementById('totalUsers').textContent = uCount || 0;
+  document.getElementById('totalAttempts').textContent = aCount || 0;
+
+  loadQuizList();
+}
+
+async function loadQuizList() {
+  const { data } = await sb.from('quizzes').select('*').order('created_at', { ascending: false }).limit(50);
+  const list = document.getElementById('quizList');
+  document.getElementById('qCount').textContent = data?.length || 0;
+
+  if (!data || data.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:#888;">Abhi koi question nahi hai. Upar se add karo!</div>';
+    return;
+  }
+
+  list.innerHTML = data.map(q => `
+    <div class="quiz-item">
+      <div class="quiz-item-header">
+        <div class="quiz-q">${q.question_text}</div>
+        <button class="btn-delete" onclick="deleteQuiz('${q.id}')">🗑️ Delete</button>
+      </div>
+      <div class="quiz-meta-row">
+        <span class="q-tag tag-subject">${q.subject}</span>
+        <span class="q-tag tag-type">${q.exam_type}</span>
+        <span class="q-tag tag-diff">${q.difficulty}</span>
+      </div>
+    </div>`).join('');
+}
+
+function selectCorrect(opt) {
+  correctAnswer = opt;
+  document.querySelectorAll('.correct-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.opt-input').forEach(o => o.classList.remove('correct-opt'));
+  event.target.classList.add('selected');
+  document.getElementById('opt-' + opt).classList.add('correct-opt');
+}
+
+async function addQuiz() {
+  const qText = document.getElementById('qText').value.trim();
+  const optA = document.getElementById('optA').value.trim();
+  const optB = document.getElementById('optB').value.trim();
+  const optC = document.getElementById('optC').value.trim();
+  const optD = document.getElementById('optD').value.trim();
+
+  if (!qText || !optA || !optB || !optC || !optD || !correctAnswer) {
+    alert('Sab fields bharo aur correct answer select karo!');
+    return;
+  }
+
+  const { error } = await sb.from('quizzes').insert({
+    question_text: qText,
+    option_a: optA,
+    option_b: optB,
+    option_c: optC,
+    option_d: optD,
+    correct_answer: correctAnswer,
+    explanation: document.getElementById('qExplanation').value.trim(),
+    subject: document.getElementById('qSubject').value,
+    exam_type: document.getElementById('qExam').value,
+    difficulty: document.getElementById('qDiff').value,
+    language: document.getElementById('qLang').value,
+  });
+
+  if (error) { alert('Error: ' + error.message); return; }
+
+  document.getElementById('successMsg').classList.add('show');
+  setTimeout(() => document.getElementById('successMsg').classList.remove('show'), 3000);
+  clearForm();
+  loadAdminData();
+}
+
+function clearForm() {
+  document.getElementById('qText').value = '';
+  document.getElementById('optA').value = '';
+  document.getElementById('optB').value = '';
+  document.getElementById('optC').value = '';
+  document.getElementById('optD').value = '';
+  document.getElementById('qExplanation').value = '';
+  correctAnswer = null;
+  document.querySelectorAll('.correct-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.opt-input').forEach(o => o.classList.remove('correct-opt'));
+}
+
+async function deleteQuiz(id) {
+  if (!confirm('Delete karna hai?')) return;
+  await sb.from('quizzes').delete().eq('id', id);
+  loadAdminData();
+}
+
+async function adminLogout() {
+  await sb.auth.signOut();
+  window.location.href = 'index.html';
+}
+</script>
+</body>
+</html>
