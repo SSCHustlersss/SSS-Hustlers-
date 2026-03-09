@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notes & PDFs | SSC Hustlers</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Poppins',sans-serif; background:#f5f6fa; color:#1a1a2e; }
+nav { background:#1a1a2e; padding:0 5%; height:64px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+.logo { font-size:1.2rem; font-weight:800; color:#e63946; text-decoration:none; }
+.logo span { color:#fff; }
+.btn-back { background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:7px 16px; border-radius:8px; font-size:0.82rem; font-weight:600; cursor:pointer; text-decoration:none; }
+
+.container { max-width:900px; margin:0 auto; padding:32px 5%; }
+.page-header { margin-bottom:28px; }
+.page-header h1 { font-size:1.5rem; font-weight:800; margin-bottom:4px; }
+.page-header h1 span { color:#e63946; }
+.page-header p { color:#888; font-size:0.88rem; }
+
+.cat-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; }
+.cat-tab { padding:8px 18px; border-radius:50px; border:2px solid #e8e8e8; background:#fff; font-size:0.82rem; font-weight:700; cursor:pointer; font-family:inherit; color:#666; transition:all 0.2s; }
+.cat-tab.active { border-color:#e63946; background:#e63946; color:#fff; }
+
+.pdf-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; }
+.pdf-card { background:#fff; border-radius:14px; border:1px solid #e8e8e8; padding:20px; cursor:pointer; transition:all 0.2s; display:flex; flex-direction:column; gap:12px; }
+.pdf-card:hover { border-color:#e63946; transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,0.1); }
+.pdf-icon { font-size:2.5rem; }
+.pdf-title { font-size:0.92rem; font-weight:700; line-height:1.4; }
+.pdf-meta { font-size:0.75rem; color:#888; }
+.btn-open { background:#e63946; color:#fff; border:none; padding:10px; border-radius:8px; font-size:0.82rem; font-weight:700; cursor:pointer; font-family:inherit; width:100%; }
+.empty { text-align:center; padding:60px 20px; color:#888; }
+.empty-icon { font-size:3rem; margin-bottom:12px; }
+.spinner { width:36px; height:36px; border:4px solid #f0f0f0; border-top-color:#e63946; border-radius:50%; animation:spin 0.8s linear infinite; margin:60px auto; }
+@keyframes spin { to{transform:rotate(360deg);} }
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="dashboard.html">SSC <span>HUSTLERS</span></a>
+  <a class="btn-back" href="dashboard.html">← Dashboard</a>
+</nav>
+
+<div class="container">
+  <div class="page-header">
+    <h1>📚 Notes & <span>PDFs</span></h1>
+    <p>Study material padho — screenshot protected</p>
+  </div>
+
+  <div class="cat-tabs">
+    <button class="cat-tab active" onclick="filterCat('all', this)">📚 All</button>
+    <button class="cat-tab" onclick="filterCat('notes', this)">📄 Notes</button>
+    <button class="cat-tab" onclick="filterCat('pyq', this)">🗂️ PYQ</button>
+    <button class="cat-tab" onclick="filterCat('current_affairs', this)">📰 Current Affairs</button>
+  </div>
+
+  <div id="pdfGrid" class="pdf-grid">
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://wwfhoyxqlversdkdqcgd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3ZmhveXhxbHZlcnNka2RxY2dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDAwMTMsImV4cCI6MjA4ODQ3NjAxM30.qaQp8LJXGxN6EfOoNPOgdhdNqY7M0nC2aR8fBSYejrw';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let allPdfs = [];
+const catIcons = { notes:'📄', pyq:'🗂️', current_affairs:'📰' };
+
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+
+  const { data, error } = await sb.from('pdf_files').select('*').order('created_at', { ascending:false });
+  if (error || !data) {
+    document.getElementById('pdfGrid').innerHTML = '<div class="empty"><div class="empty-icon">😔</div><p>PDFs load nahi hue!</p></div>';
+    return;
+  }
+  allPdfs = data;
+  renderPdfs(allPdfs);
+}
+
+function renderPdfs(pdfs) {
+  const grid = document.getElementById('pdfGrid');
+  if (!pdfs || pdfs.length === 0) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📭</div><p>Is category mein koi PDF nahi hai abhi.</p></div>';
+    return;
+  }
+  grid.innerHTML = pdfs.map(p => `
+    <div class="pdf-card" onclick="openPdf('${p.id}')">
+      <div class="pdf-icon">${catIcons[p.category] || '📄'}</div>
+      <div class="pdf-title">${p.title}</div>
+      <div class="pdf-meta">${p.category.replace('_',' ').toUpperCase()} • ${new Date(p.created_at).toLocaleDateString('en-IN')}</div>
+      <button class="btn-open">📖 Padho</button>
+    </div>`).join('');
+}
+
+function filterCat(cat, btn) {
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderPdfs(cat === 'all' ? allPdfs : allPdfs.filter(p => p.category === cat));
+}
+
+function openPdf(id) {
+  window.location.href = 'pdf-viewer.html?id=' + id;
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Viewer | SSC Hustlers</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Poppins',sans-serif; background:#0f1117; color:#e8eaf6;
+  user-select:none; -webkit-user-select:none; }
+
+/* Block screenshot attempts */
+body { -webkit-touch-callout:none; }
+
+nav { background:#1a1a2e; padding:0 5%; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; border-bottom:1px solid rgba(255,255,255,0.08); }
+.logo { font-size:1.1rem; font-weight:800; color:#e63946; text-decoration:none; }
+.logo span { color:#fff; }
+.nav-right { display:flex; gap:10px; align-items:center; }
+.btn-back { background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.15); padding:7px 16px; border-radius:8px; font-size:0.82rem; font-weight:600; cursor:pointer; font-family:inherit; text-decoration:none; }
+.nav-title { font-size:0.85rem; color:rgba(255,255,255,0.6); max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* TOOLBAR */
+.toolbar { background:#1a1d27; border-bottom:1px solid rgba(255,255,255,0.08); padding:10px 5%; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.page-controls { display:flex; align-items:center; gap:10px; }
+.btn-nav { background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.12); width:36px; height:36px; border-radius:8px; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+.btn-nav:hover:not(:disabled) { background:rgba(230,57,70,0.2); border-color:#e63946; }
+.btn-nav:disabled { opacity:0.3; cursor:not-allowed; }
+.page-info { font-size:0.85rem; color:rgba(255,255,255,0.7); font-weight:600; min-width:80px; text-align:center; }
+.zoom-controls { display:flex; align-items:center; gap:8px; }
+.zoom-pct { font-size:0.8rem; color:rgba(255,255,255,0.6); min-width:48px; text-align:center; }
+.protected-badge { background:rgba(230,57,70,0.15); color:#e63946; border:1px solid rgba(230,57,70,0.3); padding:5px 12px; border-radius:50px; font-size:0.72rem; font-weight:700; }
+
+/* VIEWER */
+.viewer-wrap { padding:20px 5%; min-height:calc(100vh - 120px); }
+.pdf-container { max-width:900px; margin:0 auto; }
+.page-wrap { position:relative; margin-bottom:20px; border-radius:8px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.5); }
+.page-wrap canvas { display:block; width:100%; }
+
+/* WATERMARK overlay per page */
+.watermark-overlay {
+  position:absolute; inset:0; pointer-events:none;
+  display:flex; flex-direction:column;
+  justify-content:space-around; align-items:center;
+  overflow:hidden;
+}
+.watermark-text {
+  font-size:clamp(14px, 2.5vw, 28px);
+  font-weight:800;
+  color:rgba(230,57,70,0.12);
+  white-space:nowrap;
+  transform:rotate(-35deg);
+  letter-spacing:2px;
+  user-select:none;
+  position:absolute;
+}
+
+/* SCREENSHOT BLOCKER — dark overlay on focus loss */
+.screenshot-blocker {
+  display:none; position:fixed; inset:0;
+  background:#000; z-index:9999;
+  align-items:center; justify-content:center;
+  font-size:1.2rem; font-weight:700; color:#fff;
+  text-align:center; padding:20px;
+}
+.screenshot-blocker.show { display:flex; }
+
+/* LOADING */
+.loading-screen { text-align:center; padding:80px 20px; }
+.spinner { width:40px; height:40px; border:4px solid rgba(255,255,255,0.1); border-top-color:#e63946; border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 16px; }
+@keyframes spin { to{transform:rotate(360deg);} }
+
+@media(max-width:600px) {
+  .toolbar { padding:8px 4%; }
+  .viewer-wrap { padding:12px 3%; }
+  .nav-title { display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- SCREENSHOT BLOCKER -->
+<div class="screenshot-blocker" id="screenshotBlocker">
+  🔒 SSC Hustlers — Protected Content<br>
+  <span style="font-size:0.85rem;font-weight:400;opacity:0.6;margin-top:8px;display:block;">Yeh content protected hai</span>
+</div>
+
+<nav>
+  <a class="logo" href="dashboard.html">SSC <span>HUSTLERS</span></a>
+  <div class="nav-right">
+    <span class="nav-title" id="pdfNavTitle">Loading...</span>
+    <a class="btn-back" href="javascript:history.back()">← Back</a>
+  </div>
+</nav>
+
+<div class="toolbar">
+  <div class="page-controls">
+    <button class="btn-nav" id="btnPrev" onclick="changePage(-1)" disabled>‹</button>
+    <div class="page-info"><span id="pageNum">1</span> / <span id="pageCount">?</span></div>
+    <button class="btn-nav" id="btnNext" onclick="changePage(1)" disabled>›</button>
+  </div>
+  <div class="zoom-controls">
+    <button class="btn-nav" onclick="changeZoom(-0.2)">−</button>
+    <span class="zoom-pct" id="zoomPct">100%</span>
+    <button class="btn-nav" onclick="changeZoom(0.2)">+</button>
+  </div>
+  <div class="protected-badge">🔒 Protected</div>
+</div>
+
+<div class="viewer-wrap">
+  <div class="pdf-container" id="pdfContainer">
+    <div class="loading-screen">
+      <div class="spinner"></div>
+      <div style="color:rgba(255,255,255,0.5);">PDF load ho raha hai...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://wwfhoyxqlversdkdqcgd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3ZmhveXhxbHZlcnNka2RxY2dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDAwMTMsImV4cCI6MjA4ODQ3NjAxM30.qaQp8LJXGxN6EfOoNPOgdhdNqY7M0nC2aR8fBSYejrw';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let pdfDoc = null, currentPage = 1, totalPages = 0, scale = 1.4;
+let userName = '';
+
+// ============ SCREENSHOT BLOCKING ============
+// Block right click
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+// Block common screenshot shortcuts
+document.addEventListener('keydown', e => {
+  if (
+    e.key === 'PrintScreen' ||
+    (e.ctrlKey && e.key === 'p') ||
+    (e.ctrlKey && e.shiftKey && e.key === 's') ||
+    (e.metaKey && e.shiftKey && (e.key === '3' || e.key === '4' || e.key === '5'))
+  ) {
+    e.preventDefault();
+    showBlocker();
+  }
+});
+
+// Show blocker on window blur (possible screenshot tool)
+window.addEventListener('blur', () => {
+  document.getElementById('screenshotBlocker').classList.add('show');
+});
+window.addEventListener('focus', () => {
+  setTimeout(() => {
+    document.getElementById('screenshotBlocker').classList.remove('show');
+  }, 800);
+});
+
+function showBlocker() {
+  const b = document.getElementById('screenshotBlocker');
+  b.classList.add('show');
+  setTimeout(() => b.classList.remove('show'), 2000);
+}
+
+// ============ INIT ============
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+
+  userName = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
+
+  const params = new URLSearchParams(window.location.search);
+  const pdfId = params.get('id');
+  if (!pdfId) { document.getElementById('pdfContainer').innerHTML = '<div class="loading-screen"><div style="color:#e63946;font-size:1.2rem;">❌ PDF ID nahi mila!</div></div>'; return; }
+
+  const { data, error } = await sb.from('pdf_files').select('*').eq('id', pdfId).single();
+  if (error || !data) { document.getElementById('pdfContainer').innerHTML = '<div class="loading-screen"><div style="color:#e63946;font-size:1.2rem;">❌ PDF nahi mila!</div></div>'; return; }
+
+  document.getElementById('pdfNavTitle').textContent = data.title;
+  document.title = data.title + ' | SSC Hustlers';
+
+  // Get signed URL (private bucket — expires in 1 hour)
+  const { data: urlData, error: urlError } = await sb.storage.from('pdfs').createSignedUrl(data.file_path, 3600);
+  if (urlError || !urlData) { document.getElementById('pdfContainer').innerHTML = '<div class="loading-screen"><div style="color:#e63946;">❌ PDF access failed!</div></div>'; return; }
+
+  loadPdf(urlData.signedUrl);
+}
+
+// ============ LOAD PDF ============
+async function loadPdf(url) {
+  try {
+    pdfDoc = await pdfjsLib.getDocument({ url, disableAutoFetch:true, disableStream:true }).promise;
+    totalPages = pdfDoc.numPages;
+    document.getElementById('pageCount').textContent = totalPages;
+    document.getElementById('btnNext').disabled = totalPages <= 1;
+    document.getElementById('pdfContainer').innerHTML = '';
+    await renderAllPages();
+  } catch(e) {
+    document.getElementById('pdfContainer').innerHTML = `<div class="loading-screen"><div style="color:#e63946;">❌ Error: ${e.message}</div></div>`;
+  }
+}
+
+async function renderAllPages() {
+  const container = document.getElementById('pdfContainer');
+  for (let i = 1; i <= totalPages; i++) {
+    const page = await pdfDoc.getPage(i);
+    const viewport = page.getViewport({ scale });
+
+    const pageWrap = document.createElement('div');
+    pageWrap.className = 'page-wrap';
+    pageWrap.id = 'page-' + i;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+
+    // Add watermark on canvas
+    addWatermark(ctx, viewport.width, viewport.height, i);
+
+    pageWrap.appendChild(canvas);
+    container.appendChild(pageWrap);
+  }
+
+  // Enable pagination
+  document.getElementById('btnPrev').disabled = currentPage <= 1;
+  document.getElementById('btnNext').disabled = currentPage >= totalPages;
+}
+
+function addWatermark(ctx, w, h, pageNum) {
+  const text = `${userName} • SSC Hustlers • Page ${pageNum}`;
+  ctx.save();
+  ctx.globalAlpha = 0.08;
+  ctx.fillStyle = '#e63946';
+  ctx.font = `bold ${Math.max(16, w * 0.025)}px Poppins, Arial`;
+  ctx.textAlign = 'center';
+
+  // Draw diagonal watermarks
+  const rows = 5, cols = 3;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      ctx.save();
+      ctx.translate((c + 0.5) * w / cols, (r + 0.5) * h / rows);
+      ctx.rotate(-35 * Math.PI / 180);
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+}
+
+// ============ PAGE NAV ============
+function changePage(delta) {
+  const newPage = currentPage + delta;
+  if (newPage < 1 || newPage > totalPages) return;
+  currentPage = newPage;
+  document.getElementById('pageNum').textContent = currentPage;
+  document.getElementById('btnPrev').disabled = currentPage <= 1;
+  document.getElementById('btnNext').disabled = currentPage >= totalPages;
+
+  const el = document.getElementById('page-' + currentPage);
+  if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// Intersection Observer to update page number on scroll
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      const pg = parseInt(id.replace('page-',''));
+      if (!isNaN(pg)) {
+        currentPage = pg;
+        document.getElementById('pageNum').textContent = pg;
+        document.getElementById('btnPrev').disabled = pg <= 1;
+        document.getElementById('btnNext').disabled = pg >= totalPages;
+      }
+    }
+  });
+}, { threshold: 0.5 });
+
+// ============ ZOOM ============
+function changeZoom(delta) {
+  scale = Math.max(0.6, Math.min(3, scale + delta));
+  document.getElementById('zoomPct').textContent = Math.round(scale * 100 / 1.4 * 100) + '%';
+  // Re-render
+  if (pdfDoc) {
+    document.getElementById('pdfContainer').innerHTML = '';
+    renderAllPages();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
