@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel | SSC Hustlers</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --red: #e63946;
+  --red-dark: #b5202c;
+  --red-glow: rgba(230,57,70,0.15);
+  --bg: #0d0f14;
+  --bg2: #13161e;
+  --bg3: #1a1e28;
+  --border: rgba(255,255,255,0.08);
+  --text: #e8eaf0;
+  --text-muted: #6b7280;
+  --green: #00c853;
+  --yellow: #ffb300;
+  --blue: #4285f4;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--red); border-radius:10px; }
+
+/* =================== LOCK SCREEN =================== */
+.lock-screen {
+  display:flex; align-items:center; justify-content:center;
+  min-height:100vh;
+  background: radial-gradient(ellipse at center, #1a0a0d 0%, var(--bg) 70%);
+}
+.lock-screen::before {
+  content:'';
+  position:fixed; inset:0;
+  background: repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(230,57,70,0.02) 60px,rgba(230,57,70,0.02) 61px),
+              repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(230,57,70,0.02) 60px,rgba(230,57,70,0.02) 61px);
+  pointer-events:none;
+}
+.lock-box {
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:48px 44px;
+  width:90%; max-width:400px;
+  text-align:center;
+  position:relative;
+  box-shadow: 0 0 80px rgba(230,57,70,0.08);
+  animation: fadeUp 0.5s ease;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+.lock-icon { font-size:2.8rem; margin-bottom:20px; display:block; }
+.lock-box h2 { font-family:'Rajdhani',sans-serif; font-size:1.8rem; font-weight:700; color:#fff; letter-spacing:1px; }
+.lock-box p { font-size:0.82rem; color:var(--text-muted); margin-top:4px; margin-bottom:32px; }
+
+.inp-wrap { margin-bottom:16px; text-align:left; }
+.inp-wrap label { font-size:0.78rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px; }
+.inp-wrap input {
+  width:100%; padding:13px 16px;
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:10px; font-size:0.9rem; font-family:inherit;
+  color:var(--text); outline:none; transition:all 0.2s;
+}
+.inp-wrap input:focus { border-color:var(--red); box-shadow:0 0 0 3px var(--red-glow); }
+.btn-enter {
+  width:100%; background:var(--red); color:#fff; border:none;
+  padding:14px; border-radius:10px; font-size:0.95rem; font-weight:700;
+  cursor:pointer; font-family:inherit; transition:all 0.2s; margin-top:8px;
+  letter-spacing:0.3px;
+}
+.btn-enter:hover { background:var(--red-dark); transform:translateY(-1px); box-shadow:0 4px 20px rgba(230,57,70,0.4); }
+.btn-enter:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+.error-msg {
+  background:rgba(230,57,70,0.1); border:1px solid rgba(230,57,70,0.3);
+  color:#ff6b6b; padding:10px 14px; border-radius:8px;
+  font-size:0.82rem; margin-bottom:16px; display:none; text-align:left;
+}
+.error-msg.show { display:block; }
+
+/* =================== NAVBAR =================== */
+.admin-panel { display:none; }
+nav {
+  background:var(--bg2); border-bottom:1px solid var(--border);
+  padding:0 5%; height:60px;
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:100;
+}
+.logo { font-family:'Rajdhani',sans-serif; font-size:1.3rem; font-weight:700; color:var(--red); letter-spacing:1px; }
+.logo span { color:var(--text); }
+.nav-right { display:flex; align-items:center; gap:12px; }
+.admin-badge {
+  background:var(--red-glow); color:var(--red);
+  padding:4px 12px; border-radius:50px;
+  font-size:0.7rem; font-weight:700;
+  border:1px solid rgba(230,57,70,0.3);
+  letter-spacing:0.5px;
+}
+.btn-logout {
+  background:transparent; color:var(--text-muted);
+  border:1px solid var(--border);
+  padding:7px 16px; border-radius:8px;
+  font-size:0.8rem; cursor:pointer; font-family:inherit;
+  transition:all 0.2s;
+}
+.btn-logout:hover { color:var(--red); border-color:rgba(230,57,70,0.4); }
+
+/* =================== LAYOUT =================== */
+.container { max-width:1100px; margin:0 auto; padding:32px 5%; }
+.page-title { font-family:'Rajdhani',sans-serif; font-size:1.6rem; font-weight:700; margin-bottom:28px; letter-spacing:0.5px; }
+.page-title span { color:var(--red); }
+
+/* =================== STATS =================== */
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; margin-bottom:32px; }
+.stat-card {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:14px; padding:20px 22px;
+  transition:border-color 0.2s;
+  position:relative; overflow:hidden;
+}
+.stat-card::before {
+  content:''; position:absolute; top:0; left:0;
+  width:3px; height:100%;
+  background:var(--red);
+}
+.stat-card:hover { border-color:rgba(230,57,70,0.3); }
+.stat-val { font-size:2rem; font-weight:700; color:var(--red); line-height:1; }
+.stat-label { font-size:0.75rem; color:var(--text-muted); margin-top:6px; text-transform:uppercase; letter-spacing:0.4px; }
+.stat-icon { position:absolute; right:16px; top:16px; font-size:1.4rem; opacity:0.3; }
+
+/* =================== TABS =================== */
+.tabs { display:flex; gap:4px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:4px; margin-bottom:24px; width:fit-content; }
+.tab {
+  padding:8px 20px; border-radius:8px; font-size:0.85rem; font-weight:600;
+  cursor:pointer; border:none; background:transparent; color:var(--text-muted);
+  font-family:inherit; transition:all 0.2s;
+}
+.tab.active { background:var(--red); color:#fff; }
+
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* =================== CARD =================== */
+.card {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:16px; padding:28px; margin-bottom:24px;
+}
+.card-title {
+  font-size:0.95rem; font-weight:700; margin-bottom:22px;
+  padding-bottom:16px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:8px; color:var(--text);
+}
+.card-title .badge {
+  background:var(--red-glow); color:var(--red);
+  padding:2px 10px; border-radius:50px; font-size:0.7rem;
+  border:1px solid rgba(230,57,70,0.3);
+}
+
+/* =================== FORM ELEMENTS =================== */
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+.form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px; }
+.form-full { margin-bottom:16px; }
+.form-field label {
+  font-size:0.75rem; font-weight:600; color:var(--text-muted);
+  display:block; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.4px;
+}
+.form-field input, .form-field select, .form-field textarea {
+  width:100%; padding:11px 14px;
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:10px; font-size:0.88rem; font-family:inherit;
+  color:var(--text); outline:none; transition:all 0.2s;
+}
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus {
+  border-color:var(--red); box-shadow:0 0 0 3px var(--red-glow);
+}
+.form-field select option { background:var(--bg3); }
+.form-field textarea { resize:vertical; min-height:80px; }
+
+/* OPTIONS GRID */
+.options-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+.opt-input { position:relative; }
+.opt-label {
+  position:absolute; left:12px; top:50%; transform:translateY(-50%);
+  font-weight:700; color:var(--text-muted); font-size:0.82rem;
+  background:var(--bg3); padding:0 4px; pointer-events:none;
+  z-index:1;
+}
+.opt-input input { padding-left:32px !important; }
+.opt-input.correct-opt input { border-color:var(--green) !important; background:rgba(0,200,83,0.06) !important; }
+.opt-input.correct-opt .opt-label { color:var(--green); }
+
+.correct-select { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+.correct-btn {
+  padding:9px 20px; border:1px solid var(--border);
+  border-radius:8px; font-size:0.85rem; font-weight:700;
+  cursor:pointer; font-family:inherit; transition:all 0.2s;
+  background:var(--bg3); color:var(--text-muted);
+}
+.correct-btn.selected { border-color:var(--green); background:rgba(0,200,83,0.08); color:var(--green); }
+
+/* SECTION DIVIDER */
+.section-divider {
+  display:flex; align-items:center; gap:12px;
+  margin: 20px 0 18px;
+}
+.section-divider span {
+  font-size:0.75rem; font-weight:700; color:var(--red);
+  text-transform:uppercase; letter-spacing:1px; white-space:nowrap;
+}
+.section-divider::before, .section-divider::after {
+  content:''; flex:1; height:1px; background:var(--border);
+}
+
+/* MARKING BADGES */
+.marking-info {
+  display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;
+}
+.m-badge {
+  padding:5px 12px; border-radius:6px; font-size:0.78rem; font-weight:700;
+}
+.m-badge.positive { background:rgba(0,200,83,0.1); color:var(--green); border:1px solid rgba(0,200,83,0.2); }
+.m-badge.negative { background:rgba(230,57,70,0.1); color:var(--red); border:1px solid rgba(230,57,70,0.2); }
+
+/* BUTTONS */
+.btn-primary {
+  background:var(--red); color:#fff; border:none;
+  padding:12px 28px; border-radius:10px;
+  font-size:0.92rem; font-weight:700; cursor:pointer;
+  font-family:inherit; transition:all 0.2s;
+}
+.btn-primary:hover:not(:disabled) { background:var(--red-dark); transform:translateY(-1px); box-shadow:0 4px 16px rgba(230,57,70,0.35); }
+.btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
+.btn-secondary {
+  background:var(--bg3); color:var(--text-muted);
+  border:1px solid var(--border);
+  padding:12px 20px; border-radius:10px;
+  font-size:0.88rem; font-weight:600; cursor:pointer;
+  font-family:inherit; margin-right:10px; transition:all 0.2s;
+}
+.btn-secondary:hover { color:var(--text); border-color:rgba(255,255,255,0.2); }
+
+.success-msg {
+  background:rgba(0,200,83,0.08); border:1px solid rgba(0,200,83,0.25);
+  color:var(--green); padding:12px 16px; border-radius:8px;
+  font-size:0.85rem; font-weight:600; margin-bottom:16px; display:none;
+}
+.success-msg.show { display:block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+
+/* =================== QUIZ LIST =================== */
+.quiz-filters {
+  display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center;
+}
+.filter-select {
+  padding:8px 14px; background:var(--bg3);
+  border:1px solid var(--border); border-radius:8px;
+  font-size:0.82rem; font-family:inherit; color:var(--text);
+  outline:none; cursor:pointer;
+}
+.filter-select:focus { border-color:var(--red); }
+.search-inp {
+  flex:1; min-width:180px; padding:8px 14px;
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:8px; font-size:0.82rem; font-family:inherit;
+  color:var(--text); outline:none;
+}
+.search-inp:focus { border-color:var(--red); }
+
+.quiz-item {
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:12px; padding:16px 18px; margin-bottom:10px;
+  transition:border-color 0.2s;
+  animation: fadeIn 0.3s ease;
+}
+.quiz-item:hover { border-color:rgba(255,255,255,0.15); }
+.quiz-item-header { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.quiz-q { font-size:0.88rem; font-weight:600; flex:1; line-height:1.5; color:var(--text); }
+.quiz-actions { display:flex; gap:6px; flex-shrink:0; }
+.quiz-meta-row { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+.q-tag { padding:3px 10px; border-radius:50px; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; }
+.tag-subject { background:rgba(66,133,244,0.12); color:#4285f4; border:1px solid rgba(66,133,244,0.2); }
+.tag-type { background:rgba(230,57,70,0.1); color:var(--red); border:1px solid rgba(230,57,70,0.2); }
+.tag-diff-easy { background:rgba(0,200,83,0.1); color:var(--green); border:1px solid rgba(0,200,83,0.2); }
+.tag-diff-medium { background:rgba(255,179,0,0.1); color:var(--yellow); border:1px solid rgba(255,179,0,0.2); }
+.tag-diff-hard { background:rgba(230,57,70,0.1); color:var(--red); border:1px solid rgba(230,57,70,0.2); }
+
+.btn-edit {
+  background:rgba(66,133,244,0.1); color:#4285f4;
+  border:1px solid rgba(66,133,244,0.25);
+  padding:5px 12px; border-radius:6px; font-size:0.75rem;
+  font-weight:700; cursor:pointer; font-family:inherit;
+}
+.btn-edit:hover { background:rgba(66,133,244,0.2); }
+.btn-delete {
+  background:rgba(230,57,70,0.1); color:var(--red);
+  border:1px solid rgba(230,57,70,0.25);
+  padding:5px 12px; border-radius:6px; font-size:0.75rem;
+  font-weight:700; cursor:pointer; font-family:inherit;
+}
+.btn-delete:hover { background:rgba(230,57,70,0.2); }
+
+/* PAGINATION */
+.pagination { display:flex; gap:6px; align-items:center; justify-content:center; margin-top:20px; }
+.page-btn {
+  padding:7px 13px; border-radius:8px; background:var(--bg3);
+  border:1px solid var(--border); color:var(--text-muted);
+  font-size:0.82rem; font-weight:600; cursor:pointer;
+  font-family:inherit; transition:all 0.2s;
+}
+.page-btn:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+.page-btn.active { background:var(--red); color:#fff; border-color:var(--red); }
+.page-btn:disabled { opacity:0.3; cursor:not-allowed; }
+
+/* EDIT MODAL */
+.modal-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.8); backdrop-filter:blur(4px);
+  z-index:1000; align-items:center; justify-content:center;
+  padding:20px;
+}
+.modal-overlay.show { display:flex; }
+.modal {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:20px; padding:32px;
+  width:100%; max-width:640px; max-height:90vh;
+  overflow-y:auto; animation: fadeUp 0.3s ease;
+}
+.modal-title {
+  font-size:1.1rem; font-weight:700; margin-bottom:20px;
+  padding-bottom:14px; border-bottom:1px solid var(--border);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.modal-close {
+  background:var(--bg3); border:1px solid var(--border);
+  color:var(--text-muted); width:30px; height:30px; border-radius:8px;
+  cursor:pointer; font-size:1.1rem; display:flex; align-items:center; justify-content:center;
+}
+.modal-close:hover { color:var(--red); border-color:rgba(230,57,70,0.4); }
+
+/* EMPTY STATE */
+.empty-state { text-align:center; padding:48px; color:var(--text-muted); }
+.empty-state .empty-icon { font-size:2.5rem; margin-bottom:12px; }
+.empty-state p { font-size:0.88rem; }
+
+/* LOADING */
+.loading { text-align:center; padding:40px; color:var(--text-muted); }
+.spinner { display:inline-block; width:20px; height:20px; border:2px solid var(--border); border-top-color:var(--red); border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* TODAY BADGE */
+.today-highlight { color:var(--yellow); }
+
+@media(max-width:700px) {
+  .form-row, .form-row-3 { grid-template-columns:1fr; }
+  .options-grid { grid-template-columns:1fr; }
+  .tabs { width:100%; }
+  .tab { flex:1; text-align:center; font-size:0.78rem; padding:8px 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ====== LOCK SCREEN ====== -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-box">
+    <span class="lock-icon">🔐</span>
+    <h2>ADMIN PANEL</h2>
+    <p>SSC Hustlers — Authorized Access Only</p>
+    <div class="error-msg" id="lockError">Galat credentials!</div>
+    <div class="inp-wrap">
+      <label>Admin Email</label>
+      <input type="email" id="adminEmail" placeholder="admin@email.com" autocomplete="off">
+    </div>
+    <div class="inp-wrap">
+      <label>Password</label>
+      <input type="password" id="adminPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkAdmin()">
+    </div>
+    <button class="btn-enter" id="loginBtn" onclick="checkAdmin()">🔓 Enter Admin Panel</button>
+  </div>
+</div>
+
+<!-- ====== ADMIN PANEL ====== -->
+<div class="admin-panel" id="adminPanel">
+  <nav>
+    <div class="logo">SSC <span>HUSTLERS</span> <span class="admin-badge">ADMIN</span></div>
+    <div class="nav-right">
+      <span style="font-size:0.8rem;color:var(--text-muted)" id="adminEmailDisplay"></span>
+      <button class="btn-logout" onclick="adminLogout()">↩ Logout</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-title">Admin <span>Dashboard</span> 🛠️</div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-val" id="totalQuizzes">—</div>
+        <div class="stat-label">Total Questions</div>
+        <span class="stat-icon">📝</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="totalUsers">—</div>
+        <div class="stat-label">Registered Users</div>
+        <span class="stat-icon">👥</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="totalAttempts">—</div>
+        <div class="stat-label">Total Attempts</div>
+        <span class="stat-icon">🎯</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val today-highlight" id="todayAttempts">—</div>
+        <div class="stat-label">Today's Attempts</div>
+        <span class="stat-icon">📈</span>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('add', this)">➕ Question Add</button>
+      <button class="tab" onclick="switchTab('list', this)">📋 All Questions</button>
+    </div>
+
+    <!-- TAB: ADD QUESTION -->
+    <div class="tab-content active" id="tab-add">
+      <div class="card">
+        <div class="card-title">➕ Naya Quiz Question <span class="badge">NEW</span></div>
+        <div class="success-msg" id="successMsg">✅ Question successfully add ho gaya!</div>
+
+        <!-- BASIC INFO -->
+        <div class="section-divider"><span>📌 Basic Info</span></div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>Subject</label>
+            <select id="qSubject">
+              <option value="maths">Quantitative Aptitude (Maths)</option>
+              <option value="reasoning">Reasoning</option>
+              <option value="english">English</option>
+              <option value="ga">General Awareness</option>
+              <option value="current_affairs">Current Affairs</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Exam Type</label>
+            <select id="qExam">
+              <option value="ssc_cgl">SSC CGL</option>
+              <option value="ssc_chsl">SSC CHSL</option>
+              <option value="ssc_mts">SSC MTS</option>
+              <option value="ssc_gd">SSC GD</option>
+              <option value="ntpc">SSC NTPC</option>
+              <option value="railway">Railway RRB</option>
+              <option value="banking">Banking</option>
+              <option value="all">All Exams</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>Difficulty</label>
+            <select id="qDiff">
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Language</label>
+            <select id="qLang">
+              <option value="both">Hindi + English</option>
+              <option value="hindi">Hindi Only</option>
+              <option value="english">English Only</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- QUESTION -->
+        <div class="section-divider"><span>❓ Question & Options</span></div>
+        <div class="form-full form-field">
+          <label>Question Text *</label>
+          <textarea id="qText" placeholder="Question yahan likho..."></textarea>
+        </div>
+
+        <div class="options-grid">
+          <div class="opt-input" id="opt-A">
+            <span class="opt-label">A</span>
+            <input type="text" id="optA" placeholder="Option A">
+          </div>
+          <div class="opt-input" id="opt-B">
+            <span class="opt-label">B</span>
+            <input type="text" id="optB" placeholder="Option B">
+          </div>
+          <div class="opt-input" id="opt-C">
+            <span class="opt-label">C</span>
+            <input type="text" id="optC" placeholder="Option C">
+          </div>
+          <div class="opt-input" id="opt-D">
+            <span class="opt-label">D</span>
+            <input type="text" id="optD" placeholder="Option D">
+          </div>
+        </div>
+
+        <div class="form-full form-field">
+          <label>Correct Answer Select Karo *</label>
+          <div class="correct-select">
+            <button class="correct-btn" onclick="selectCorrect('A', this)">✔ A</button>
+            <button class="correct-btn" onclick="selectCorrect('B', this)">✔ B</button>
+            <button class="correct-btn" onclick="selectCorrect('C', this)">✔ C</button>
+            <button class="correct-btn" onclick="selectCorrect('D', this)">✔ D</button>
+          </div>
+        </div>
+
+        <div class="form-full form-field">
+          <label>Explanation (Optional)</label>
+          <textarea id="qExplanation" placeholder="Answer ki explanation likho..." style="min-height:60px;"></textarea>
+        </div>
+
+        <!-- TEST SETTINGS -->
+        <div class="section-divider"><span>⚙️ Test Settings (Optional)</span></div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>⏱️ Test Duration (minutes)</label>
+            <input type="number" id="qDuration" placeholder="e.g. 60" min="1" max="300">
+          </div>
+          <div class="form-field">
+            <label>🔢 Total Marks</label>
+            <input type="number" id="qTotalMarks" placeholder="e.g. 200" min="1">
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-field">
+            <label>✅ Positive Marking</label>
+            <input type="number" id="qPositive" placeholder="e.g. 2" step="0.25" min="0">
+          </div>
+          <div class="form-field">
+            <label>❌ Negative Marking</label>
+            <input type="number" id="qNegative" placeholder="e.g. 0.5" step="0.25" min="0">
+          </div>
+          <div class="form-field">
+            <label>📌 Marks Preview</label>
+            <div class="marking-info" id="markingPreview">
+              <span class="m-badge positive">+0 per correct</span>
+              <span class="m-badge negative">-0 per wrong</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>🟢 Test Open Time (Start)</label>
+            <input type="datetime-local" id="qOpenTime">
+          </div>
+          <div class="form-field">
+            <label>🔴 Test End Time</label>
+            <input type="datetime-local" id="qEndTime">
+          </div>
+        </div>
+
+        <!-- BUTTONS -->
+        <div style="margin-top:8px;">
+          <button class="btn-secondary" onclick="clearForm()">🗑️ Clear</button>
+          <button class="btn-primary" id="addBtn" onclick="addQuiz()">✅ Question Add Karo</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: QUESTION LIST -->
+    <div class="tab-content" id="tab-list">
+      <div class="card">
+        <div class="card-title">📋 All Questions (<span id="qCount">0</span>) <span class="badge" id="filterBadge">Showing all</span></div>
+
+        <div class="quiz-filters">
+          <input class="search-inp" id="searchInp" type="text" placeholder="🔍 Search question..." oninput="filterQuizzes()">
+          <select class="filter-select" id="filterSubject" onchange="filterQuizzes()">
+            <option value="">All Subjects</option>
+            <option value="maths">Maths</option>
+            <option value="reasoning">Reasoning</option>
+            <option value="english">English</option>
+            <option value="ga">GA</option>
+            <option value="current_affairs">Current Affairs</option>
+          </select>
+          <select class="filter-select" id="filterDiff" onchange="filterQuizzes()">
+            <option value="">All Difficulty</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <select class="filter-select" id="filterExam" onchange="filterQuizzes()">
+            <option value="">All Exams</option>
+            <option value="ssc_cgl">SSC CGL</option>
+            <option value="ssc_chsl">SSC CHSL</option>
+            <option value="ssc_mts">SSC MTS</option>
+            <option value="ssc_gd">SSC GD</option>
+            <option value="ntpc">NTPC</option>
+            <option value="railway">Railway</option>
+            <option value="banking">Banking</option>
+          </select>
+        </div>
+
+        <div id="quizList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ====== EDIT MODAL ====== -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-title">
+      ✏️ Question Edit Karo
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="success-msg" id="editSuccessMsg">✅ Question update ho gaya!</div>
+
+    <div class="form-row">
+      <div class="form-field">
+        <label>Subject</label>
+        <select id="eSubject">
+          <option value="maths">Quantitative Aptitude (Maths)</option>
+          <option value="reasoning">Reasoning</option>
+          <option value="english">English</option>
+          <option value="ga">General Awareness</option>
+          <option value="current_affairs">Current Affairs</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Exam Type</label>
+        <select id="eExam">
+          <option value="ssc_cgl">SSC CGL</option>
+          <option value="ssc_chsl">SSC CHSL</option>
+          <option value="ssc_mts">SSC MTS</option>
+          <option value="ssc_gd">SSC GD</option>
+          <option value="ntpc">NTPC</option>
+          <option value="railway">Railway RRB</option>
+          <option value="banking">Banking</option>
+          <option value="all">All Exams</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-field">
+        <label>Difficulty</label>
+        <select id="eDiff">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Language</label>
+        <select id="eLang">
+          <option value="both">Hindi + English</option>
+          <option value="hindi">Hindi Only</option>
+          <option value="english">English Only</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-full form-field">
+      <label>Question Text *</label>
+      <textarea id="eText" style="min-height:90px;"></textarea>
+    </div>
+
+    <div class="options-grid">
+      <div class="opt-input" id="eopt-A">
+        <span class="opt-label">A</span>
+        <input type="text" id="eOptA" placeholder="Option A">
+      </div>
+      <div class="opt-input" id="eopt-B">
+        <span class="opt-label">B</span>
+        <input type="text" id="eOptB" placeholder="Option B">
+      </div>
+      <div class="opt-input" id="eopt-C">
+        <span class="opt-label">C</span>
+        <input type="text" id="eOptC" placeholder="Option C">
+      </div>
+      <div class="opt-input" id="eopt-D">
+        <span class="opt-label">D</span>
+        <input type="text" id="eOptD" placeholder="Option D">
+      </div>
+    </div>
+
+    <div class="form-full form-field">
+      <label>Correct Answer *</label>
+      <div class="correct-select">
+        <button class="correct-btn" onclick="selectEditCorrect('A', this)">✔ A</button>
+        <button class="correct-btn" onclick="selectEditCorrect('B', this)">✔ B</button>
+        <button class="correct-btn" onclick="selectEditCorrect('C', this)">✔ C</button>
+        <button class="correct-btn" onclick="selectEditCorrect('D', this)">✔ D</button>
+      </div>
+    </div>
+
+    <div class="form-full form-field">
+      <label>Explanation (Optional)</label>
+      <textarea id="eExplanation" style="min-height:60px;"></textarea>
+    </div>
+
+    <!-- TEST SETTINGS IN EDIT -->
+    <div class="section-divider"><span>⚙️ Test Settings</span></div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>⏱️ Duration (minutes)</label>
+        <input type="number" id="eDuration" placeholder="e.g. 60" min="1">
+      </div>
+      <div class="form-field">
+        <label>🔢 Total Marks</label>
+        <input type="number" id="eTotalMarks" placeholder="e.g. 200">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>✅ Positive Marking</label>
+        <input type="number" id="ePositive" placeholder="e.g. 2" step="0.25">
+      </div>
+      <div class="form-field">
+        <label>❌ Negative Marking</label>
+        <input type="number" id="eNegative" placeholder="e.g. 0.5" step="0.25">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>🟢 Test Open Time</label>
+        <input type="datetime-local" id="eOpenTime">
+      </div>
+      <div class="form-field">
+        <label>🔴 Test End Time</label>
+        <input type="datetime-local" id="eEndTime">
+      </div>
+    </div>
+
+    <div style="margin-top:16px;display:flex;gap:10px;">
+      <button class="btn-secondary" onclick="closeEditModal()" style="margin:0">Cancel</button>
+      <button class="btn-primary" id="saveEditBtn" onclick="saveEdit()">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ CONFIG ============
+const SUPABASE_URL = 'https://wwfhoyxqlversdkdqcgd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3ZmhveXhxbHZlcnNka2RxY2dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDAwMTMsImV4cCI6MjA4ODQ3NjAxM30.qaQp8LJXGxN6EfOoNPOgdhdNqY7M0nC2aR8fBSYejrw';
+const ADMIN_EMAIL = 'anshul200160@gmail.com';
+// ================================
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let correctAnswer = null;
+let editCorrectAnswer = null;
+let editingId = null;
+let allQuizzes = [];
+let filteredQuizzes = [];
+const PAGE_SIZE = 20;
+let currentPage = 1;
+
+// ============ AUTH ============
+async function checkAdmin() {
+  const email = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPassword').value;
+  const errEl = document.getElementById('lockError');
+  const loginBtn = document.getElementById('loginBtn');
+
+  if (!email || !password) {
+    errEl.textContent = '⚠️ Email aur password daalo!';
+    errEl.classList.add('show');
+    return;
+  }
+
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Logging in...';
+  errEl.classList.remove('show');
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+  if (error || !data?.user || data.user.email !== ADMIN_EMAIL) {
+    await sb.auth.signOut();
+    errEl.textContent = '🚫 Access Denied! Sirf admin enter kar sakta hai.';
+    errEl.classList.add('show');
+    loginBtn.disabled = false;
+    loginBtn.textContent = '🔓 Enter Admin Panel';
+    return;
+  }
+
+  document.getElementById('lockScreen').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'block';
+  document.getElementById('adminEmailDisplay').textContent = data.user.email;
+  loadAdminData();
+}
+
+async function adminLogout() {
+  await sb.auth.signOut();
+  window.location.href = 'index.html';
+}
+
+// ============ LOAD DATA ============
+async function loadAdminData() {
+  // Total quizzes
+  const { count: qCount } = await sb.from('quizzes').select('*', { count:'exact', head:true });
+  // Total users
+  const { count: uCount } = await sb.from('profiles').select('*', { count:'exact', head:true });
+  // Total attempts
+  const { count: aCount } = await sb.from('test_attempts').select('*', { count:'exact', head:true });
+  // Today's attempts — FIX: date filter laga ke
+  const todayStart = new Date();
+  todayStart.setHours(0,0,0,0);
+  const { count: tCount } = await sb.from('test_attempts')
+    .select('*', { count:'exact', head:true })
+    .gte('created_at', todayStart.toISOString());
+
+  document.getElementById('totalQuizzes').textContent = qCount ?? 0;
+  document.getElementById('totalUsers').textContent = uCount ?? 0;
+  document.getElementById('totalAttempts').textContent = aCount ?? 0;
+  document.getElementById('todayAttempts').textContent = tCount ?? 0;
+
+  loadQuizList();
+}
+
+async function loadQuizList() {
+  const listEl = document.getElementById('quizList');
+  listEl.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+
+  const { data, error } = await sb.from('quizzes')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Error: ${error.message}</p></div>`;
+    return;
+  }
+
+  allQuizzes = data || [];
+  filteredQuizzes = [...allQuizzes];
+  currentPage = 1;
+  renderQuizList();
+}
+
+// ============ FILTER ============
+function filterQuizzes() {
+  const search = document.getElementById('searchInp').value.toLowerCase();
+  const subj = document.getElementById('filterSubject').value;
+  const diff = document.getElementById('filterDiff').value;
+  const exam = document.getElementById('filterExam').value;
+
+  filteredQuizzes = allQuizzes.filter(q => {
+    const matchSearch = !search || q.question_text?.toLowerCase().includes(search);
+    const matchSubj = !subj || q.subject === subj;
+    const matchDiff = !diff || q.difficulty === diff;
+    const matchExam = !exam || q.exam_type === exam;
+    return matchSearch && matchSubj && matchDiff && matchExam;
+  });
+
+  currentPage = 1;
+  renderQuizList();
+}
+
+// ============ RENDER LIST ============
+function renderQuizList() {
+  const listEl = document.getElementById('quizList');
+  document.getElementById('qCount').textContent = filteredQuizzes.length;
+
+  const active = document.getElementById('filterSubject').value ||
+                 document.getElementById('filterDiff').value ||
+                 document.getElementById('filterExam').value ||
+                 document.getElementById('searchInp').value;
+  document.getElementById('filterBadge').textContent =
+    active ? `Filtered: ${filteredQuizzes.length}` : `Showing all: ${allQuizzes.length}`;
+
+  if (filteredQuizzes.length === 0) {
+    listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Koi question nahi mila. Upar se add karo ya filter change karo!</p></div>';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  const totalPages = Math.ceil(filteredQuizzes.length / PAGE_SIZE);
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageData = filteredQuizzes.slice(start, start + PAGE_SIZE);
+
+  const diffClass = { easy:'tag-diff-easy', medium:'tag-diff-medium', hard:'tag-diff-hard' };
+
+  listEl.innerHTML = pageData.map(q => `
+    <div class="quiz-item">
+      <div class="quiz-item-header">
+        <div class="quiz-q">${escHtml(q.question_text)}</div>
+        <div class="quiz-actions">
+          <button class="btn-edit" onclick="openEditModal('${q.id}')">✏️ Edit</button>
+          <button class="btn-delete" onclick="deleteQuiz('${q.id}')">🗑️ Delete</button>
+        </div>
+      </div>
+      <div class="quiz-meta-row">
+        <span class="q-tag tag-subject">${q.subject || '—'}</span>
+        <span class="q-tag tag-type">${q.exam_type || '—'}</span>
+        <span class="q-tag ${diffClass[q.difficulty] || 'tag-diff-medium'}">${q.difficulty || '—'}</span>
+        ${q.positive_marking ? `<span class="q-tag" style="background:rgba(0,200,83,0.1);color:var(--green);border:1px solid rgba(0,200,83,0.2);">+${q.positive_marking}</span>` : ''}
+        ${q.negative_marking ? `<span class="q-tag" style="background:rgba(230,57,70,0.1);color:var(--red);border:1px solid rgba(230,57,70,0.2);">-${q.negative_marking}</span>` : ''}
+        ${q.test_duration ? `<span class="q-tag" style="background:rgba(255,179,0,0.1);color:var(--yellow);border:1px solid rgba(255,179,0,0.2);">⏱ ${q.test_duration}min</span>` : ''}
+      </div>
+    </div>`).join('');
+
+  // Pagination
+  renderPagination(totalPages);
+}
+
+function renderPagination(totalPages) {
+  const pagEl = document.getElementById('pagination');
+  if (totalPages <= 1) { pagEl.innerHTML = ''; return; }
+
+  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i===1 || i===totalPages || Math.abs(i-currentPage)<=2) {
+      html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    } else if (Math.abs(i-currentPage)===3) {
+      html += `<span style="color:var(--text-muted);padding:0 4px">…</span>`;
+    }
+  }
+
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+  pagEl.innerHTML = html;
+}
+
+function goPage(p) {
+  currentPage = p;
+  renderQuizList();
+  document.getElementById('tab-list').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ============ SELECT CORRECT ============
+function selectCorrect(opt, btn) {
+  correctAnswer = opt;
+  document.querySelectorAll('#tab-add .correct-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#tab-add .opt-input').forEach(o => o.classList.remove('correct-opt'));
+  btn.classList.add('selected');
+  document.getElementById('opt-' + opt).classList.add('correct-opt');
+}
+
+function selectEditCorrect(opt, btn) {
+  editCorrectAnswer = opt;
+  document.querySelectorAll('#editModal .correct-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#editModal .opt-input').forEach(o => o.classList.remove('correct-opt'));
+  btn.classList.add('selected');
+  document.getElementById('eopt-' + opt).classList.add('correct-opt');
+}
+
+// ============ MARKING PREVIEW ============
+document.addEventListener('input', function(e) {
+  if (e.target.id === 'qPositive' || e.target.id === 'qNegative') {
+    const pos = parseFloat(document.getElementById('qPositive').value) || 0;
+    const neg = parseFloat(document.getElementById('qNegative').value) || 0;
+    document.getElementById('markingPreview').innerHTML =
+      `<span class="m-badge positive">+${pos} per correct</span>
+       <span class="m-badge negative">-${neg} per wrong</span>`;
+  }
+});
+
+// ============ ADD QUIZ ============
+async function addQuiz() {
+  const qText = document.getElementById('qText').value.trim();
+  const optA = document.getElementById('optA').value.trim();
+  const optB = document.getElementById('optB').value.trim();
+  const optC = document.getElementById('optC').value.trim();
+  const optD = document.getElementById('optD').value.trim();
+
+  if (!qText || !optA || !optB || !optC || !optD || !correctAnswer) {
+    alert('⚠️ Sab required fields bharo aur correct answer select karo!');
+    return;
+  }
+
+  const openTime = document.getElementById('qOpenTime').value;
+  const endTime = document.getElementById('qEndTime').value;
+  if (openTime && endTime && new Date(openTime) >= new Date(endTime)) {
+    alert('⚠️ Test end time, open time se baad honi chahiye!');
+    return;
+  }
+
+  const addBtn = document.getElementById('addBtn');
+  addBtn.disabled = true;
+  addBtn.textContent = '⏳ Adding...';
+
+  const payload = {
+    question_text: qText,
+    option_a: optA, option_b: optB, option_c: optC, option_d: optD,
+    correct_answer: correctAnswer,
+    explanation: document.getElementById('qExplanation').value.trim() || null,
+    subject: document.getElementById('qSubject').value,
+    exam_type: document.getElementById('qExam').value,
+    difficulty: document.getElementById('qDiff').value,
+    language: document.getElementById('qLang').value,
+    test_duration: parseInt(document.getElementById('qDuration').value) || null,
+    total_marks: parseInt(document.getElementById('qTotalMarks').value) || null,
+    positive_marking: parseFloat(document.getElementById('qPositive').value) || null,
+    negative_marking: parseFloat(document.getElementById('qNegative').value) || null,
+    test_open_time: openTime || null,
+    test_end_time: endTime || null,
+  };
+
+  const { error } = await sb.from('quizzes').insert(payload);
+  addBtn.disabled = false;
+  addBtn.textContent = '✅ Question Add Karo';
+
+  if (error) { alert('Error: ' + error.message); return; }
+
+  const sMsg = document.getElementById('successMsg');
+  sMsg.classList.add('show');
+  setTimeout(() => sMsg.classList.remove('show'), 3000);
+  clearForm();
+  loadAdminData();
+}
+
+// ============ CLEAR FORM ============
+function clearForm() {
+  ['qText','optA','optB','optC','optD','qExplanation',
+   'qDuration','qTotalMarks','qPositive','qNegative','qOpenTime','qEndTime']
+    .forEach(id => document.getElementById(id).value = '');
+  correctAnswer = null;
+  document.querySelectorAll('#tab-add .correct-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#tab-add .opt-input').forEach(o => o.classList.remove('correct-opt'));
+  document.getElementById('markingPreview').innerHTML =
+    '<span class="m-badge positive">+0 per correct</span><span class="m-badge negative">-0 per wrong</span>';
+}
+
+// ============ DELETE QUIZ ============
+async function deleteQuiz(id) {
+  if (!confirm('❗ Is question ko delete karna hai?')) return;
+  const { error } = await sb.from('quizzes').delete().eq('id', id);
+  if (error) { alert('Error: ' + error.message); return; }
+  loadAdminData();
+}
+
+// ============ EDIT MODAL ============
+function openEditModal(id) {
+  const q = allQuizzes.find(x => x.id === id);
+  if (!q) return;
+  editingId = id;
+  editCorrectAnswer = q.correct_answer;
+
+  document.getElementById('eText').value = q.question_text || '';
+  document.getElementById('eOptA').value = q.option_a || '';
+  document.getElementById('eOptB').value = q.option_b || '';
+  document.getElementById('eOptC').value = q.option_c || '';
+  document.getElementById('eOptD').value = q.option_d || '';
+  document.getElementById('eExplanation').value = q.explanation || '';
+  document.getElementById('eSubject').value = q.subject || 'maths';
+  document.getElementById('eExam').value = q.exam_type || 'ssc_cgl';
+  document.getElementById('eDiff').value = q.difficulty || 'easy';
+  document.getElementById('eLang').value = q.language || 'both';
+  document.getElementById('eDuration').value = q.test_duration || '';
+  document.getElementById('eTotalMarks').value = q.total_marks || '';
+  document.getElementById('ePositive').value = q.positive_marking || '';
+  document.getElementById('eNegative').value = q.negative_marking || '';
+  document.getElementById('eOpenTime').value = q.test_open_time ? q.test_open_time.slice(0,16) : '';
+  document.getElementById('eEndTime').value = q.test_end_time ? q.test_end_time.slice(0,16) : '';
+
+  // Set correct answer buttons
+  document.querySelectorAll('#editModal .correct-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#editModal .opt-input').forEach(o => o.classList.remove('correct-opt'));
+  const selBtn = document.querySelector(`#editModal .correct-btn:nth-child(${['A','B','C','D'].indexOf(q.correct_answer)+1})`);
+  if (selBtn) selBtn.classList.add('selected');
+  const selOpt = document.getElementById('eopt-' + q.correct_answer);
+  if (selOpt) selOpt.classList.add('correct-opt');
+
+  document.getElementById('editSuccessMsg').classList.remove('show');
+  document.getElementById('editModal').classList.add('show');
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('show');
+  editingId = null;
+  editCorrectAnswer = null;
+}
+
+async function saveEdit() {
+  if (!editingId) return;
+  if (!editCorrectAnswer) { alert('Correct answer select karo!'); return; }
+
+  const saveBtn = document.getElementById('saveEditBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = '⏳ Saving...';
+
+  const openTime = document.getElementById('eOpenTime').value;
+  const endTime = document.getElementById('eEndTime').value;
+  if (openTime && endTime && new Date(openTime) >= new Date(endTime)) {
+    alert('⚠️ Test end time, open time se baad honi chahiye!');
+    saveBtn.disabled = false;
+    saveBtn.textContent = '💾 Save Changes';
+    return;
+  }
+
+  const { error } = await sb.from('quizzes').update({
+    question_text: document.getElementById('eText').value.trim(),
+    option_a: document.getElementById('eOptA').value.trim(),
+    option_b: document.getElementById('eOptB').value.trim(),
+    option_c: document.getElementById('eOptC').value.trim(),
+    option_d: document.getElementById('eOptD').value.trim(),
+    correct_answer: editCorrectAnswer,
+    explanation: document.getElementById('eExplanation').value.trim() || null,
+    subject: document.getElementById('eSubject').value,
+    exam_type: document.getElementById('eExam').value,
+    difficulty: document.getElementById('eDiff').value,
+    language: document.getElementById('eLang').value,
+    test_duration: parseInt(document.getElementById('eDuration').value) || null,
+    total_marks: parseInt(document.getElementById('eTotalMarks').value) || null,
+    positive_marking: parseFloat(document.getElementById('ePositive').value) || null,
+    negative_marking: parseFloat(document.getElementById('eNegative').value) || null,
+    test_open_time: openTime || null,
+    test_end_time: endTime || null,
+  }).eq('id', editingId);
+
+  saveBtn.disabled = false;
+  saveBtn.textContent = '💾 Save Changes';
+
+  if (error) { alert('Error: ' + error.message); return; }
+
+  document.getElementById('editSuccessMsg').classList.add('show');
+  setTimeout(() => { closeEditModal(); loadAdminData(); }, 1200);
+}
+
+// ============ TABS ============
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'list') loadQuizList();
+}
+
+// ============ UTILS ============
+function escHtml(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Close modal on outside click
+document.getElementById('editModal').addEventListener('click', function(e) {
+  if (e.target === this) closeEditModal();
+});
+</script>
+</body>
+</html>
