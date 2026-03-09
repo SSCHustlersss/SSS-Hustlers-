@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel | SSC Hustlers</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --red: #e63946;
+  --red-dark: #b5202c;
+  --red-glow: rgba(230,57,70,0.15);
+  --bg: #0d0f14;
+  --bg2: #13161e;
+  --bg3: #1a1e28;
+  --border: rgba(255,255,255,0.08);
+  --text: #e8eaf0;
+  --text-muted: #6b7280;
+  --green: #00c853;
+  --yellow: #ffb300;
+  --blue: #4285f4;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--red); border-radius:10px; }
+
+/* =================== LOCK SCREEN =================== */
+.lock-screen {
+  display:flex; align-items:center; justify-content:center;
+  min-height:100vh;
+  background: radial-gradient(ellipse at center, #1a0a0d 0%, var(--bg) 70%);
+}
+.lock-screen::before {
+  content:'';
+  position:fixed; inset:0;
+  background: repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(230,57,70,0.02) 60px,rgba(230,57,70,0.02) 61px),
+              repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(230,57,70,0.02) 60px,rgba(230,57,70,0.02) 61px);
+  pointer-events:none;
+}
+.lock-box {
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:48px 44px;
+  width:90%; max-width:400px;
+  text-align:center;
+  position:relative;
+  box-shadow: 0 0 80px rgba(230,57,70,0.08);
+  animation: fadeUp 0.5s ease;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+.lock-icon { font-size:2.8rem; margin-bottom:20px; display:block; }
+.lock-box h2 { font-family:'Rajdhani',sans-serif; font-size:1.8rem; font-weight:700; color:#fff; letter-spacing:1px; }
+.lock-box p { font-size:0.82rem; color:var(--text-muted); margin-top:4px; margin-bottom:32px; }
+
+.inp-wrap { margin-bottom:16px; text-align:left; }
+.inp-wrap label { font-size:0.78rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px; }
+.inp-wrap input {
+  width:100%; padding:13px 16px;
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:10px; font-size:0.9rem; font-family:inherit;
+  color:var(--text); outline:none; transition:all 0.2s;
+}
+.inp-wrap input:focus { border-color:var(--red); box-shadow:0 0 0 3px var(--red-glow); }
+.btn-enter {
+  width:100%; background:var(--red); color:#fff; border:none;
+  padding:14px; border-radius:10px; font-size:0.95rem; font-weight:700;
+  cursor:pointer; font-family:inherit; transition:all 0.2s; margin-top:8px;
+  letter-spacing:0.3px;
+}
+.btn-enter:hover { background:var(--red-dark); transform:translateY(-1px); box-shadow:0 4px 20px rgba(230,57,70,0.4); }
+.btn-enter:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+.error-msg {
+  background:rgba(230,57,70,0.1); border:1px solid rgba(230,57,70,0.3);
+  color:#ff6b6b; padding:10px 14px; border-radius:8px;
+  font-size:0.82rem; margin-bottom:16px; display:none; text-align:left;
+}
+.error-msg.show { display:block; }
+
+/* =================== NAVBAR =================== */
+.admin-panel { display:none; }
+nav {
+  background:var(--bg2); border-bottom:1px solid var(--border);
+  padding:0 5%; height:60px;
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:100;
+}
+.logo { font-family:'Rajdhani',sans-serif; font-size:1.3rem; font-weight:700; color:var(--red); letter-spacing:1px; }
+.logo span { color:var(--text); }
+.nav-right { display:flex; align-items:center; gap:12px; }
+.admin-badge {
+  background:var(--red-glow); color:var(--red);
+  padding:4px 12px; border-radius:50px;
+  font-size:0.7rem; font-weight:700;
+  border:1px solid rgba(230,57,70,0.3);
+  letter-spacing:0.5px;
+}
+.btn-logout {
+  background:transparent; color:var(--text-muted);
+  border:1px solid var(--border);
+  padding:7px 16px; border-radius:8px;
+  font-size:0.8rem; cursor:pointer; font-family:inherit;
+  transition:all 0.2s;
+}
+.btn-logout:hover { color:var(--red); border-color:rgba(230,57,70,0.4); }
+
+/* =================== LAYOUT =================== */
+.container { max-width:1100px; margin:0 auto; padding:32px 5%; }
+.page-title { font-family:'Rajdhani',sans-serif; font-size:1.6rem; font-weight:700; margin-bottom:28px; letter-spacing:0.5px; }
+.page-title span { color:var(--red); }
+
+/* =================== STATS =================== */
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; margin-bottom:32px; }
+.stat-card {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:14px; padding:20px 22px;
+  transition:border-color 0.2s;
+  position:relative; overflow:hidden;
+}
+.stat-card::before {
+  content:''; position:absolute; top:0; left:0;
+  width:3px; height:100%;
+  background:var(--red);
+}
+.stat-card:hover { border-color:rgba(230,57,70,0.3); }
+.stat-val { font-size:2rem; font-weight:700; color:var(--red); line-height:1; }
+.stat-label { font-size:0.75rem; color:var(--text-muted); margin-top:6px; text-transform:uppercase; letter-spacing:0.4px; }
+.stat-icon { position:absolute; right:16px; top:16px; font-size:1.4rem; opacity:0.3; }
+
+/* =================== TABS =================== */
+.tabs { display:flex; gap:4px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:4px; margin-bottom:24px; width:fit-content; }
+.tab {
+  padding:8px 20px; border-radius:8px; font-size:0.85rem; font-weight:600;
+  cursor:pointer; border:none; background:transparent; color:var(--text-muted);
+  font-family:inherit; transition:all 0.2s;
+}
+.tab.active { background:var(--red); color:#fff; }
+
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* =================== CARD =================== */
+.card {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:16px; padding:28px; margin-bottom:24px;
+}
+.card-title {
+  font-size:0.95rem; font-weight:700; margin-bottom:22px;
+  padding-bottom:16px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:8px; color:var(--text);
+}
+.card-title .badge {
+  background:var(--red-glow); color:var(--red);
+  padding:2px 10px; border-radius:50px; font-size:0.7rem;
+  border:1px solid rgba(230,57,70,0.3);
+}
+
+/* =================== FORM ELEMENTS =================== */
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+.form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px; }
+.form-full { margin-bottom:16px; }
+.form-field label {
+  font-size:0.75rem; font-weight:600; color:var(--text-muted);
+  display:block; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.4px;
+}
+.form-field input, .form-field select, .form-field textarea {
+  width:100%; padding:11px 14px;
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:10px; font-size:0.88rem; font-family:inherit;
+  color:var(--text); outline:none; transition:all 0.2s;
+}
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus {
+  border-color:var(--red); box-shadow:0 0 0 3px var(--red-glow);
+}
+.form-field select option { background:var(--bg3); }
+.form-field textarea { resize:vertical; min-height:80px; }
+
+/* OPTIONS GRID */
+.options-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+.opt-input { position:relative; }
+.opt-label {
+  position:absolute; left:12px; top:50%; transform:translateY(-50%);
+  font-weight:700; color:var(--text-muted); font-size:0.82rem;
+  background:var(--bg3); padding:0 4px; pointer-events:none;
+  z-index:1;
+}
+.opt-input input { padding-left:32px !important; }
+.opt-input.correct-opt input { border-color:var(--green) !important; background:rgba(0,200,83,0.06) !important; }
+.opt-input.correct-opt .opt-label { color:var(--green); }
+
+.correct-select { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+.correct-btn {
+  padding:9px 20px; border:1px solid var(--border);
+  border-radius:8px; font-size:0.85rem; font-weight:700;
+  cursor:pointer; font-family:inherit; transition:all 0.2s;
+  background:var(--bg3); color:var(--text-muted);
+}
+.correct-btn.selected { border-color:var(--green); background:rgba(0,200,83,0.08); color:var(--green); }
+
+/* SECTION DIVIDER */
+.section-divider {
+  display:flex; align-items:center; gap:12px;
+  margin: 20px 0 18px;
+}
+.section-divider span {
+  font-size:0.75rem; font-weight:700; color:var(--red);
+  text-transform:uppercase; letter-spacing:1px; white-space:nowrap;
+}
+.section-divider::before, .section-divider::after {
+  content:''; flex:1; height:1px; background:var(--border);
+}
+
+/* MARKING BADGES */
+.marking-info {
+  display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;
+}
+.m-badge {
+  padding:5px 12px; border-radius:6px; font-size:0.78rem; font-weight:700;
+}
+.m-badge.positive { background:rgba(0,200,83,0.1); color:var(--green); border:1px solid rgba(0,200,83,0.2); }
+.m-badge.negative { background:rgba(230,57,70,0.1); color:var(--red); border:1px solid rgba(230,57,70,0.2); }
+
+/* BUTTONS */
+.btn-primary {
+  background:var(--red); color:#fff; border:none;
+  padding:12px 28px; border-radius:10px;
+  font-size:0.92rem; font-weight:700; cursor:pointer;
+  font-family:inherit; transition:all 0.2s;
+}
+.btn-primary:hover:not(:disabled) { background:var(--red-dark); transform:translateY(-1px); box-shadow:0 4px 16px rgba(230,57,70,0.35); }
+.btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
+.btn-secondary {
+  background:var(--bg3); color:var(--text-muted);
+  border:1px solid var(--border);
+  padding:12px 20px; border-radius:10px;
+  font-size:0.88rem; font-weight:600; cursor:pointer;
+  font-family:inherit; margin-right:10px; transition:all 0.2s;
+}
+.btn-secondary:hover { color:var(--text); border-color:rgba(255,255,255,0.2); }
+
+.success-msg {
+  background:rgba(0,200,83,0.08); border:1px solid rgba(0,200,83,0.25);
+  color:var(--green); padding:12px 16px; border-radius:8px;
+  font-size:0.85rem; font-weight:600; margin-bottom:16px; display:none;
+}
+.success-msg.show { display:block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+
+/* =================== QUIZ LIST =================== */
+.quiz-filters {
+  display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center;
+}
+.filter-select {
+  padding:8px 14px; background:var(--bg3);
+  border:1px solid var(--border); border-radius:8px;
+  font-size:0.82rem; font-family:inherit; color:var(--text);
+  outline:none; cursor:pointer;
+}
+.filter-select:focus { border-color:var(--red); }
+.search-inp {
+  flex:1; min-width:180px; padding:8px 14px;
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:8px; font-size:0.82rem; font-family:inherit;
+  color:var(--text); outline:none;
+}
+.search-inp:focus { border-color:var(--red); }
+
+.quiz-item {
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:12px; padding:16px 18px; margin-bottom:10px;
+  transition:border-color 0.2s;
+  animation: fadeIn 0.3s ease;
+}
+.quiz-item:hover { border-color:rgba(255,255,255,0.15); }
+.quiz-item-header { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.quiz-q { font-size:0.88rem; font-weight:600; flex:1; line-height:1.5; color:var(--text); }
+.quiz-actions { display:flex; gap:6px; flex-shrink:0; }
+.quiz-meta-row { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+.q-tag { padding:3px 10px; border-radius:50px; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; }
+.tag-subject { background:rgba(66,133,244,0.12); color:#4285f4; border:1px solid rgba(66,133,244,0.2); }
+.tag-type { background:rgba(230,57,70,0.1); color:var(--red); border:1px solid rgba(230,57,70,0.2); }
+.tag-diff-easy { background:rgba(0,200,83,0.1); color:var(--green); border:1px solid rgba(0,200,83,0.2); }
+.tag-diff-medium { background:rgba(255,179,0,0.1); color:var(--yellow); border:1px solid rgba(255,179,0,0.2); }
+.tag-diff-hard { background:rgba(230,57,70,0.1); color:var(--red); border:1px solid rgba(230,57,70,0.2); }
+
+.btn-edit {
+  background:rgba(66,133,244,0.1); color:#4285f4;
+  border:1px solid rgba(66,133,244,0.25);
+  padding:5px 12px; border-radius:6px; font-size:0.75rem;
+  font-weight:700; cursor:pointer; font-family:inherit;
+}
+.btn-edit:hover { background:rgba(66,133,244,0.2); }
+.btn-delete {
+  background:rgba(230,57,70,0.1); color:var(--red);
+  border:1px solid rgba(230,57,70,0.25);
+  padding:5px 12px; border-radius:6px; font-size:0.75rem;
+  font-weight:700; cursor:pointer; font-family:inherit;
+}
+.btn-delete:hover { background:rgba(230,57,70,0.2); }
+
+/* PAGINATION */
+.pagination { display:flex; gap:6px; align-items:center; justify-content:center; margin-top:20px; }
+.page-btn {
+  padding:7px 13px; border-radius:8px; background:var(--bg3);
+  border:1px solid var(--border); color:var(--text-muted);
+  font-size:0.82rem; font-weight:600; cursor:pointer;
+  font-family:inherit; transition:all 0.2s;
+}
+.page-btn:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+.page-btn.active { background:var(--red); color:#fff; border-color:var(--red); }
+.page-btn:disabled { opacity:0.3; cursor:not-allowed; }
+
+/* EDIT MODAL */
+.modal-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.8); backdrop-filter:blur(4px);
+  z-index:1000; align-items:center; justify-content:center;
+  padding:20px;
+}
+.modal-overlay.show { display:flex; }
+.modal {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:20px; padding:32px;
+  width:100%; max-width:640px; max-height:90vh;
+  overflow-y:auto; animation: fadeUp 0.3s ease;
+}
+.modal-title {
+  font-size:1.1rem; font-weight:700; margin-bottom:20px;
+  padding-bottom:14px; border-bottom:1px solid var(--border);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.modal-close {
+  background:var(--bg3); border:1px solid var(--border);
+  color:var(--text-muted); width:30px; height:30px; border-radius:8px;
+  cursor:pointer; font-size:1.1rem; display:flex; align-items:center; justify-content:center;
+}
+.modal-close:hover { color:var(--red); border-color:rgba(230,57,70,0.4); }
+
+/* EMPTY STATE */
+.empty-state { text-align:center; padding:48px; color:var(--text-muted); }
+.empty-state .empty-icon { font-size:2.5rem; margin-bottom:12px; }
+.empty-state p { font-size:0.88rem; }
+
+/* LOADING */
+.loading { text-align:center; padding:40px; color:var(--text-muted); }
+.spinner { display:inline-block; width:20px; height:20px; border:2px solid var(--border); border-top-color:var(--red); border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* TODAY BADGE */
+.today-highlight { color:var(--yellow); }
+
+/* =================== BULK UPLOAD =================== */
+.upload-zone {
+  border:2px dashed var(--border); border-radius:14px;
+  padding:40px 20px; text-align:center; cursor:pointer;
+  transition:all 0.2s; background:var(--bg3);
+  position:relative;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color:var(--red); background:rgba(230,57,70,0.05);
+}
+.upload-zone input[type=file] {
+  position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;
+}
+.upload-icon { font-size:2.5rem; margin-bottom:10px; }
+.upload-zone h3 { font-size:1rem; font-weight:700; margin-bottom:6px; }
+.upload-zone p { font-size:0.8rem; color:var(--text-muted); }
+
+.template-btns { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+.btn-template {
+  padding:9px 18px; border-radius:8px; font-size:0.82rem; font-weight:700;
+  cursor:pointer; font-family:inherit; transition:all 0.2s; border:none;
+}
+.btn-csv { background:rgba(0,200,83,0.1); color:var(--green); border:1px solid rgba(0,200,83,0.3); }
+.btn-csv:hover { background:rgba(0,200,83,0.2); }
+.btn-excel { background:rgba(66,133,244,0.1); color:var(--blue); border:1px solid rgba(66,133,244,0.3); }
+.btn-excel:hover { background:rgba(66,133,244,0.2); }
+
+.preview-table-wrap { overflow-x:auto; margin-top:20px; border-radius:10px; border:1px solid var(--border); }
+.preview-table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+.preview-table th {
+  background:var(--bg3); padding:10px 12px; text-align:left;
+  font-weight:700; color:var(--text-muted); text-transform:uppercase;
+  font-size:0.7rem; letter-spacing:0.4px; border-bottom:1px solid var(--border);
+}
+.preview-table td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:top; }
+.preview-table tr:last-child td { border-bottom:none; }
+.preview-table tr:hover td { background:rgba(255,255,255,0.02); }
+.row-valid td:first-child { border-left:3px solid var(--green); }
+.row-error td:first-child { border-left:3px solid var(--red); }
+
+.bulk-stats {
+  display:flex; gap:10px; flex-wrap:wrap; margin:16px 0;
+}
+.bulk-stat {
+  padding:8px 16px; border-radius:8px; font-size:0.82rem; font-weight:700;
+}
+.bs-total { background:rgba(255,255,255,0.05); color:var(--text); border:1px solid var(--border); }
+.bs-valid { background:rgba(0,200,83,0.1); color:var(--green); border:1px solid rgba(0,200,83,0.2); }
+.bs-error { background:rgba(230,57,70,0.1); color:var(--red); border:1px solid rgba(230,57,70,0.2); }
+
+.progress-bar-wrap {
+  background:var(--bg3); border-radius:50px; height:8px; margin:12px 0;
+  overflow:hidden; display:none;
+}
+.progress-bar-fill {
+  height:100%; background:var(--red); border-radius:50px;
+  transition:width 0.3s ease; width:0%;
+}
+.progress-text { font-size:0.82rem; color:var(--text-muted); margin-bottom:8px; }
+
+@media(max-width:700px) {
+  .form-row, .form-row-3 { grid-template-columns:1fr; }
+  .options-grid { grid-template-columns:1fr; }
+  .tabs { width:100%; }
+  .tab { flex:1; text-align:center; font-size:0.78rem; padding:8px 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ====== LOCK SCREEN ====== -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-box">
+    <span class="lock-icon">🔐</span>
+    <h2>ADMIN PANEL</h2>
+    <p>SSC Hustlers — Authorized Access Only</p>
+    <div class="error-msg" id="lockError">Galat credentials!</div>
+    <div class="inp-wrap">
+      <label>Admin Email</label>
+      <input type="email" id="adminEmail" placeholder="admin@email.com" autocomplete="off">
+    </div>
+    <div class="inp-wrap">
+      <label>Password</label>
+      <input type="password" id="adminPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkAdmin()">
+    </div>
+    <button class="btn-enter" id="loginBtn" onclick="checkAdmin()">🔓 Enter Admin Panel</button>
+  </div>
+</div>
+
+<!-- ====== ADMIN PANEL ====== -->
+<div class="admin-panel" id="adminPanel">
+  <nav>
+    <div class="logo">SSC <span>HUSTLERS</span> <span class="admin-badge">ADMIN</span></div>
+    <div class="nav-right">
+      <span style="font-size:0.8rem;color:var(--text-muted)" id="adminEmailDisplay"></span>
+      <button class="btn-logout" onclick="adminLogout()">↩ Logout</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-title">Admin <span>Dashboard</span> 🛠️</div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-val" id="totalQuizzes">—</div>
+        <div class="stat-label">Total Questions</div>
+        <span class="stat-icon">📝</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="totalUsers">—</div>
+        <div class="stat-label">Registered Users</div>
+        <span class="stat-icon">👥</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="totalAttempts">—</div>
+        <div class="stat-label">Total Attempts</div>
+        <span class="stat-icon">🎯</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val today-highlight" id="todayAttempts">—</div>
+        <div class="stat-label">Today's Attempts</div>
+        <span class="stat-icon">📈</span>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('add', this)">➕ Question Add</button>
+      <button class="tab" onclick="switchTab('bulk', this)">📤 Bulk Upload</button>
+      <button class="tab" onclick="switchTab('list', this)">📋 All Questions</button>
+    </div>
+
+    <!-- TAB: ADD QUESTION -->
+    <div class="tab-content active" id="tab-add">
+      <div class="card">
+        <div class="card-title">➕ Naya Quiz Question <span class="badge">NEW</span></div>
+        <div class="success-msg" id="successMsg">✅ Question successfully add ho gaya!</div>
+
+        <!-- BASIC INFO -->
+        <div class="section-divider"><span>📌 Basic Info</span></div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>Subject</label>
+            <select id="qSubject">
+              <option value="maths">Quantitative Aptitude (Maths)</option>
+              <option value="reasoning">Reasoning</option>
+              <option value="english">English</option>
+              <option value="ga">General Awareness</option>
+              <option value="current_affairs">Current Affairs</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Exam Type</label>
+            <select id="qExam">
+              <option value="ssc_cgl">SSC CGL</option>
+              <option value="ssc_chsl">SSC CHSL</option>
+              <option value="ssc_mts">SSC MTS</option>
+              <option value="ssc_gd">SSC GD</option>
+              <option value="ntpc">SSC NTPC</option>
+              <option value="railway">Railway RRB</option>
+              <option value="banking">Banking</option>
+              <option value="all">All Exams</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>Difficulty</label>
+            <select id="qDiff">
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Language</label>
+            <select id="qLang">
+              <option value="both">Hindi + English</option>
+              <option value="hindi">Hindi Only</option>
+              <option value="english">English Only</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- QUESTION -->
+        <div class="section-divider"><span>❓ Question & Options</span></div>
+        <div class="form-full form-field">
+          <label>Question Text *</label>
+          <textarea id="qText" placeholder="Question yahan likho..."></textarea>
+        </div>
+
+        <div class="options-grid">
+          <div class="opt-input" id="opt-A">
+            <span class="opt-label">A</span>
+            <input type="text" id="optA" placeholder="Option A">
+          </div>
+          <div class="opt-input" id="opt-B">
+            <span class="opt-label">B</span>
+            <input type="text" id="optB" placeholder="Option B">
+          </div>
+          <div class="opt-input" id="opt-C">
+            <span class="opt-label">C</span>
+            <input type="text" id="optC" placeholder="Option C">
+          </div>
+          <div class="opt-input" id="opt-D">
+            <span class="opt-label">D</span>
+            <input type="text" id="optD" placeholder="Option D">
+          </div>
+        </div>
+
+        <div class="form-full form-field">
+          <label>Correct Answer Select Karo *</label>
+          <div class="correct-select">
+            <button class="correct-btn" onclick="selectCorrect('A', this)">✔ A</button>
+            <button class="correct-btn" onclick="selectCorrect('B', this)">✔ B</button>
+            <button class="correct-btn" onclick="selectCorrect('C', this)">✔ C</button>
+            <button class="correct-btn" onclick="selectCorrect('D', this)">✔ D</button>
+          </div>
+        </div>
+
+        <div class="form-full form-field">
+          <label>Explanation (Optional)</label>
+          <textarea id="qExplanation" placeholder="Answer ki explanation likho..." style="min-height:60px;"></textarea>
+        </div>
+
+        <!-- TEST SETTINGS -->
+        <div class="section-divider"><span>⚙️ Test Settings (Optional)</span></div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>⏱️ Test Duration (minutes)</label>
+            <input type="number" id="qDuration" placeholder="e.g. 60" min="1" max="300">
+          </div>
+          <div class="form-field">
+            <label>🔢 Total Marks</label>
+            <input type="number" id="qTotalMarks" placeholder="e.g. 200" min="1">
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-field">
+            <label>✅ Positive Marking</label>
+            <input type="number" id="qPositive" placeholder="e.g. 2" step="0.25" min="0">
+          </div>
+          <div class="form-field">
+            <label>❌ Negative Marking</label>
+            <input type="number" id="qNegative" placeholder="e.g. 0.5" step="0.25" min="0">
+          </div>
+          <div class="form-field">
+            <label>📌 Marks Preview</label>
+            <div class="marking-info" id="markingPreview">
+              <span class="m-badge positive">+0 per correct</span>
+              <span class="m-badge negative">-0 per wrong</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>🟢 Test Open Time (Start)</label>
+            <input type="datetime-local" id="qOpenTime">
+          </div>
+          <div class="form-field">
+            <label>🔴 Test End Time</label>
+            <input type="datetime-local" id="qEndTime">
+          </div>
+        </div>
+
+        <!-- BUTTONS -->
+        <div style="margin-top:8px;">
+          <button class="btn-secondary" onclick="clearForm()">🗑️ Clear</button>
+          <button class="btn-primary" id="addBtn" onclick="addQuiz()">✅ Question Add Karo</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: BULK UPLOAD -->
+    <div class="tab-content" id="tab-bulk">
+      <div class="card">
+        <div class="card-title">📤 Bulk Upload — CSV / Excel <span class="badge">BULK</span></div>
+
+        <!-- TEMPLATE DOWNLOAD -->
+        <div class="section-divider"><span>📥 Step 1 — Template Download Karo</span></div>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">
+          Pehle template download karo, usme questions fill karo, phir upload karo.
+        </p>
+        <div class="template-btns">
+          <button class="btn-template btn-csv" onclick="downloadCSVTemplate()">⬇️ CSV Template</button>
+          <button class="btn-template btn-excel" onclick="downloadExcelTemplate()">⬇️ Excel Template</button>
+        </div>
+
+        <!-- COLUMN INFO -->
+        <div style="margin-top:16px;background:var(--bg3);border-radius:10px;padding:14px 16px;border:1px solid var(--border);">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.4px;">📋 Required Columns</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span style="padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;background:rgba(230,57,70,0.1);color:var(--red);border:1px solid rgba(230,57,70,0.2);">question_text *</span>
+            <span style="padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;background:rgba(230,57,70,0.1);color:var(--red);border:1px solid rgba(230,57,70,0.2);">option_a *</span>
+            <span style="padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;background:rgba(230,57,70,0.1);color:var(--red);border:1px solid rgba(230,57,70,0.2);">option_b *</span>
+            <span style="padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;background:rgba(230,57,70,0.1);color:var(--red);border:1px solid rgba(230,57,70,0.2);">option_c *</span>
+            <span style="padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;background:rgba(230,57,70,0.1);color:var(--red);border:1px solid rgba(230,57,70,0.2);">option_d *</span>
+            <span style="padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;background:rgba(230,57,70,0.1);color:var(--red);border:1px solid rgba(230,57,70,0.2);">correct_answer * (A/B/C/D)</span>
+            <span style="padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;background:rgba(255,255,255,0.05);color:var(--text-muted);border:1px solid var(--border);">subject</span>
+            <span style="padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;background:rgba(255,255,255,0.05);color:var(--text-muted);border:1px solid var(--border);">exam_type</span>
+            <span style="padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;background:rgba(255,255,255,0.05);color:var(--text-muted);border:1px solid var(--border);">difficulty</span>
+            <span style="padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;background:rgba(255,255,255,0.05);color:var(--text-muted);border:1px solid var(--border);">language</span>
+            <span style="padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;background:rgba(255,255,255,0.05);color:var(--text-muted);border:1px solid var(--border);">explanation</span>
+            <span style="padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;background:rgba(255,179,0,0.1);color:var(--yellow);border:1px solid rgba(255,179,0,0.2);">👉 explanation column must honi chahiye</span>
+            <span style="padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;background:rgba(255,255,255,0.05);color:var(--text-muted);border:1px solid var(--border);">positive_marking</span>
+            <span style="padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;background:rgba(255,255,255,0.05);color:var(--text-muted);border:1px solid var(--border);">negative_marking</span>
+            <span style="padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;background:rgba(255,255,255,0.05);color:var(--text-muted);border:1px solid var(--border);">test_duration</span>
+          </div>
+        </div>
+
+        <!-- FILE UPLOAD -->
+        <div class="section-divider" style="margin-top:24px;"><span>📂 Step 2 — File Upload Karo</span></div>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="bulkFile" accept=".csv,.xlsx,.xls" onchange="handleFileUpload(event)">
+          <div class="upload-icon">📂</div>
+          <h3>CSV ya Excel file yahan drop karo</h3>
+          <p>ya click karke select karo — .csv, .xlsx, .xls supported</p>
+        </div>
+
+        <!-- PREVIEW -->
+        <div id="bulkPreview" style="display:none;">
+          <div class="section-divider" style="margin-top:24px;"><span>👁️ Step 3 — Preview & Upload</span></div>
+
+          <div class="bulk-stats">
+            <span class="bulk-stat bs-total">📊 Total: <span id="bsTotal">0</span></span>
+            <span class="bulk-stat bs-valid">✅ Valid: <span id="bsValid">0</span></span>
+            <span class="bulk-stat bs-error">❌ Errors: <span id="bsError">0</span></span>
+          </div>
+
+          <div class="preview-table-wrap">
+            <table class="preview-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Question</th>
+                  <th>Options</th>
+                  <th>Correct</th>
+                  <th>Subject</th>
+                  <th>Difficulty</th>
+                  <th>Explanation</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="previewBody"></tbody>
+            </table>
+          </div>
+
+          <div style="margin-top:20px;">
+            <div class="progress-text" id="progressText"></div>
+            <div class="progress-bar-wrap" id="progressWrap">
+              <div class="progress-bar-fill" id="progressFill"></div>
+            </div>
+            <button class="btn-secondary" onclick="clearBulkUpload()">🗑️ Clear</button>
+            <button class="btn-primary" id="bulkUploadBtn" onclick="startBulkUpload()">🚀 Upload All Valid Questions</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB: QUESTION LIST -->
+    <div class="tab-content" id="tab-list">
+      <div class="card">
+        <div class="card-title">📋 All Questions (<span id="qCount">0</span>) <span class="badge" id="filterBadge">Showing all</span></div>
+
+        <div class="quiz-filters">
+          <input class="search-inp" id="searchInp" type="text" placeholder="🔍 Search question..." oninput="filterQuizzes()">
+          <select class="filter-select" id="filterSubject" onchange="filterQuizzes()">
+            <option value="">All Subjects</option>
+            <option value="maths">Maths</option>
+            <option value="reasoning">Reasoning</option>
+            <option value="english">English</option>
+            <option value="ga">GA</option>
+            <option value="current_affairs">Current Affairs</option>
+          </select>
+          <select class="filter-select" id="filterDiff" onchange="filterQuizzes()">
+            <option value="">All Difficulty</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <select class="filter-select" id="filterExam" onchange="filterQuizzes()">
+            <option value="">All Exams</option>
+            <option value="ssc_cgl">SSC CGL</option>
+            <option value="ssc_chsl">SSC CHSL</option>
+            <option value="ssc_mts">SSC MTS</option>
+            <option value="ssc_gd">SSC GD</option>
+            <option value="ntpc">NTPC</option>
+            <option value="railway">Railway</option>
+            <option value="banking">Banking</option>
+          </select>
+        </div>
+
+        <div id="quizList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ====== EDIT MODAL ====== -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-title">
+      ✏️ Question Edit Karo
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="success-msg" id="editSuccessMsg">✅ Question update ho gaya!</div>
+
+    <div class="form-row">
+      <div class="form-field">
+        <label>Subject</label>
+        <select id="eSubject">
+          <option value="maths">Quantitative Aptitude (Maths)</option>
+          <option value="reasoning">Reasoning</option>
+          <option value="english">English</option>
+          <option value="ga">General Awareness</option>
+          <option value="current_affairs">Current Affairs</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Exam Type</label>
+        <select id="eExam">
+          <option value="ssc_cgl">SSC CGL</option>
+          <option value="ssc_chsl">SSC CHSL</option>
+          <option value="ssc_mts">SSC MTS</option>
+          <option value="ssc_gd">SSC GD</option>
+          <option value="ntpc">NTPC</option>
+          <option value="railway">Railway RRB</option>
+          <option value="banking">Banking</option>
+          <option value="all">All Exams</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-field">
+        <label>Difficulty</label>
+        <select id="eDiff">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Language</label>
+        <select id="eLang">
+          <option value="both">Hindi + English</option>
+          <option value="hindi">Hindi Only</option>
+          <option value="english">English Only</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-full form-field">
+      <label>Question Text *</label>
+      <textarea id="eText" style="min-height:90px;"></textarea>
+    </div>
+
+    <div class="options-grid">
+      <div class="opt-input" id="eopt-A">
+        <span class="opt-label">A</span>
+        <input type="text" id="eOptA" placeholder="Option A">
+      </div>
+      <div class="opt-input" id="eopt-B">
+        <span class="opt-label">B</span>
+        <input type="text" id="eOptB" placeholder="Option B">
+      </div>
+      <div class="opt-input" id="eopt-C">
+        <span class="opt-label">C</span>
+        <input type="text" id="eOptC" placeholder="Option C">
+      </div>
+      <div class="opt-input" id="eopt-D">
+        <span class="opt-label">D</span>
+        <input type="text" id="eOptD" placeholder="Option D">
+      </div>
+    </div>
+
+    <div class="form-full form-field">
+      <label>Correct Answer *</label>
+      <div class="correct-select">
+        <button class="correct-btn" onclick="selectEditCorrect('A', this)">✔ A</button>
+        <button class="correct-btn" onclick="selectEditCorrect('B', this)">✔ B</button>
+        <button class="correct-btn" onclick="selectEditCorrect('C', this)">✔ C</button>
+        <button class="correct-btn" onclick="selectEditCorrect('D', this)">✔ D</button>
+      </div>
+    </div>
+
+    <div class="form-full form-field">
+      <label>Explanation (Optional)</label>
+      <textarea id="eExplanation" style="min-height:60px;"></textarea>
+    </div>
+
+    <!-- TEST SETTINGS IN EDIT -->
+    <div class="section-divider"><span>⚙️ Test Settings</span></div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>⏱️ Duration (minutes)</label>
+        <input type="number" id="eDuration" placeholder="e.g. 60" min="1">
+      </div>
+      <div class="form-field">
+        <label>🔢 Total Marks</label>
+        <input type="number" id="eTotalMarks" placeholder="e.g. 200">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>✅ Positive Marking</label>
+        <input type="number" id="ePositive" placeholder="e.g. 2" step="0.25">
+      </div>
+      <div class="form-field">
+        <label>❌ Negative Marking</label>
+        <input type="number" id="eNegative" placeholder="e.g. 0.5" step="0.25">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>🟢 Test Open Time</label>
+        <input type="datetime-local" id="eOpenTime">
+      </div>
+      <div class="form-field">
+        <label>🔴 Test End Time</label>
+        <input type="datetime-local" id="eEndTime">
+      </div>
+    </div>
+
+    <div style="margin-top:16px;display:flex;gap:10px;">
+      <button class="btn-secondary" onclick="closeEditModal()" style="margin:0">Cancel</button>
+      <button class="btn-primary" id="saveEditBtn" onclick="saveEdit()">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ CONFIG ============
+const SUPABASE_URL = 'https://wwfhoyxqlversdkdqcgd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3ZmhveXhxbHZlcnNka2RxY2dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDAwMTMsImV4cCI6MjA4ODQ3NjAxM30.qaQp8LJXGxN6EfOoNPOgdhdNqY7M0nC2aR8fBSYejrw';
+const ADMIN_EMAIL = 'anshul200160@gmail.com';
+// ================================
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let correctAnswer = null;
+let editCorrectAnswer = null;
+let editingId = null;
+let allQuizzes = [];
+let filteredQuizzes = [];
+const PAGE_SIZE = 20;
+let currentPage = 1;
+
+// ============ AUTH ============
+async function checkAdmin() {
+  const email = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPassword').value;
+  const errEl = document.getElementById('lockError');
+  const loginBtn = document.getElementById('loginBtn');
+
+  if (!email || !password) {
+    errEl.textContent = '⚠️ Email aur password daalo!';
+    errEl.classList.add('show');
+    return;
+  }
+
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Logging in...';
+  errEl.classList.remove('show');
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+  if (error || !data?.user || data.user.email !== ADMIN_EMAIL) {
+    await sb.auth.signOut();
+    errEl.textContent = '🚫 Access Denied! Sirf admin enter kar sakta hai.';
+    errEl.classList.add('show');
+    loginBtn.disabled = false;
+    loginBtn.textContent = '🔓 Enter Admin Panel';
+    return;
+  }
+
+  document.getElementById('lockScreen').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'block';
+  document.getElementById('adminEmailDisplay').textContent = data.user.email;
+  loadAdminData();
+}
+
+async function adminLogout() {
+  await sb.auth.signOut();
+  window.location.href = 'index.html';
+}
+
+// ============ LOAD DATA ============
+async function loadAdminData() {
+  // Total quizzes
+  const { count: qCount } = await sb.from('quizzes').select('*', { count:'exact', head:true });
+  // Total users
+  const { count: uCount } = await sb.from('profiles').select('*', { count:'exact', head:true });
+  // Total attempts
+  const { count: aCount } = await sb.from('test_attempts').select('*', { count:'exact', head:true });
+  // Today's attempts — FIX: date filter laga ke
+  const todayStart = new Date();
+  todayStart.setHours(0,0,0,0);
+  const { count: tCount } = await sb.from('test_attempts')
+    .select('*', { count:'exact', head:true })
+    .gte('created_at', todayStart.toISOString());
+
+  document.getElementById('totalQuizzes').textContent = qCount ?? 0;
+  document.getElementById('totalUsers').textContent = uCount ?? 0;
+  document.getElementById('totalAttempts').textContent = aCount ?? 0;
+  document.getElementById('todayAttempts').textContent = tCount ?? 0;
+
+  loadQuizList();
+}
+
+async function loadQuizList() {
+  const listEl = document.getElementById('quizList');
+  listEl.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+
+  const { data, error } = await sb.from('quizzes')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Error: ${error.message}</p></div>`;
+    return;
+  }
+
+  allQuizzes = data || [];
+  filteredQuizzes = [...allQuizzes];
+  currentPage = 1;
+  renderQuizList();
+}
+
+// ============ FILTER ============
+function filterQuizzes() {
+  const search = document.getElementById('searchInp').value.toLowerCase();
+  const subj = document.getElementById('filterSubject').value;
+  const diff = document.getElementById('filterDiff').value;
+  const exam = document.getElementById('filterExam').value;
+
+  filteredQuizzes = allQuizzes.filter(q => {
+    const matchSearch = !search || q.question_text?.toLowerCase().includes(search);
+    const matchSubj = !subj || q.subject === subj;
+    const matchDiff = !diff || q.difficulty === diff;
+    const matchExam = !exam || q.exam_type === exam;
+    return matchSearch && matchSubj && matchDiff && matchExam;
+  });
+
+  currentPage = 1;
+  renderQuizList();
+}
+
+// ============ RENDER LIST ============
+function renderQuizList() {
+  const listEl = document.getElementById('quizList');
+  document.getElementById('qCount').textContent = filteredQuizzes.length;
+
+  const active = document.getElementById('filterSubject').value ||
+                 document.getElementById('filterDiff').value ||
+                 document.getElementById('filterExam').value ||
+                 document.getElementById('searchInp').value;
+  document.getElementById('filterBadge').textContent =
+    active ? `Filtered: ${filteredQuizzes.length}` : `Showing all: ${allQuizzes.length}`;
+
+  if (filteredQuizzes.length === 0) {
+    listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Koi question nahi mila. Upar se add karo ya filter change karo!</p></div>';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  const totalPages = Math.ceil(filteredQuizzes.length / PAGE_SIZE);
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageData = filteredQuizzes.slice(start, start + PAGE_SIZE);
+
+  const diffClass = { easy:'tag-diff-easy', medium:'tag-diff-medium', hard:'tag-diff-hard' };
+
+  listEl.innerHTML = pageData.map(q => `
+    <div class="quiz-item">
+      <div class="quiz-item-header">
+        <div class="quiz-q">${escHtml(q.question_text)}</div>
+        <div class="quiz-actions">
+          <button class="btn-edit" onclick="openEditModal('${q.id}')">✏️ Edit</button>
+          <button class="btn-delete" onclick="deleteQuiz('${q.id}')">🗑️ Delete</button>
+        </div>
+      </div>
+      <div class="quiz-meta-row">
+        <span class="q-tag tag-subject">${q.subject || '—'}</span>
+        <span class="q-tag tag-type">${q.exam_type || '—'}</span>
+        <span class="q-tag ${diffClass[q.difficulty] || 'tag-diff-medium'}">${q.difficulty || '—'}</span>
+        ${q.positive_marking ? `<span class="q-tag" style="background:rgba(0,200,83,0.1);color:var(--green);border:1px solid rgba(0,200,83,0.2);">+${q.positive_marking}</span>` : ''}
+        ${q.negative_marking ? `<span class="q-tag" style="background:rgba(230,57,70,0.1);color:var(--red);border:1px solid rgba(230,57,70,0.2);">-${q.negative_marking}</span>` : ''}
+        ${q.test_duration ? `<span class="q-tag" style="background:rgba(255,179,0,0.1);color:var(--yellow);border:1px solid rgba(255,179,0,0.2);">⏱ ${q.test_duration}min</span>` : ''}
+      </div>
+    </div>`).join('');
+
+  // Pagination
+  renderPagination(totalPages);
+}
+
+function renderPagination(totalPages) {
+  const pagEl = document.getElementById('pagination');
+  if (totalPages <= 1) { pagEl.innerHTML = ''; return; }
+
+  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i===1 || i===totalPages || Math.abs(i-currentPage)<=2) {
+      html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    } else if (Math.abs(i-currentPage)===3) {
+      html += `<span style="color:var(--text-muted);padding:0 4px">…</span>`;
+    }
+  }
+
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+  pagEl.innerHTML = html;
+}
+
+function goPage(p) {
+  currentPage = p;
+  renderQuizList();
+  document.getElementById('tab-list').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ============ SELECT CORRECT ============
+function selectCorrect(opt, btn) {
+  correctAnswer = opt;
+  document.querySelectorAll('#tab-add .correct-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#tab-add .opt-input').forEach(o => o.classList.remove('correct-opt'));
+  btn.classList.add('selected');
+  document.getElementById('opt-' + opt).classList.add('correct-opt');
+}
+
+function selectEditCorrect(opt, btn) {
+  editCorrectAnswer = opt;
+  document.querySelectorAll('#editModal .correct-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#editModal .opt-input').forEach(o => o.classList.remove('correct-opt'));
+  btn.classList.add('selected');
+  document.getElementById('eopt-' + opt).classList.add('correct-opt');
+}
+
+// ============ MARKING PREVIEW ============
+document.addEventListener('input', function(e) {
+  if (e.target.id === 'qPositive' || e.target.id === 'qNegative') {
+    const pos = parseFloat(document.getElementById('qPositive').value) || 0;
+    const neg = parseFloat(document.getElementById('qNegative').value) || 0;
+    document.getElementById('markingPreview').innerHTML =
+      `<span class="m-badge positive">+${pos} per correct</span>
+       <span class="m-badge negative">-${neg} per wrong</span>`;
+  }
+});
+
+// ============ ADD QUIZ ============
+async function addQuiz() {
+  const qText = document.getElementById('qText').value.trim();
+  const optA = document.getElementById('optA').value.trim();
+  const optB = document.getElementById('optB').value.trim();
+  const optC = document.getElementById('optC').value.trim();
+  const optD = document.getElementById('optD').value.trim();
+
+  if (!qText || !optA || !optB || !optC || !optD || !correctAnswer) {
+    alert('⚠️ Sab required fields bharo aur correct answer select karo!');
+    return;
+  }
+
+  const openTime = document.getElementById('qOpenTime').value;
+  const endTime = document.getElementById('qEndTime').value;
+  if (openTime && endTime && new Date(openTime) >= new Date(endTime)) {
+    alert('⚠️ Test end time, open time se baad honi chahiye!');
+    return;
+  }
+
+  const addBtn = document.getElementById('addBtn');
+  addBtn.disabled = true;
+  addBtn.textContent = '⏳ Adding...';
+
+  const payload = {
+    question_text: qText,
+    option_a: optA, option_b: optB, option_c: optC, option_d: optD,
+    correct_answer: correctAnswer,
+    explanation: document.getElementById('qExplanation').value.trim() || null,
+    subject: document.getElementById('qSubject').value,
+    exam_type: document.getElementById('qExam').value,
+    difficulty: document.getElementById('qDiff').value,
+    language: document.getElementById('qLang').value,
+    test_duration: parseInt(document.getElementById('qDuration').value) || null,
+    total_marks: parseInt(document.getElementById('qTotalMarks').value) || null,
+    positive_marking: parseFloat(document.getElementById('qPositive').value) || null,
+    negative_marking: parseFloat(document.getElementById('qNegative').value) || null,
+    test_open_time: openTime || null,
+    test_end_time: endTime || null,
+  };
+
+  const { error } = await sb.from('quizzes').insert(payload);
+  addBtn.disabled = false;
+  addBtn.textContent = '✅ Question Add Karo';
+
+  if (error) { alert('Error: ' + error.message); return; }
+
+  const sMsg = document.getElementById('successMsg');
+  sMsg.classList.add('show');
+  setTimeout(() => sMsg.classList.remove('show'), 3000);
+  clearForm();
+  loadAdminData();
+}
+
+// ============ CLEAR FORM ============
+function clearForm() {
+  ['qText','optA','optB','optC','optD','qExplanation',
+   'qDuration','qTotalMarks','qPositive','qNegative','qOpenTime','qEndTime']
+    .forEach(id => document.getElementById(id).value = '');
+  correctAnswer = null;
+  document.querySelectorAll('#tab-add .correct-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#tab-add .opt-input').forEach(o => o.classList.remove('correct-opt'));
+  document.getElementById('markingPreview').innerHTML =
+    '<span class="m-badge positive">+0 per correct</span><span class="m-badge negative">-0 per wrong</span>';
+}
+
+// ============ DELETE QUIZ ============
+async function deleteQuiz(id) {
+  if (!confirm('❗ Is question ko delete karna hai?')) return;
+  const { error } = await sb.from('quizzes').delete().eq('id', id);
+  if (error) { alert('Error: ' + error.message); return; }
+  loadAdminData();
+}
+
+// ============ EDIT MODAL ============
+function openEditModal(id) {
+  const q = allQuizzes.find(x => x.id === id);
+  if (!q) return;
+  editingId = id;
+  editCorrectAnswer = q.correct_answer;
+
+  document.getElementById('eText').value = q.question_text || '';
+  document.getElementById('eOptA').value = q.option_a || '';
+  document.getElementById('eOptB').value = q.option_b || '';
+  document.getElementById('eOptC').value = q.option_c || '';
+  document.getElementById('eOptD').value = q.option_d || '';
+  document.getElementById('eExplanation').value = q.explanation || '';
+  document.getElementById('eSubject').value = q.subject || 'maths';
+  document.getElementById('eExam').value = q.exam_type || 'ssc_cgl';
+  document.getElementById('eDiff').value = q.difficulty || 'easy';
+  document.getElementById('eLang').value = q.language || 'both';
+  document.getElementById('eDuration').value = q.test_duration || '';
+  document.getElementById('eTotalMarks').value = q.total_marks || '';
+  document.getElementById('ePositive').value = q.positive_marking || '';
+  document.getElementById('eNegative').value = q.negative_marking || '';
+  document.getElementById('eOpenTime').value = q.test_open_time ? q.test_open_time.slice(0,16) : '';
+  document.getElementById('eEndTime').value = q.test_end_time ? q.test_end_time.slice(0,16) : '';
+
+  // Set correct answer buttons
+  document.querySelectorAll('#editModal .correct-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#editModal .opt-input').forEach(o => o.classList.remove('correct-opt'));
+  const selBtn = document.querySelector(`#editModal .correct-btn:nth-child(${['A','B','C','D'].indexOf(q.correct_answer)+1})`);
+  if (selBtn) selBtn.classList.add('selected');
+  const selOpt = document.getElementById('eopt-' + q.correct_answer);
+  if (selOpt) selOpt.classList.add('correct-opt');
+
+  document.getElementById('editSuccessMsg').classList.remove('show');
+  document.getElementById('editModal').classList.add('show');
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('show');
+  editingId = null;
+  editCorrectAnswer = null;
+}
+
+async function saveEdit() {
+  if (!editingId) return;
+  if (!editCorrectAnswer) { alert('Correct answer select karo!'); return; }
+
+  const saveBtn = document.getElementById('saveEditBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = '⏳ Saving...';
+
+  const openTime = document.getElementById('eOpenTime').value;
+  const endTime = document.getElementById('eEndTime').value;
+  if (openTime && endTime && new Date(openTime) >= new Date(endTime)) {
+    alert('⚠️ Test end time, open time se baad honi chahiye!');
+    saveBtn.disabled = false;
+    saveBtn.textContent = '💾 Save Changes';
+    return;
+  }
+
+  const { error } = await sb.from('quizzes').update({
+    question_text: document.getElementById('eText').value.trim(),
+    option_a: document.getElementById('eOptA').value.trim(),
+    option_b: document.getElementById('eOptB').value.trim(),
+    option_c: document.getElementById('eOptC').value.trim(),
+    option_d: document.getElementById('eOptD').value.trim(),
+    correct_answer: editCorrectAnswer,
+    explanation: document.getElementById('eExplanation').value.trim() || null,
+    subject: document.getElementById('eSubject').value,
+    exam_type: document.getElementById('eExam').value,
+    difficulty: document.getElementById('eDiff').value,
+    language: document.getElementById('eLang').value,
+    test_duration: parseInt(document.getElementById('eDuration').value) || null,
+    total_marks: parseInt(document.getElementById('eTotalMarks').value) || null,
+    positive_marking: parseFloat(document.getElementById('ePositive').value) || null,
+    negative_marking: parseFloat(document.getElementById('eNegative').value) || null,
+    test_open_time: openTime || null,
+    test_end_time: endTime || null,
+  }).eq('id', editingId);
+
+  saveBtn.disabled = false;
+  saveBtn.textContent = '💾 Save Changes';
+
+  if (error) { alert('Error: ' + error.message); return; }
+
+  document.getElementById('editSuccessMsg').classList.add('show');
+  setTimeout(() => { closeEditModal(); loadAdminData(); }, 1200);
+}
+
+// ============ BULK UPLOAD ============
+
+let bulkData = [];
+
+// Drag & Drop
+const uploadZone = document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+});
+
+function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if (file) processFile(file);
+}
+
+function processFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+
+  if (ext === 'csv') {
+    reader.onload = e => parseCSV(e.target.result);
+    reader.readAsText(file);
+  } else if (ext === 'xlsx' || ext === 'xls') {
+    reader.onload = e => parseExcel(e.target.result);
+    reader.readAsArrayBuffer(file);
+  } else {
+    alert('❌ Sirf .csv, .xlsx, .xls files supported hain!');
+  }
+}
+
+function parseCSV(text) {
+  // Full CSV parser that handles multi-line quoted fields
+  const fields = parseCSVFull(text);
+  if (fields.length === 0) return;
+
+  const headers = fields[0].map(h => h.trim().toLowerCase());
+  const rows = [];
+  for (let i = 1; i < fields.length; i++) {
+    if (fields[i].every(v => !v.trim())) continue;
+    const obj = {};
+    headers.forEach((h, idx) => obj[h] = (fields[i][idx] || '').trim());
+    rows.push(obj);
+  }
+  showPreview(rows);
+}
+
+function parseCSVFull(text) {
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+  let i = 0;
+
+  while (i < text.length) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i+1] === '"') { field += '"'; i += 2; continue; } // escaped quote
+        else { inQuotes = false; i++; continue; }
+      }
+      field += ch; i++;
+    } else {
+      if (ch === '"') { inQuotes = true; i++; }
+      else if (ch === ',') { row.push(field); field = ''; i++; }
+      else if (ch === '\r' && text[i+1] === '\n') { row.push(field); rows.push(row); row = []; field = ''; i += 2; }
+      else if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; }
+      else { field += ch; i++; }
+    }
+  }
+  if (field || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+function parseExcel(buffer) {
+  const wb = XLSX.read(buffer, { type: 'array' });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+  // Normalize keys to lowercase
+  const normalized = rows.map(r => {
+    const obj = {};
+    Object.keys(r).forEach(k => obj[k.trim().toLowerCase()] = String(r[k]).trim());
+    return obj;
+  });
+  showPreview(normalized);
+}
+
+function validateRow(row) {
+  const errors = [];
+  if (!row.question_text) errors.push('Question missing');
+  if (!row.option_a) errors.push('Option A missing');
+  if (!row.option_b) errors.push('Option B missing');
+  if (!row.option_c) errors.push('Option C missing');
+  if (!row.option_d) errors.push('Option D missing');
+  if (!['A','B','C','D'].includes((row.correct_answer||'').toUpperCase())) errors.push('Correct answer A/B/C/D hona chahiye');
+  return errors;
+}
+
+function showPreview(rows) {
+  bulkData = rows;
+  const tbody = document.getElementById('previewBody');
+  let validCount = 0, errorCount = 0;
+
+  tbody.innerHTML = rows.map((row, idx) => {
+    const errors = validateRow(row);
+    const isValid = errors.length === 0;
+    if (isValid) validCount++; else errorCount++;
+
+    return `<tr class="${isValid ? 'row-valid' : 'row-error'}">
+      <td>${idx + 1}</td>
+      <td style="max-width:200px;word-break:break-word;">${escHtml((row.question_text||'').substring(0,80))}${(row.question_text||'').length>80?'…':''}</td>
+      <td style="font-size:0.75rem;color:var(--text-muted);">
+        A: ${escHtml(row.option_a||'—')}<br>
+        B: ${escHtml(row.option_b||'—')}<br>
+        C: ${escHtml(row.option_c||'—')}<br>
+        D: ${escHtml(row.option_d||'—')}
+      </td>
+      <td><strong style="color:var(--green)">${(row.correct_answer||'').toUpperCase()}</strong></td>
+      <td style="font-size:0.75rem">${row.subject||'—'}</td>
+      <td style="font-size:0.75rem">${row.difficulty||'—'}</td>
+      <td style="font-size:0.75rem;color:var(--text-muted);max-width:160px;word-break:break-word;">${row.explanation ? escHtml(row.explanation.substring(0,80)) + (row.explanation.length>80?'…':'') : '<span style="opacity:0.4">—</span>'}</td>
+      <td>${isValid
+        ? '<span style="color:var(--green);font-size:0.75rem;font-weight:700;">✅ Valid</span>'
+        : `<span style="color:var(--red);font-size:0.72rem;font-weight:700;">❌ ${errors.join(', ')}</span>`
+      }</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('bsTotal').textContent = rows.length;
+  document.getElementById('bsValid').textContent = validCount;
+  document.getElementById('bsError').textContent = errorCount;
+  document.getElementById('bulkPreview').style.display = 'block';
+}
+
+async function startBulkUpload() {
+  const validRows = bulkData.filter(r => validateRow(r).length === 0);
+  if (validRows.length === 0) { alert('Koi valid row nahi hai!'); return; }
+
+  const btn = document.getElementById('bulkUploadBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Uploading...';
+
+  const progressWrap = document.getElementById('progressWrap');
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  progressWrap.style.display = 'block';
+
+  let uploaded = 0, failed = 0;
+  const BATCH = 100; // 100 rows at a time
+
+  for (let i = 0; i < validRows.length; i += BATCH) {
+    const batch = validRows.slice(i, i + BATCH).map(row => ({
+      question_text: row.question_text,
+      option_a: row.option_a,
+      option_b: row.option_b,
+      option_c: row.option_c,
+      option_d: row.option_d,
+      correct_answer: (row.correct_answer||'').toUpperCase(),
+      explanation: row.explanation || null,
+      subject: row.subject || 'maths',
+      exam_type: row.exam_type || 'all',
+      difficulty: row.difficulty || 'medium',
+      language: row.language || 'both',
+      positive_marking: parseFloat(row.positive_marking) || null,
+      negative_marking: parseFloat(row.negative_marking) || null,
+      test_duration: parseInt(row.test_duration) || null,
+      total_marks: parseInt(row.total_marks) || null,
+      test_open_time: row.test_open_time || null,
+      test_end_time: row.test_end_time || null,
+    }));
+
+    const { error } = await sb.from('quizzes').insert(batch);
+    if (error) {
+      failed += batch.length;
+      progressText.textContent = `❌ Error: ${error.message}`;
+      alert('❌ Supabase Error:\n' + error.message + '\n\nDetails: ' + (error.details || 'none') + '\nHint: ' + (error.hint || 'none'));
+      break; // stop further batches
+    }
+    else { uploaded += batch.length; }
+
+    const pct = Math.round(((i + batch.length) / validRows.length) * 100);
+    progressFill.style.width = pct + '%';
+    progressText.textContent = `Uploading... ${Math.min(i + BATCH, validRows.length)}/${validRows.length} done`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🚀 Upload All Valid Questions';
+  progressText.textContent = `✅ Done! ${uploaded} uploaded, ${failed} failed.`;
+
+  if (uploaded > 0) {
+    loadAdminData();
+    setTimeout(() => {
+      alert(`🎉 ${uploaded} questions successfully upload ho gaye!${failed > 0 ? `\n⚠️ ${failed} fail hue.` : ''}`);
+    }, 300);
+  }
+}
+
+function clearBulkUpload() {
+  bulkData = [];
+  document.getElementById('bulkFile').value = '';
+  document.getElementById('bulkPreview').style.display = 'none';
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('progressText').textContent = '';
+}
+
+// ============ TEMPLATE DOWNLOAD ============
+function downloadCSVTemplate() {
+  const headers = ['question_text','option_a','option_b','option_c','option_d','correct_answer','subject','exam_type','difficulty','language','explanation','positive_marking','negative_marking','test_duration'];
+  const sample = [
+    '"2 + 2 = ?","1","2","4","8","C","maths","ssc_cgl","easy","both","Kyunki 2+2=4 hota hai","2","0.5","60"',
+    '"India ki capital kya hai?","Mumbai","Delhi","Kolkata","Chennai","B","ga","all","easy","both","New Delhi India ki capital hai","1","0.25","",',
+  ];
+  const csv = headers.join(',') + '\n' + sample.join('\n');
+  downloadFile('ssc_hustlers_template.csv', csv, 'text/csv');
+}
+
+function downloadExcelTemplate() {
+  const headers = ['question_text','option_a','option_b','option_c','option_d','correct_answer','subject','exam_type','difficulty','language','explanation','positive_marking','negative_marking','test_duration'];
+  const sampleData = [
+    { question_text:'2 + 2 = ?', option_a:'1', option_b:'2', option_c:'4', option_d:'8', correct_answer:'C', subject:'maths', exam_type:'ssc_cgl', difficulty:'easy', language:'both', explanation:'2+2=4 hota hai', positive_marking:2, negative_marking:0.5, test_duration:60 },
+    { question_text:'India ki capital?', option_a:'Mumbai', option_b:'Delhi', option_c:'Kolkata', option_d:'Chennai', correct_answer:'B', subject:'ga', exam_type:'all', difficulty:'easy', language:'both', explanation:'New Delhi', positive_marking:1, negative_marking:0.25, test_duration:'' },
+  ];
+  const ws = XLSX.utils.json_to_sheet(sampleData, { header: headers });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Questions');
+  XLSX.writeFile(wb, 'ssc_hustlers_template.xlsx');
+}
+
+function downloadFile(name, content, type) {
+  const blob = new Blob([content], { type });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+}
+
+// ============ TABS ============
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'list') loadQuizList();
+}
+
+// ============ UTILS ============
+function escHtml(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Close modal on outside click
+document.getElementById('editModal').addEventListener('click', function(e) {
+  if (e.target === this) closeEditModal();
+});
+</script>
+</body>
+</html>
