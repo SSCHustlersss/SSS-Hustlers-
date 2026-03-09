@@ -25,7 +25,6 @@
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text); display:flex; min-height:100vh; transition:background 0.3s,color 0.3s; }
 
-/* SIDEBAR & MAIN LAYOUT */
 .sidebar { width:240px; background:#1a1a2e; min-height:100vh; position:fixed; left:0; top:0; z-index:50; display:flex; flex-direction:column; }
 .main { margin-left:240px; flex:1; padding:28px; }
 .sidebar-logo { padding:24px 20px; border-bottom:1px solid rgba(255,255,255,0.08); }
@@ -33,24 +32,19 @@ body { font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text)
 .nav-item { display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px; cursor:pointer; color:rgba(255,255,255,0.6); font-size:0.88rem; text-decoration:none; margin-bottom:4px; }
 .nav-item.active { background:rgba(230,57,70,0.15); color:var(--red); }
 
-/* FOLDER GRID & ITEMS */
-.folder-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
-.folder-item { background:var(--folder-item); border:2px solid var(--border); border-radius:14px; padding:20px; text-align:center; cursor:pointer; transition:0.2s; position:relative; }
-.folder-item:hover { border-color:var(--red); transform:translateY(-2px); }
-.folder-icon { font-size:2rem; margin-bottom:8px; }
-.folder-name { font-size:0.88rem; font-weight:700; color:var(--text); }
-.sub-folder-container { display:none; grid-column: 1 / -1; background:var(--bg3); padding:15px; border-radius:14px; border:1px dashed var(--border); margin-bottom:15px; }
-
-/* TEST ITEMS */
-.test-item { display:flex; align-items:center; justify-content:space-between; background:var(--bg2); border-radius:10px; padding:12px 16px; border:1px solid var(--border); margin-bottom:8px; cursor:pointer; }
-.test-item:hover { border-color:var(--red); }
-.test-name { font-size:0.85rem; font-weight:600; }
-
-/* BAKI KI STYLING (Stats, Leaderboard etc. remain same as your original) */
 .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:28px; }
 .stat-card { background:var(--card-bg); border-radius:14px; padding:22px 20px; border:1px solid var(--border); }
+.stat-val { font-size:1.8rem; font-weight:800; }
+.stat-label { font-size:0.78rem; color:var(--text2); }
+
+/* Folder Styles */
+.exam-box { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:28px; border-left:4px solid var(--red); }
+.folder-toggle { display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+.sub-folder { background:var(--bg3); border-radius:10px; padding:12px; margin-top:10px; display:none; }
+.test-link { display:flex; justify-content:space-between; padding:10px; background:var(--bg2); border:1px solid var(--border); border-radius:8px; margin-bottom:6px; cursor:pointer; font-size:0.85rem; }
+
 .tabs-header { display:flex; border-bottom:1px solid var(--border); margin-bottom:20px; }
-.tab-btn { flex:1; padding:14px; cursor:pointer; background:none; border:none; color:var(--text2); font-weight:600; }
+.tab-btn { flex:1; padding:14px; cursor:pointer; background:none; border:none; color:var(--text2); font-weight:600; font-family:inherit; }
 .tab-btn.active { color:var(--red); border-bottom:2px solid var(--red); }
 .tab-content { display:none; }
 .tab-content.active { display:block; }
@@ -58,13 +52,11 @@ body { font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text)
 </head>
 <body>
 
-<div class="sidebar" id="sidebar">
+<div class="sidebar">
   <div class="sidebar-logo"><h2>SSC <span>HUSTLERS</span></h2></div>
   <nav class="sidebar-nav" style="padding:16px 12px;">
-    <a class="nav-item active" onclick="showTab('overview')">🏠 Dashboard</a>
+    <a class="nav-item active">🏠 Dashboard</a>
     <a class="nav-item" href="quizzes.html">📝 Quizzes</a>
-    <a class="nav-item" onclick="showTab('folders')">📁 Study Material</a>
-    <a class="nav-item" onclick="showTab('leaderboard')">🏆 Leaderboard</a>
   </nav>
 </div>
 
@@ -80,53 +72,49 @@ body { font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text)
     <div class="stat-card"><div>🏆</div><div class="stat-val" id="myRank">#-</div><div class="stat-label">Rank</div></div>
   </div>
 
+  <div class="exam-box">
+    <div class="folder-toggle" onclick="toggleFolder('ntpc-tree')">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span id="ntpc-tree-icon" style="font-size:1.5rem;">📁</span>
+        <span style="font-weight:700;">RRB NTPC 2026 (Exam Material)</span>
+      </div>
+      <span>▼</span>
+    </div>
+
+    <div id="ntpc-tree" class="sub-folder">
+      <div class="folder-toggle" onclick="toggleFolder('ca-tree')" style="background:var(--bg2); padding:10px; border-radius:8px; margin-bottom:8px;">
+        <div style="display:flex; align-items:center; gap:10px; font-size:0.9rem;">
+          <span id="ca-tree-icon">📁</span> Current Affairs (2025-26)
+        </div>
+      </div>
+      <div id="ca-tree" style="display:none; padding-left:15px; margin-bottom:10px;">
+        <div class="test-link" onclick="window.location.href='quizzes.html?cat=CA_Weekly'">🔥 Weekly Mock <span>➔</span></div>
+        <div class="test-link" onclick="window.location.href='quizzes.html?cat=CA_Sports'">🏆 Sports & Awards <span>➔</span></div>
+      </div>
+
+      <div class="test-link" onclick="window.location.href='quizzes.html?cat=Maths'">🔢 Mathematics <span>➔</span></div>
+      <div class="test-link" onclick="window.location.href='quizzes.html?cat=Reasoning'">🧠 Reasoning <span>➔</span></div>
+    </div>
+  </div>
+
   <div class="tabs-container">
     <div class="tabs-header">
-      <button class="tab-btn active" id="tab-overview" onclick="showTab('overview')">📈 Overview</button>
-      <button class="tab-btn" id="tab-folders" onclick="showTab('folders')">📁 Material</button>
-      <button class="tab-btn" id="tab-leaderboard" onclick="showTab('leaderboard')">🏆 Leaderboard</button>
+      <button class="tab-btn active" onclick="showTab('overview')">📈 Overview</button>
+      <button class="tab-btn" onclick="showTab('leaderboard')">🏆 Leaderboard</button>
     </div>
 
     <div class="tab-content active" id="content-overview">
-      <h3>Performance Tracking...</h3>
-    </div>
-
-    <div class="tab-content" id="content-folders">
-      <div class="folder-grid">
-        
-        <div class="folder-item" onclick="toggleFolder('ntpc-tree')" style="border-color:var(--red);">
-          <div class="folder-icon" id="ntpc-tree-icon">📁</div>
-          <div class="folder-name">RRB NTPC 2026</div>
-          <div class="folder-count">Full Exam Access</div>
-        </div>
-
-        <div id="ntpc-tree" class="sub-folder-container">
-          <div class="folder-item" onclick="toggleFolder('ca-tree')" style="background:var(--bg2); margin-bottom:10px;">
-            <div class="folder-icon" id="ca-tree-icon">📁</div>
-            <div class="folder-name">Current Affairs</div>
-          </div>
-          <div id="ca-tree" style="display:none; padding-left:20px; margin-bottom:15px;">
-            <div class="test-item" onclick="window.location.href='quizzes.html?cat=CA_Weekly'">🔥 Weekly Special Mock</div>
-            <div class="test-item" onclick="window.location.href='quizzes.html?cat=CA_Sports'">🏆 Sports & Awards</div>
-          </div>
-          <div class="test-item" onclick="window.location.href='quizzes.html?cat=Maths'">🔢 Mathematics</div>
-          <div class="test-item" onclick="window.location.href='quizzes.html?cat=Reasoning'">🧠 Reasoning</div>
-        </div>
-
-        <div class="folder-item" onclick="alert('Coming Soon')">
-          <div class="folder-icon">🗂️</div><div class="folder-name">PYQ Bank</div>
-        </div>
-      </div>
+      <h3 style="font-size:1rem; margin-bottom:15px;">Subject-wise Performance</h3>
+      <p style="color:var(--text2); font-size:0.85rem;">Tests attempt karte hi yahan chart dikhega.</p>
     </div>
 
     <div class="tab-content" id="content-leaderboard">
-      <div id="lbList"></div>
+      <div id="lbList">Loading leaderboard...</div>
     </div>
   </div>
 </div>
 
 <script>
-// Toggle Folders
 function toggleFolder(id) {
   const el = document.getElementById(id);
   const icon = document.getElementById(id + '-icon');
@@ -139,24 +127,17 @@ function toggleFolder(id) {
   }
 }
 
-// Tab Switching
 function showTab(tab) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
   document.getElementById('content-' + tab).classList.add('active');
-  document.getElementById('tab-' + tab).classList.add('active');
 }
 
-// Dark Mode
 function toggleDark() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
 }
 
-// SUPABASE INIT (Paste your original init and auth logic here)
-const SUPABASE_URL = 'https://wwfhoyxqlversdkdqcgd.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3ZmhveXhxbHZlcnNka2RxY2dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDAwMTMsImV4cCI6MjA4ODQ3NjAxM30.qaQp8LJXGxN6EfOoNPOgdhdNqY7M0nC2aR8fBSYejrw';
-// ... Add your loadStats, loadLeaderboard functions below
+// Baki Supabase wala logic yahan niche paste kar dena...
 </script>
 </body>
 </html>
