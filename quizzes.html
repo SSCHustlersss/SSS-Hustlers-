@@ -223,7 +223,7 @@ nav { background:#1a1a2e; padding:0 5%; height:64px; display:flex; align-items:c
         <div class="r-stat r-skip"><div class="r-stat-val" id="rSkip">0</div><div class="r-stat-label">Skipped</div></div>
       </div>
       <div>
-        <button class="btn-retry" onclick="retryQuiz()">🔁 Retry</button>
+        <button class="btn-retry" id="reattemptBtn" onclick="reattemptOnce()">🔁 Reattempt</button>
         <button class="btn-done" onclick="exitQuiz()">✅ Done</button>
       </div>
     </div>
@@ -248,6 +248,8 @@ const EXAM_LABELS = { ssc_cgl:'SSC CGL', ssc_chsl:'SSC CHSL', ssc_mts:'SSC MTS',
 let currentExam = 'ssc_cgl', currentSubject = null, currentUser = null;
 let questions = [], currentQ = 0, answers = {}, timerInterval = null;
 let timeLeft = 0, posMarking = 1, negMarking = 0, activeTestName = '';
+let lockedAnswers = new Set(); // questions where answer is revealed
+let pendingAnswer = null;      // selected but not yet revealed
 
 // ============ INIT ============
 async function init() {
@@ -378,7 +380,7 @@ async function startQuiz(testName) {
 
   if (error || !data || data.length === 0) { alert('⚠️ Questions load nahi hue!'); return; }
 
-  questions = data; currentQ = 0; answers = {};
+  questions = data; currentQ = 0; answers = {}; lockedAnswers = new Set(); pendingAnswer = null;
   posMarking = questions[0].positive_marking || 1;
   negMarking = questions[0].negative_marking || 0;
   timeLeft = (questions[0].test_duration || 30) * 60;
@@ -398,33 +400,65 @@ async function startQuiz(testName) {
 // ============ QUESTION ============
 function showQuestion(idx) {
   currentQ = idx;
+  pendingAnswer = answers[idx] || null; // restore pending if already selected
   const q = questions[idx], total = questions.length;
   document.getElementById('qNumber').textContent = `Question ${idx+1} of ${total}`;
   document.getElementById('qText').textContent = q.question_text;
   document.getElementById('quizProgressText').textContent = `${idx+1}/${total}`;
   document.getElementById('quizProgressFill').style.width = ((idx+1)/total*100) + '%';
-  const selected = answers[idx], answered = selected !== undefined;
+
+  const isLocked = lockedAnswers.has(idx); // answer revealed
+  const selected  = answers[idx];
+
   document.getElementById('optionsList').innerHTML = [
     {k:'A',v:q.option_a},{k:'B',v:q.option_b},{k:'C',v:q.option_c},{k:'D',v:q.option_d}
   ].map(o => {
     let cls = 'option-btn';
-    if (answered) { if (o.k === q.correct_answer) cls += ' correct'; else if (o.k === selected) cls += ' wrong'; }
-    else if (o.k === selected) cls += ' selected';
-    return `<button class="${cls}" onclick="selectOption('${o.k}')" ${answered?'disabled':''}>
+    if (isLocked) {
+      // reveal correct/wrong
+      if (o.k === q.correct_answer) cls += ' correct';
+      else if (o.k === selected) cls += ' wrong';
+    } else if (o.k === selected) {
+      cls += ' selected'; // just highlight, no reveal
+    }
+    return `<button class="${cls}" onclick="selectOption('${o.k}')" ${isLocked?'disabled':''}>
       <span class="option-label">${o.k}</span><span>${o.v||''}</span></button>`;
   }).join('');
+
   const expBox = document.getElementById('explanationBox');
-  if (answered && q.explanation) { document.getElementById('explanationText').textContent = q.explanation; expBox.classList.add('show'); }
+  if (isLocked && q.explanation) { document.getElementById('explanationText').textContent = q.explanation; expBox.classList.add('show'); }
   else expBox.classList.remove('show');
+
   document.getElementById('btnPrev').style.display   = idx===0 ? 'none':'inline-block';
   document.getElementById('btnNext').style.display   = idx===total-1 ? 'none':'inline-block';
   document.getElementById('btnSubmit').style.display = idx===total-1 ? 'inline-block':'none';
   renderQNavDots();
 }
 
-function selectOption(opt) { if (answers[currentQ]!==undefined) return; answers[currentQ]=opt; showQuestion(currentQ); }
-function prevQ() { if (currentQ>0) showQuestion(currentQ-1); }
-function nextQ() { if (currentQ<questions.length-1) showQuestion(currentQ+1); }
+function selectOption(opt) {
+  if (lockedAnswers.has(currentQ)) return; // already locked (revealed)
+  pendingAnswer = opt;
+  // Just highlight selected, don't reveal correct yet
+  document.querySelectorAll('.option-btn').forEach(b => {
+    b.classList.remove('selected');
+    const lbl = b.querySelector('.option-label');
+    if (lbl && lbl.textContent === opt) b.classList.add('selected');
+  });
+}
+function lockAndMove(newIdx) {
+  // Save pending answer and lock (reveal) current question
+  if (pendingAnswer !== null) {
+    answers[currentQ] = pendingAnswer;
+    lockedAnswers.add(currentQ);
+    // show reveal briefly before moving
+    showQuestion(currentQ); // re-render with locked state
+    setTimeout(() => showQuestion(newIdx), 600);
+  } else {
+    showQuestion(newIdx);
+  }
+}
+function prevQ() { if (currentQ>0) lockAndMove(currentQ-1); }
+function nextQ() { if (currentQ<questions.length-1) lockAndMove(currentQ+1); }
 function renderQNavDots() {
   document.getElementById('qNavDots').innerHTML = questions.map((q,i) => {
     let cls = 'q-dot' + (answers[i]!==undefined?' answered':'') + (i===currentQ?' current':'');
@@ -446,6 +480,8 @@ function updateTimerDisplay() {
 // ============ SUBMIT ============
 async function submitQuiz() {
   clearInterval(timerInterval);
+  // Lock current pending answer before submit
+  if (pendingAnswer !== null) { answers[currentQ] = pendingAnswer; lockedAnswers.add(currentQ); }
   let correct=0,wrong=0,skip=0,score=0;
   questions.forEach((q,i)=>{const a=answers[i];if(!a)skip++;else if(a===q.correct_answer){correct++;score+=posMarking;}else{wrong++;score-=negMarking;}});
   const totalMarks = questions[0].total_marks || (questions.length*posMarking);
@@ -467,8 +503,15 @@ async function submitQuiz() {
   } catch(e){}
 }
 
-function retryQuiz() {
-  answers={}; currentQ=0; timeLeft=(questions[0].test_duration||30)*60;
+function reattemptOnce() {
+  const btn = document.getElementById('reattemptBtn');
+  btn.disabled = true;
+  btn.textContent = '✅ Reattempt Done';
+  btn.style.opacity = '0.5';
+  btn.style.cursor = 'not-allowed';
+
+  answers={}; lockedAnswers=new Set(); pendingAnswer=null; currentQ=0;
+  timeLeft=(questions[0].test_duration||30)*60;
   document.getElementById('resultScreen').classList.remove('show');
   document.getElementById('quizBody').style.display='block';
   document.getElementById('quizFooter').style.display='flex';
