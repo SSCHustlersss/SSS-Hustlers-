@@ -146,8 +146,106 @@ nav { background:#1a1a2e; padding:0 5%; height:64px; display:flex; align-items:c
   .q-nav-dots { padding:10px 14px 4px; }
 }
 
-/* ANALYSIS */
-.btn-analysis { padding:11px 24px; border-radius:10px; font-size:0.88rem; font-weight:700; cursor:pointer; font-family:inherit; border:none; margin:5px; background:#4285f4; color:#fff; }
+/* THEME TOGGLE BUTTON */
+.btn-theme-toggle {
+  background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2);
+  padding:7px 12px; border-radius:8px; font-size:1rem; cursor:pointer;
+  font-family:inherit; transition:all 0.2s;
+}
+.btn-theme-toggle:hover { background:rgba(255,255,255,0.2); }
+
+/* ====== DARK MODE ====== */
+body.dark { background:#0d0f14; color:#e8eaf0; }
+body.dark nav { background:#0a0c10; border-bottom:1px solid rgba(255,255,255,0.06); }
+body.dark .page-header h1 { color:#e8eaf0; }
+body.dark .page-header p { color:#6b7280; }
+body.dark .exam-tab { background:#1a1e28; border-color:#2a2e3a; color:#9ca3af; }
+body.dark .exam-tab:hover { border-color:#e63946; color:#e63946; }
+body.dark .exam-tab.active { background:#e63946; color:#fff; border-color:#e63946; }
+body.dark .subject-card { background:#1a1e28; border-color:#2a2e3a; }
+body.dark .subject-card:hover { border-color:var(--clr); }
+body.dark .sc-name { color:#e8eaf0; }
+body.dark .test-card { background:#1a1e28; border-color:#2a2e3a; }
+body.dark .test-card:hover { border-color:#e63946; }
+body.dark .test-name { color:#e8eaf0; }
+body.dark .ttag { background:#252932; color:#9ca3af; }
+body.dark .ttag.red { background:rgba(230,57,70,0.15); color:#e63946; }
+body.dark .ttag.green { background:rgba(0,200,83,0.1); color:#00c853; }
+body.dark .ttag.blue { background:rgba(66,133,244,0.1); color:#4285f4; }
+body.dark .empty-box { background:#1a1e28; border-color:#2a2e3a; }
+body.dark .view-title { color:#e8eaf0; }
+body.dark .bc-current { color:#9ca3af; }
+body.dark .bc-btn { background:rgba(230,57,70,0.1); color:#e63946; border-color:rgba(230,57,70,0.2); }
+
+/* Dark Mode - Quiz Modal */
+body.dark .quiz-modal { background:#13161e; }
+body.dark .quiz-header { background:#0a0c10; }
+body.dark .quiz-progress-bar { background:#1a1e28; }
+body.dark .q-nav-dots { background:#13161e; }
+body.dark .q-dot { background:#1a1e28; border-color:#2a2e3a; color:#9ca3af; }
+body.dark .q-dot.answered { background:#e63946; border-color:#e63946; color:#fff; }
+body.dark .q-dot.current { border-color:#e8eaf0; }
+body.dark .quiz-body { background:#13161e; }
+body.dark .q-number { color:#e63946; }
+body.dark .q-text { color:#e8eaf0; }
+body.dark .option-btn { background:#1a1e28; border-color:#2a2e3a; color:#e8eaf0; }
+body.dark .option-btn:hover:not(:disabled) { border-color:#e63946; background:rgba(230,57,70,0.08); }
+body.dark .option-label { background:#252932; color:#9ca3af; }
+body.dark .option-btn.selected { border-color:#e63946; background:rgba(230,57,70,0.08); }
+body.dark .option-btn.selected .option-label { background:#e63946; color:#fff; }
+body.dark .option-btn.correct { border-color:#00c853; background:rgba(0,200,83,0.08); }
+body.dark .option-btn.correct .option-label { background:#00c853; color:#fff; }
+body.dark .option-btn.wrong { border-color:#e63946; background:rgba(230,57,70,0.08); }
+body.dark .explanation-box { background:rgba(0,200,83,0.08); border-color:rgba(0,200,83,0.2); color:#e8eaf0; }
+body.dark .quiz-footer { background:#13161e; border-top-color:#2a2e3a; }
+body.dark .marking-info-row { color:#9ca3af; }
+body.dark .btn-prev { background:#1a1e28; color:#9ca3af; border-color:#2a2e3a; }
+body.dark .btn-prev:hover { color:#e8eaf0; }
+
+/* Dark Mode - Result Screen */
+body.dark .result-screen { background:#13161e; }
+body.dark .result-title { color:#e8eaf0; }
+body.dark .result-sub { color:#9ca3af; }
+body.dark .r-stat { background:#1a1e28; }
+body.dark .r-stat-label { color:#9ca3af; }
+
+/* Dark Mode - Saved Panel */
+body.dark .saved-panel { background:rgba(230,100,0,0.08); border-color:rgba(230,100,0,0.2); }
+body.dark .saved-panel-title { color:#ffb347; }
+
+/* Dark Mode - Analysis */
+body.dark .analysis-box { background:#13161e; }
+body.dark .analysis-body { background:#13161e; }
+body.dark .analysis-q { background:#1a1e28; border-color:#2a2e3a; color:#e8eaf0; }
+body.dark .analysis-q.aq-correct { border-color:rgba(0,200,83,0.3); background:rgba(0,200,83,0.06); }
+body.dark .analysis-q.aq-wrong { border-color:rgba(230,57,70,0.3); background:rgba(230,57,70,0.06); }
+body.dark .aq-question { color:#e8eaf0; }
+body.dark .aq-opt { background:#252932; border-color:#2a2e3a; color:#e8eaf0; }
+body.dark .aq-opt.opt-correct { border-color:#00c853; background:rgba(0,200,83,0.1); color:#00c853; }
+body.dark .aq-opt.opt-wrong { border-color:#e63946; background:rgba(230,57,70,0.1); color:#e63946; }
+body.dark .aq-explanation { background:#1a1e28; border-color:rgba(0,200,83,0.2); color:#e8eaf0; }
+body.dark .as-card { }
+body.dark .as-card.correct { background:rgba(0,200,83,0.08); border-color:rgba(0,200,83,0.2); }
+body.dark .as-card.wrong { background:rgba(230,57,70,0.08); border-color:rgba(230,57,70,0.2); }
+body.dark .as-card.skip { background:#1a1e28; border-color:#2a2e3a; }
+body.dark .as-card-label { color:#9ca3af; } padding:11px 24px; border-radius:10px; font-size:0.88rem; font-weight:700; cursor:pointer; font-family:inherit; border:none; margin:5px; background:#4285f4; color:#fff; }
+
+/* BOOKMARK / SAVE */
+.btn-bookmark { background:transparent; border:none; cursor:pointer; font-size:1.2rem; padding:4px 8px; border-radius:8px; transition:all 0.15s; color:#ccc; flex-shrink:0; }
+.btn-bookmark:hover { background:#fff5f5; color:#e63946; }
+.btn-bookmark.saved { color:#e63946; }
+
+/* SHARE RESULT */
+.btn-share { padding:11px 24px; border-radius:10px; font-size:0.88rem; font-weight:700; cursor:pointer; font-family:inherit; border:none; margin:5px; background:#25d366; color:#fff; }
+.btn-share:hover { background:#1da851; }
+
+/* SAVED QUESTIONS PANEL */
+.saved-panel { background:#fff8f0; border:2px solid #ffe0b2; border-radius:12px; padding:12px 16px; margin:10px 20px 0; display:none; }
+.saved-panel.show { display:block; }
+.saved-panel-title { font-size:0.78rem; font-weight:800; color:#e65100; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; }
+.saved-q-list { display:flex; gap:6px; flex-wrap:wrap; }
+.saved-q-chip { padding:4px 12px; border-radius:50px; font-size:0.75rem; font-weight:700; background:#e65100; color:#fff; cursor:pointer; transition:all 0.15s; }
+.saved-q-chip:hover { background:#bf360c; }
 .analysis-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:300; overflow-y:auto; padding:20px; }
 .analysis-overlay.show { display:block; }
 .analysis-box { background:#fff; border-radius:20px; width:100%; max-width:720px; margin:0 auto; overflow:hidden; animation:popIn 0.3s ease; }
@@ -193,6 +291,7 @@ nav { background:#1a1a2e; padding:0 5%; height:64px; display:flex; align-items:c
   <a class="logo" href="dashboard.html">SSC <span>HUSTLERS</span></a>
   <div class="nav-right">
     <span class="user-name-nav" id="userNameNav">...</span>
+    <button class="btn-theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Dark/Light Mode">🌙</button>
     <a class="btn-back-nav" href="dashboard.html">← Dashboard</a>
   </div>
 </nav>
@@ -250,10 +349,19 @@ nav { background:#1a1a2e; padding:0 5%; height:64px; display:flex; align-items:c
     <div class="quiz-footer" id="quizFooter">
       <div class="marking-info-row">✅ <span id="mPos">+1</span> &nbsp;❌ <span id="mNeg">-0</span></div>
       <div class="quiz-nav">
+        <button class="btn-bookmark" id="btnBookmark" onclick="toggleBookmark()" title="Save this question">🔖</button>
         <button class="btn-prev" id="btnPrev" onclick="prevQ()">← Prev</button>
         <button class="btn-next" id="btnNext" onclick="nextQ()">Next →</button>
         <button class="btn-submit" id="btnSubmit" onclick="submitQuiz()" style="display:none;">✅ Submit</button>
       </div>
+    </div>
+    <!-- SAVED QUESTIONS PANEL -->
+    <div class="saved-panel" id="savedPanel">
+      <div class="saved-panel-title">
+        🔖 Saved Questions <span id="savedCount">0</span>
+        <span onclick="document.getElementById('savedPanel').classList.remove('show')" style="cursor:pointer;font-size:0.75rem;color:#aaa;">✕ Hide</span>
+      </div>
+      <div class="saved-q-list" id="savedQList"></div>
     </div>
     <div class="result-screen" id="resultScreen">
       <div class="result-icon" id="resultIcon">🎉</div>
@@ -268,6 +376,7 @@ nav { background:#1a1a2e; padding:0 5%; height:64px; display:flex; align-items:c
       <div>
         <button class="btn-retry" id="reattemptBtn" onclick="reattemptOnce()">🔁 Reattempt</button>
         <button class="btn-analysis" onclick="showAnalysis()">📊 Analysis</button>
+        <button class="btn-share" onclick="shareResult()">📤 Share</button>
         <button class="btn-done" onclick="exitQuiz()">✅ Done</button>
       </div>
     </div>
@@ -425,6 +534,7 @@ async function startQuiz(testName) {
   if (error || !data || data.length === 0) { alert('⚠️ Questions load nahi hue!'); return; }
 
   questions = data; currentQ = 0; answers = {}; lockedAnswers = new Set(); pendingAnswer = null;
+  savedQuestions = new Set(); // reset saved questions for new test
   posMarking = questions[0].positive_marking || 1;
   negMarking = questions[0].negative_marking || 0;
   timeLeft = (questions[0].test_duration || 30) * 60;
@@ -468,6 +578,7 @@ function showQuestion(idx) {
   document.getElementById('btnPrev').style.display   = idx===0 ? 'none':'inline-block';
   document.getElementById('btnNext').style.display   = idx===total-1 ? 'none':'inline-block';
   document.getElementById('btnSubmit').style.display = idx===total-1 ? 'inline-block':'none';
+  updateBookmarkBtn();
   renderQNavDots();
 }
 
@@ -554,6 +665,96 @@ function exitQuiz() {
 
 function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;'); }
 
+// ============ BOOKMARK / SAVE QUESTIONS ============
+let savedQuestions = new Set();
+
+function toggleBookmark() {
+  const btn = document.getElementById('btnBookmark');
+  if (savedQuestions.has(currentQ)) {
+    savedQuestions.delete(currentQ);
+    btn.classList.remove('saved');
+    btn.textContent = '🔖';
+    btn.title = 'Save this question';
+  } else {
+    savedQuestions.add(currentQ);
+    btn.classList.add('saved');
+    btn.textContent = '🔖';
+    btn.style.color = '#e63946';
+    btn.title = 'Saved! Click to unsave';
+    // Show saved panel
+    document.getElementById('savedPanel').classList.add('show');
+  }
+  updateSavedPanel();
+}
+
+function updateSavedPanel() {
+  const list = Array.from(savedQuestions).sort((a,b) => a-b);
+  document.getElementById('savedCount').textContent = list.length;
+  document.getElementById('savedQList').innerHTML = list.map(i =>
+    `<span class="saved-q-chip" onclick="showQuestion(${i})">Q${i+1}</span>`
+  ).join('');
+  if (list.length === 0) document.getElementById('savedPanel').classList.remove('show');
+}
+
+function updateBookmarkBtn() {
+  const btn = document.getElementById('btnBookmark');
+  if (savedQuestions.has(currentQ)) {
+    btn.classList.add('saved');
+    btn.style.color = '#e63946';
+    btn.title = 'Saved! Click to unsave';
+  } else {
+    btn.classList.remove('saved');
+    btn.style.color = '';
+    btn.title = 'Save this question';
+  }
+}
+
+// ============ SHARE RESULT ============
+function shareResult() {
+  const score = document.getElementById('resultScore').textContent;
+  const sub   = document.getElementById('resultSub').textContent;
+  const correct = document.getElementById('rCorrect').textContent;
+  const wrong   = document.getElementById('rWrong').textContent;
+  const skip    = document.getElementById('rSkip').textContent;
+  const testName = activeTestName;
+
+  const msg = `🎯 *SSC Hustlers — Test Result*\n\n📝 Test: ${testName}\n🏆 Score: ${score} ${sub}\n\n✅ Correct: ${correct}\n❌ Wrong: ${wrong}\n⏭ Skipped: ${skip}\n\n🔗 Practice karo: ${window.location.origin}`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'SSC Hustlers Result', text: msg })
+      .catch(() => copyToClipboard(msg));
+  } else {
+    copyToClipboard(msg);
+  }
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    alert('✅ Result copied! WhatsApp ya kahi bhi paste karo.');
+  }).catch(() => {
+    const wa = 'https://wa.me/?text=' + encodeURIComponent(text);
+    window.open(wa, '_blank');
+  });
+}
+
+// ============ NIGHT / DAY MODE ============
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark');
+  const btn = document.getElementById('themeToggle');
+  btn.textContent = isDark ? '☀️' : '🌙';
+  btn.title = isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+  localStorage.setItem('ssc_theme', isDark ? 'dark' : 'light');
+}
+
+function loadTheme() {
+  const saved = localStorage.getItem('ssc_theme');
+  if (saved === 'dark') {
+    document.body.classList.add('dark');
+    const btn = document.getElementById('themeToggle');
+    if (btn) { btn.textContent = '☀️'; btn.title = 'Switch to Light Mode'; }
+  }
+}
+
 
 // ============ ANALYSIS ============
 function showAnalysis() {
@@ -613,6 +814,7 @@ function closeAnalysis() {
 }
 
 init();
+loadTheme();
 </script>
 
 <!-- ANALYSIS OVERLAY -->
