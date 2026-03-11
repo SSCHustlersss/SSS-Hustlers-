@@ -230,6 +230,32 @@ body.dark .as-card.wrong { background:rgba(230,57,70,0.08); border-color:rgba(23
 body.dark .as-card.skip { background:#1a1e28; border-color:#2a2e3a; }
 body.dark .as-card-label { color:#9ca3af; } padding:11px 24px; border-radius:10px; font-size:0.88rem; font-weight:700; cursor:pointer; font-family:inherit; border:none; margin:5px; background:#4285f4; color:#fff; }
 
+/* RANK PERCENTILE ROW */
+.rank-percentile-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:14px 0 10px; }
+.rp-card { background:#f5f6fa; border-radius:12px; padding:12px 8px; text-align:center; border:2px solid #e8e8e8; }
+.rp-val { font-size:1.3rem; font-weight:800; }
+.rp-label { font-size:0.68rem; color:#888; margin-top:3px; }
+.rp-rank { border-color:#ffb300; background:#fffbee; }
+.rp-total { border-color:#4285f4; background:#e8f0fe; }
+.rp-pct { border-color:#00c853; background:#f0fff4; }
+body.dark .rp-card { background:#1a1e28; border-color:#2a2e3a; }
+body.dark .rp-label { color:#9ca3af; }
+
+/* LEADERBOARD */
+.leaderboard-box { background:#f9f9f9; border-radius:14px; padding:14px 16px; margin:12px 0; border:2px solid #e8e8e8; text-align:left; }
+.lb-title { font-size:0.88rem; font-weight:800; margin-bottom:10px; color:#1a1a2e; }
+.lb-row { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; margin-bottom:6px; background:#fff; border:1.5px solid #f0f0f0; font-size:0.82rem; }
+.lb-row.lb-me { background:#fff5f5; border-color:#e63946; font-weight:700; }
+.lb-pos { font-size:1rem; width:28px; flex-shrink:0; text-align:center; }
+.lb-name { flex:1; font-weight:600; color:#1a1a2e; }
+.lb-score { font-weight:800; color:#e63946; }
+.lb-row.lb-me .lb-name { color:#e63946; }
+body.dark .leaderboard-box { background:#1a1e28; border-color:#2a2e3a; }
+body.dark .lb-title { color:#e8eaf0; }
+body.dark .lb-row { background:#252932; border-color:#2a2e3a; }
+body.dark .lb-row.lb-me { background:rgba(230,57,70,0.1); border-color:#e63946; }
+body.dark .lb-name { color:#e8eaf0; }
+
 /* BOOKMARK / SAVE */
 .btn-bookmark { background:transparent; border:none; cursor:pointer; font-size:1.2rem; padding:4px 8px; border-radius:8px; transition:all 0.15s; color:#ccc; flex-shrink:0; }
 .btn-bookmark:hover { background:#fff5f5; color:#e63946; }
@@ -368,10 +394,30 @@ body.dark .as-card-label { color:#9ca3af; } padding:11px 24px; border-radius:10p
       <div class="result-title" id="resultTitle">Test Complete!</div>
       <div class="result-score" id="resultScore">0</div>
       <div class="result-sub" id="resultSub">out of 0 marks</div>
+      <!-- RANK + PERCENTILE ROW -->
+      <div class="rank-percentile-row" id="rankPercentileRow" style="display:none;">
+        <div class="rp-card rp-rank">
+          <div class="rp-val" id="rpRank">--</div>
+          <div class="rp-label">🏆 Your Rank</div>
+        </div>
+        <div class="rp-card rp-total">
+          <div class="rp-val" id="rpTotal">--</div>
+          <div class="rp-label">👥 Total Students</div>
+        </div>
+        <div class="rp-card rp-pct">
+          <div class="rp-val" id="rpPercentile">--</div>
+          <div class="rp-label">📊 Percentile</div>
+        </div>
+      </div>
       <div class="result-stats">
         <div class="r-stat r-correct"><div class="r-stat-val" id="rCorrect">0</div><div class="r-stat-label">Correct</div></div>
         <div class="r-stat r-wrong"><div class="r-stat-val" id="rWrong">0</div><div class="r-stat-label">Wrong</div></div>
         <div class="r-stat r-skip"><div class="r-stat-val" id="rSkip">0</div><div class="r-stat-label">Skipped</div></div>
+      </div>
+      <!-- TOP 10 LEADERBOARD -->
+      <div class="leaderboard-box" id="leaderboardBox" style="display:none;">
+        <div class="lb-title">🥇 Top 10 Students</div>
+        <div id="lbList"></div>
       </div>
       <div>
         <button class="btn-retry" id="reattemptBtn" onclick="reattemptOnce()">🔁 Reattempt</button>
@@ -546,6 +592,7 @@ async function startQuiz(testName) {
   document.getElementById('quizBody').style.display = 'block';
   document.getElementById('quizFooter').style.display = 'flex';
   document.getElementById('qNavDots').style.display = 'flex';
+  await loadSavedForTest();
   renderQNavDots(); showQuestion(0); startTimer();
   document.getElementById('quizOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
@@ -641,6 +688,52 @@ async function submitQuiz() {
   document.getElementById('rSkip').textContent=skip;
   try {
     await sb.from('test_attempts').insert({ user_id:currentUser.id, test_name:activeTestName, score:parseFloat(score.toFixed(1)), total_marks:totalMarks, correct_answers:correct, wrong_answers:wrong, questions_attempted:questions.length-skip });
+    // ── RANK + PERCENTILE + LEADERBOARD ──
+    const finalScore = parseFloat(score.toFixed(1));
+
+    // Kitne log higher score pe hain
+    const { count: higherCount } = await sb.from('test_attempts')
+      .select('*', { count:'exact', head:true })
+      .eq('test_name', activeTestName)
+      .gt('score', finalScore);
+
+    // Total attempts
+    const { count: totalCount } = await sb.from('test_attempts')
+      .select('*', { count:'exact', head:true })
+      .eq('test_name', activeTestName);
+
+    const rank  = (higherCount || 0) + 1;
+    const total = totalCount || 1;
+    const percentile = Math.round(((total - rank) / total) * 100);
+
+    // Rank + Percentile row dikhao
+    document.getElementById('rankPercentileRow').style.display = 'grid';
+    document.getElementById('rpRank').textContent = `#${rank}`;
+    document.getElementById('rpRank').style.color = rank===1?'#ffb300':rank<=3?'#4285f4':'#e63946';
+    document.getElementById('rpTotal').textContent = total;
+    document.getElementById('rpPercentile').textContent = `${percentile}%`;
+    document.getElementById('rpPercentile').style.color = percentile>=90?'#00c853':percentile>=70?'#4285f4':'#e63946';
+
+    // Top 10 leaderboard
+    const { data: top10 } = await sb.from('test_attempts')
+      .select('score, user_id')
+      .eq('test_name', activeTestName)
+      .order('score', { ascending: false })
+      .limit(10);
+
+    if (top10 && top10.length > 0) {
+      const medals = ['🥇','🥈','🥉'];
+      const lbHtml = top10.map((row, i) => {
+        const isMe = row.user_id === currentUser.id;
+        return `<div class="lb-row${isMe?' lb-me':''}">
+          <span class="lb-pos">${medals[i]||'#'+(i+1)}</span>
+          <span class="lb-name">${isMe ? '⭐ You' : 'Student '+(i+1)}</span>
+          <span class="lb-score">${row.score} pts</span>
+        </div>`;
+      }).join('');
+      document.getElementById('lbList').innerHTML = lbHtml;
+      document.getElementById('leaderboardBox').style.display = 'block';
+    }
   } catch(e){}
 }
 
@@ -672,25 +765,84 @@ function exitQuiz() {
 
 function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;'); }
 
-// ============ BOOKMARK / SAVE QUESTIONS ============
-let savedQuestions = new Set();
+// ============ BOOKMARK / SAVE QUESTIONS — SUPABASE ============
+let savedQuestions = new Set();      // stores question index
+let savedQIds = {};                  // index -> supabase row id (for delete)
 
-function toggleBookmark() {
+async function toggleBookmark() {
   const btn = document.getElementById('btnBookmark');
+  const q = questions[currentQ];
+
   if (savedQuestions.has(currentQ)) {
+    // ── UNSAVE ──
     savedQuestions.delete(currentQ);
     btn.classList.remove('saved');
-    btn.textContent = '🔖';
+    btn.style.color = '';
     btn.title = 'Save this question';
+    updateSavedPanel();
+    // Supabase se delete
+    try {
+      const rowId = savedQIds[currentQ];
+      if (rowId) {
+        await sb.from('saved_questions').delete().eq('id', rowId);
+        delete savedQIds[currentQ];
+      } else {
+        await sb.from('saved_questions')
+          .delete()
+          .eq('user_id', currentUser.id)
+          .eq('question_id', q.id || String(currentQ));
+      }
+    } catch(e) { console.error('Unsave error:', e); }
+
   } else {
+    // ── SAVE ──
     savedQuestions.add(currentQ);
     btn.classList.add('saved');
-    btn.textContent = '🔖';
     btn.style.color = '#e63946';
     btn.title = 'Saved! Click to unsave';
-    // Show saved panel
     document.getElementById('savedPanel').classList.add('show');
+    updateSavedPanel();
+    // Supabase mein insert
+    try {
+      const { data, error } = await sb.from('saved_questions').insert({
+        user_id:       currentUser.id,
+        question_id:   q.id || String(currentQ),
+        question_text: q.question_text,
+        option_a:      q.option_a,
+        option_b:      q.option_b,
+        option_c:      q.option_c,
+        option_d:      q.option_d,
+        correct_answer:q.correct_answer,
+        explanation:   q.explanation || '',
+        subject:       currentSubject?.key || '',
+        exam_type:     currentExam,
+        test_name:     activeTestName
+      }).select('id').single();
+      if (data) savedQIds[currentQ] = data.id;
+    } catch(e) { console.error('Save error:', e); }
   }
+}
+
+// Quiz start hone pe pehle se saved questions fetch karo
+async function loadSavedForTest() {
+  savedQuestions = new Set();
+  savedQIds = {};
+  try {
+    const { data } = await sb.from('saved_questions')
+      .select('id, question_id')
+      .eq('user_id', currentUser.id)
+      .eq('test_name', activeTestName);
+    if (data) {
+      data.forEach(row => {
+        // question index dhundo
+        const idx = questions.findIndex(q => String(q.id) === String(row.question_id));
+        if (idx !== -1) {
+          savedQuestions.add(idx);
+          savedQIds[idx] = row.id;
+        }
+      });
+    }
+  } catch(e) { console.error('Load saved error:', e); }
   updateSavedPanel();
 }
 
