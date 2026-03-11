@@ -137,6 +137,7 @@ nav { background:#1a1a2e; padding:0 5%; height:64px; display:flex; align-items:c
 .r-wrong .r-stat-val   { color:#e63946; }
 .r-skip .r-stat-val    { color:#888; }
 .btn-retry,.btn-done { padding:11px 24px; border-radius:10px; font-size:0.88rem; font-weight:700; cursor:pointer; font-family:inherit; border:none; margin:5px; }
+.btn-analysis { padding:11px 24px; border-radius:10px; font-size:0.88rem; font-weight:700; cursor:pointer; font-family:inherit; border:none; margin:5px; background:#4285f4; color:#fff; }
 .btn-retry { background:#f5f5f5; color:#333; border:1px solid #e8e8e8; }
 .btn-done  { background:#e63946; color:#fff; }
 @media(max-width:600px) {
@@ -420,7 +421,7 @@ body.dark .lb-name { color:#e8eaf0; }
         <div id="lbList"></div>
       </div>
       <div>
-        <button class="btn-retry" id="reattemptBtn" onclick="reattemptOnce()">🔁 Reattempt</button>
+        <button class="btn-retry" id="reattemptBtn" onclick="reattemptOnce()" style="display:none;">🔁 Reattempt</button>
         <button class="btn-analysis" onclick="showAnalysis()">📊 Analysis</button>
         <button class="btn-share" onclick="shareResult()">📤 Share</button>
         <button class="btn-done" onclick="exitQuiz()">✅ Done</button>
@@ -523,9 +524,57 @@ async function openSubject(key, label, icon) {
   });
 
   const tests = Object.entries(testMap);
+
+  // Fetch all attempts for this user for these tests
+  const testNames = tests.map(([name]) => name);
+  let attemptsMap = {}; // testName -> [{score, correct_answers, wrong_answers, ...}]
+  try {
+    const { data: attData } = await sb.from('test_attempts')
+      .select('test_name, score, total_marks, correct_answers, wrong_answers, questions_attempted, created_at')
+      .eq('user_id', currentUser.id)
+      .in('test_name', testNames)
+      .order('created_at', { ascending: true });
+    if (attData) {
+      attData.forEach(row => {
+        if (!attemptsMap[row.test_name]) attemptsMap[row.test_name] = [];
+        attemptsMap[row.test_name].push(row);
+      });
+    }
+  } catch(e) {}
+
   document.getElementById('testList').innerHTML = '<div class="test-list">' +
-    tests.map(([name, info], i) => `
-      <div class="test-card" onclick="startQuiz('${esc(name)}')">
+    tests.map(([name, info], i) => {
+      const attempts = attemptsMap[name] || [];
+      const attemptCount = attempts.length;
+      const lastAttempt = attempts[attemptCount - 1];
+      const MAX_ATTEMPTS = 2;
+
+      let actionBtn = '';
+      let statusTag = '';
+
+      if (attemptCount === 0) {
+        // Never attempted
+        actionBtn = `<button class="btn-start-test" onclick="event.stopPropagation();startQuiz('${esc(name)}')">Start →</button>`;
+      } else {
+        // Has at least 1 attempt — show result/analysis/reattempt
+        const pct = lastAttempt.total_marks ? Math.round((lastAttempt.score / lastAttempt.total_marks) * 100) : 0;
+        statusTag = `<span class="ttag ${pct>=70?'green':pct>=40?'blue':'red'}">Last: ${lastAttempt.score} pts (${pct}%)</span>`;
+        if (attemptCount < MAX_ATTEMPTS) {
+          actionBtn = `<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+            <button class="btn-start-test" style="background:#4285f4" onclick="event.stopPropagation();viewResult('${esc(name)}')">📊 Result</button>
+            <button class="btn-start-test" style="background:#00c853;font-size:0.75rem;padding:6px 12px" onclick="event.stopPropagation();startQuiz('${esc(name)}')">🔁 Reattempt</button>
+          </div>`;
+        } else {
+          // Max attempts reached
+          actionBtn = `<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+            <button class="btn-start-test" style="background:#4285f4" onclick="event.stopPropagation();viewResult('${esc(name)}')">📊 Result</button>
+            <button class="btn-start-test" style="background:#aaa;cursor:not-allowed;font-size:0.75rem;padding:6px 12px" disabled>✅ Max Attempts</button>
+          </div>`;
+        }
+      }
+
+      return `
+      <div class="test-card">
         <div class="test-card-left">
           <div class="test-serial">Test ${i+1}</div>
           <div class="test-name">${esc(name)}</div>
@@ -534,10 +583,12 @@ async function openSubject(key, label, icon) {
             ${info.dur ? `<span class="ttag blue">⏱ ${info.dur} min</span>` : ''}
             ${info.pos ? `<span class="ttag green">+${info.pos}</span>` : ''}
             ${info.neg ? `<span class="ttag red">-${info.neg}</span>` : ''}
+            ${statusTag}
           </div>
         </div>
-        <button class="btn-start-test">Start →</button>
-      </div>`).join('') + '</div>';
+        ${actionBtn}
+      </div>`;
+    }).join('') + '</div>';
 }
 
 // ============ BREADCRUMB / VIEW ============
@@ -738,12 +789,6 @@ async function submitQuiz() {
 }
 
 function reattemptOnce() {
-  const btn = document.getElementById('reattemptBtn');
-  btn.disabled = true;
-  btn.textContent = '✅ Reattempt Done';
-  btn.style.opacity = '0.5';
-  btn.style.cursor = 'not-allowed';
-
   answers={}; lockedAnswers=new Set(); pendingAnswer=null; currentQ=0;
   timeLeft=(questions[0].test_duration||30)*60;
   document.getElementById('resultScreen').classList.remove('show');
@@ -751,6 +796,64 @@ function reattemptOnce() {
   document.getElementById('quizFooter').style.display='flex';
   document.getElementById('qNavDots').style.display='flex';
   renderQNavDots(); showQuestion(0); startTimer();
+}
+
+// ============ VIEW RESULT (from test list) ============
+async function viewResult(testName) {
+  activeTestName = testName;
+
+  // Load questions for analysis
+  const { data, error } = await sb.from('quizzes')
+    .select('*')
+    .eq('exam_type', currentExam)
+    .eq('subject', currentSubject.key)
+    .eq('test_name', testName)
+    .order('created_at', { ascending: true });
+
+  if (error || !data || data.length === 0) { alert('⚠️ Questions load nahi hue!'); return; }
+  questions = data;
+
+  // Get last attempt data
+  const { data: attData } = await sb.from('test_attempts')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .eq('test_name', testName)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (!attData || attData.length === 0) { alert('Koi attempt nahi mila!'); return; }
+  const att = attData[0];
+
+  const totalMarks = att.total_marks || questions.length;
+  const score = att.score || 0;
+  const correct = att.correct_answers || 0;
+  const wrong = att.wrong_answers || 0;
+  const skip = questions.length - (att.questions_attempted || 0);
+  const pct = Math.round((score / totalMarks) * 100);
+
+  // Show quiz overlay in result mode (no quiz body)
+  document.getElementById('quizTitle').innerHTML = `${EXAM_LABELS[currentExam]} — <span>${testName}</span>`;
+  document.getElementById('quizBody').style.display = 'none';
+  document.getElementById('quizFooter').style.display = 'none';
+  document.getElementById('qNavDots').style.display = 'none';
+  document.getElementById('resultScreen').classList.add('show');
+
+  document.getElementById('resultIcon').textContent  = pct>=70?'🎉':pct>=40?'😊':'😔';
+  document.getElementById('resultTitle').textContent = pct>=70?'Bahut Badhiya!':pct>=40?'Achha Kiya!':'Aur Practice Karo!';
+  document.getElementById('resultScore').textContent = score.toFixed ? score.toFixed(1) : score;
+  document.getElementById('resultSub').textContent   = `out of ${totalMarks} marks (${pct}%)`;
+  document.getElementById('rCorrect').textContent = correct;
+  document.getElementById('rWrong').textContent   = wrong;
+  document.getElementById('rSkip').textContent    = skip;
+
+  // Hide reattempt btn here (handled from test list)
+  document.getElementById('reattemptBtn').style.display = 'none';
+
+  // answers object blank (for analysis, user can see questions but no selections saved)
+  answers = {};
+
+  document.getElementById('quizOverlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
 }
 
 function exitQuiz() {
@@ -761,6 +864,9 @@ function exitQuiz() {
   document.getElementById('quizBody').style.display='block';
   document.getElementById('quizFooter').style.display='flex';
   document.getElementById('qNavDots').style.display='flex';
+  document.getElementById('reattemptBtn').style.display='';
+  // Refresh test list to show updated attempt status
+  if (currentSubject) openSubject(currentSubject.key, currentSubject.label, currentSubject.icon);
 }
 
 function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;'); }
