@@ -112,6 +112,30 @@ body { font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text)
 .empty-state .empty-icon { font-size:2.5rem; margin-bottom:10px; }
 .empty-state p { font-size:0.88rem; }
 
+/* SAVED QUESTION MODAL */
+.sq-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); backdrop-filter:blur(4px); z-index:300; overflow-y:auto; padding:20px; }
+.sq-overlay.show { display:flex; align-items:center; justify-content:center; }
+.sq-modal { background:var(--card-bg); border-radius:18px; width:100%; max-width:560px; padding:24px; animation:sqPop 0.25s ease; position:relative; border:1px solid var(--border); }
+@keyframes sqPop { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+.sq-modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.sq-modal-tag { font-size:0.72rem; font-weight:700; color:var(--red); text-transform:uppercase; letter-spacing:0.5px; }
+.sq-close { background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--text2); padding:2px 6px; border-radius:6px; }
+.sq-close:hover { background:var(--border); }
+.sq-question { font-size:0.95rem; font-weight:700; line-height:1.7; margin-bottom:18px; color:var(--text); white-space:pre-line; }
+.sq-options { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+.sq-opt { display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:10px; border:2px solid var(--border); font-size:0.86rem; background:var(--bg3); color:var(--text); }
+.sq-opt.correct { border-color:#00c853; background:#f0fff4; color:#00a040; font-weight:700; }
+.sq-opt-label { width:28px; height:28px; border-radius:50%; background:var(--border); display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:800; flex-shrink:0; }
+.sq-opt.correct .sq-opt-label { background:#00c853; color:#fff; }
+.sq-explanation { background:#f0fff4; border:1px solid #b7f0c8; border-radius:10px; padding:12px 14px; font-size:0.82rem; line-height:1.6; color:#333; margin-bottom:16px; }
+.sq-explanation strong { color:#00a040; }
+.sq-footer { display:flex; justify-content:space-between; align-items:center; }
+.sq-meta { font-size:0.75rem; color:var(--text2); }
+.btn-unsave { background:#fff0f0; color:var(--red); border:1px solid rgba(230,57,70,0.3); padding:8px 16px; border-radius:8px; font-size:0.82rem; font-weight:700; cursor:pointer; font-family:inherit; }
+.btn-unsave:hover { background:var(--red); color:#fff; }
+.saved-item { cursor:pointer; transition:all 0.2s; }
+.saved-item:hover { border-color:var(--red); transform:translateX(3px); }
+
 /* FOLDER GRID */
 .folder-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
 .folder-item { background:var(--folder-item); border:2px solid var(--border); border-radius:14px; padding:22px 16px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative; }
@@ -461,11 +485,13 @@ async function loadStats() {
   const { data: saved } = await sb.from('saved_questions').select('*').eq('user_id', currentUser.id);
   if (saved && saved.length > 0) {
     document.getElementById('savedCount').textContent = saved.length;
-    document.getElementById('savedList').innerHTML = saved.map(q => `
-      <div class="saved-item">
-        <div class="saved-q">${q.question_text}</div>
-        <div class="saved-ans">✅ ${q.correct_answer}</div>
-        <div class="saved-subject">📚 ${q.subject || 'General'}</div>
+    // Store saved questions globally for modal
+    window._savedQData = saved;
+    document.getElementById('savedList').innerHTML = saved.map((q, i) => `
+      <div class="saved-item" onclick="openSavedQ(${i})">
+        <div class="saved-q">${q.question_text?.substring(0,120)}${q.question_text?.length>120?'...':''}</div>
+        <div class="saved-ans">✅ Correct: ${q.correct_answer}</div>
+        <div class="saved-subject">📚 ${q.subject || 'General'} &nbsp;•&nbsp; ${q.exam_type || ''} &nbsp;•&nbsp; 👁️ Click to view</div>
       </div>`).join('');
   }
 
@@ -532,6 +558,83 @@ async function handleLogout() {
 }
 
 init();
+
+// ── SAVED QUESTION MODAL ──
+function openSavedQ(idx) {
+  const q = window._savedQData[idx];
+  if (!q) return;
+
+  const opts = [
+    { k:'A', v:q.option_a },
+    { k:'B', v:q.option_b },
+    { k:'C', v:q.option_c },
+    { k:'D', v:q.option_d }
+  ];
+
+  const optsHtml = opts.map(o => `
+    <div class="sq-opt${o.k === q.correct_answer ? ' correct' : ''}">
+      <span class="sq-opt-label">${o.k}</span>
+      <span>${o.v || ''}</span>
+      ${o.k === q.correct_answer ? '<span style="margin-left:auto;font-size:0.75rem;">✅ Correct</span>' : ''}
+    </div>`).join('');
+
+  document.getElementById('sqModalTag').textContent =
+    `📚 ${q.subject || 'General'}  •  ${q.exam_type || ''}  •  ${q.test_name || ''}`;
+  document.getElementById('sqModalQuestion').textContent = q.question_text || '';
+  document.getElementById('sqModalOptions').innerHTML = optsHtml;
+  document.getElementById('sqModalExplanation').style.display = q.explanation ? 'block' : 'none';
+  document.getElementById('sqModalExplanationText').textContent = q.explanation || '';
+  document.getElementById('sqUnsaveBtn').onclick = () => unsaveSavedQ(idx, q.id);
+
+  document.getElementById('sqOverlay').classList.add('show');
+}
+
+function closeSavedQ() {
+  document.getElementById('sqOverlay').classList.remove('show');
+}
+
+async function unsaveSavedQ(idx, rowId) {
+  try {
+    await sb.from('saved_questions').delete().eq('id', rowId);
+    window._savedQData.splice(idx, 1);
+    // Re-render list
+    const saved = window._savedQData;
+    document.getElementById('savedCount').textContent = saved.length;
+    document.getElementById('savedList').innerHTML = saved.length === 0
+      ? `<div class="empty-state"><div class="empty-icon">🔖</div><p>Koi saved question nahi hai.<br>Test dete waqt 🔖 icon pe click karo save karne ke liye.</p></div>`
+      : saved.map((q, i) => `
+        <div class="saved-item" onclick="openSavedQ(${i})">
+          <div class="saved-q">${q.question_text?.substring(0,120)}${q.question_text?.length>120?'...':''}</div>
+          <div class="saved-ans">✅ Correct: ${q.correct_answer}</div>
+          <div class="saved-subject">📚 ${q.subject || 'General'} &nbsp;•&nbsp; ${q.exam_type || ''} &nbsp;•&nbsp; 👁️ Click to view</div>
+        </div>`).join('');
+    closeSavedQ();
+  } catch(e) { alert('Error removing question!'); }
+}
+
+// Close on backdrop click
+document.getElementById('sqOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeSavedQ();
+});
 </script>
+
+<!-- SAVED QUESTION MODAL -->
+<div class="sq-overlay" id="sqOverlay">
+  <div class="sq-modal">
+    <div class="sq-modal-header">
+      <span class="sq-modal-tag" id="sqModalTag"></span>
+      <button class="sq-close" onclick="closeSavedQ()">✕</button>
+    </div>
+    <div class="sq-question" id="sqModalQuestion"></div>
+    <div class="sq-options" id="sqModalOptions"></div>
+    <div class="sq-explanation" id="sqModalExplanation" style="display:none;">
+      <strong>💡 Explanation:</strong> <span id="sqModalExplanationText"></span>
+    </div>
+    <div class="sq-footer">
+      <span class="sq-meta">Saved Question</span>
+      <button class="btn-unsave" id="sqUnsaveBtn">🗑️ Unsave</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
