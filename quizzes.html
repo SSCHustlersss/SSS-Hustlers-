@@ -583,6 +583,13 @@ function showQuestion(idx) {
 }
 
 function selectOption(opt) {
+  // Same option dobara click karo toh deselect ho jaaye
+  if (answers[currentQ] === opt) {
+    delete answers[currentQ];
+    document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+    renderQNavDots();
+    return;
+  }
   answers[currentQ] = opt; // save answer
   // Just highlight selected
   document.querySelectorAll('.option-btn').forEach(b => {
