@@ -604,7 +604,7 @@ function showQuestion(idx) {
   pendingAnswer = null;
   const q = questions[idx], total = questions.length;
   document.getElementById('qNumber').textContent = `Question ${idx+1} of ${total}`;
-  document.getElementById('qText').textContent = q.question_text;
+  document.getElementById('qText').innerHTML = q.question_text;
   document.getElementById('quizProgressText').textContent = `${idx+1}/${total}`;
   document.getElementById('quizProgressFill').style.width = ((idx+1)/total*100) + '%';
 
