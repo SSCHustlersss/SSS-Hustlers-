@@ -917,6 +917,24 @@ function updateTimerDisplay() {
   el.textContent=m+':'+s; el.style.color=timeLeft<60?'#ff4444':'#e63946';
 }
 
+// ── LEADERBOARD HELPER: Unique students, best score per user ──
+async function getLeaderboardData(testName) {
+  const { data: allAttempts } = await sb.from('test_attempts')
+    .select('user_id, score, full_name')
+    .eq('test_name', testName)
+    .order('score', { ascending: false });
+  if (!allAttempts || allAttempts.length === 0) return { uniqueUsers: [], totalStudents: 0 };
+  // Per user sirf best score rakh lo (deduplicate)
+  const bestMap = {};
+  allAttempts.forEach(r => {
+    if (!bestMap[r.user_id] || r.score > bestMap[r.user_id].score) {
+      bestMap[r.user_id] = { user_id: r.user_id, score: r.score, full_name: r.full_name };
+    }
+  });
+  const uniqueUsers = Object.values(bestMap).sort((a, b) => b.score - a.score);
+  return { uniqueUsers, totalStudents: uniqueUsers.length };
+}
+
 // ============ SUBMIT ============
 async function submitQuiz() {
   clearInterval(timerInterval);
@@ -939,7 +957,8 @@ async function submitQuiz() {
   document.getElementById('rWrong').textContent=wrong;
   document.getElementById('rSkip').textContent=skip;
   try {
-    await sb.from('test_attempts').insert({ user_id:currentUser.id, test_name:activeTestName, score:parseFloat(score.toFixed(1)), total_marks:totalMarks, correct_answers:correct, wrong_answers:wrong, questions_attempted:questions.length-skip });
+    const _uName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Student';
+    await sb.from('test_attempts').insert({ user_id:currentUser.id, full_name:_uName, test_name:activeTestName, score:parseFloat(score.toFixed(1)), total_marks:totalMarks, correct_answers:correct, wrong_answers:wrong, questions_attempted:questions.length-skip });
 
     // ── Leaderboard update karo (naam bhi save karo) ──
     const userName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Student';
@@ -960,25 +979,15 @@ async function submitQuiz() {
         });
       }
     } catch(e) { console.error('Leaderboard update error:', e); }
-    // ── RANK + PERCENTILE + LEADERBOARD ──
+    // ── RANK + PERCENTILE + LEADERBOARD (deduplicated) ──
     const finalScore = parseFloat(score.toFixed(1));
+    const { uniqueUsers, totalStudents } = await getLeaderboardData(activeTestName);
 
-    // Kitne log higher score pe hain
-    const { count: higherCount } = await sb.from('test_attempts')
-      .select('*', { count:'exact', head:true })
-      .eq('test_name', activeTestName)
-      .gt('score', finalScore);
-
-    // Total attempts
-    const { count: totalCount } = await sb.from('test_attempts')
-      .select('*', { count:'exact', head:true })
-      .eq('test_name', activeTestName);
-
-    const rank  = (higherCount || 0) + 1;
-    const total = totalCount || 1;
+    // Rank = kitne unique users ka best score mujhse zyada hai + 1
+    const rank = uniqueUsers.filter(u => u.score > finalScore).length + 1;
+    const total = totalStudents || 1;
     const percentile = Math.round(((total - rank) / total) * 100);
 
-    // Rank + Percentile row dikhao
     document.getElementById('rankPercentileRow').style.display = 'grid';
     document.getElementById('rpRank').textContent = `#${rank}`;
     document.getElementById('rpRank').style.color = rank===1?'#ffb300':rank<=3?'#4285f4':'#e63946';
@@ -986,20 +995,13 @@ async function submitQuiz() {
     document.getElementById('rpPercentile').textContent = `${percentile}%`;
     document.getElementById('rpPercentile').style.color = percentile>=90?'#00c853':percentile>=70?'#4285f4':'#e63946';
 
-    // Top 10 leaderboard
-    const { data: top10 } = await sb.from('test_attempts')
-      .select('score, user_id')
-      .eq('test_name', activeTestName)
-      .order('score', { ascending: false })
-      .limit(10);
-
-    if (top10 && top10.length > 0) {
-      const uids = [...new Set(top10.map(r => r.user_id))];
-      const nm = await fetchNames(uids);
+    // Top 10 — unique users only
+    const top10 = uniqueUsers.slice(0, 10);
+    if (top10.length > 0) {
       const medals = ['🥇','🥈','🥉'];
       document.getElementById('lbList').innerHTML = top10.map((row, i) => {
         const isMe = row.user_id === currentUser.id;
-        const name = nm[row.user_id] || (isMe ? (currentUser.user_metadata?.full_name||'You') : 'Student '+(i+1));
+        const name = row.full_name || (isMe ? (currentUser.user_metadata?.full_name||'You') : 'Student '+(i+1));
         return `<div class="lb-row${isMe?' lb-me':''}">
           <span class="lb-pos">${medals[i]||'#'+(i+1)}</span>
           <span class="lb-name">${isMe?'⭐ '+name:name}</span>
@@ -1084,29 +1086,24 @@ async function viewResult(testName) {
   document.getElementById('quizOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
 
-  // ── RANK + LEADERBOARD ──
+  // ── RANK + LEADERBOARD (deduplicated) ──
   try {
-    const { count: higherCount } = await sb.from('test_attempts')
-      .select('*',{count:'exact',head:true}).eq('test_name',testName).gt('score',score);
-    const { count: totalCount } = await sb.from('test_attempts')
-      .select('*',{count:'exact',head:true}).eq('test_name',testName);
-    const rank = (higherCount||0)+1, totalAtts = totalCount||1;
-    const percentile = Math.round(((totalAtts-rank)/totalAtts)*100);
+    const { uniqueUsers, totalStudents } = await getLeaderboardData(testName);
+    const rank = uniqueUsers.filter(u => u.score > score).length + 1;
+    const totalAtts = totalStudents || 1;
+    const percentile = Math.round(((totalAtts - rank) / totalAtts) * 100);
     document.getElementById('rankPercentileRow').style.display='grid';
     document.getElementById('rpRank').textContent=`#${rank}`;
     document.getElementById('rpRank').style.color=rank===1?'#ffb300':rank<=3?'#4285f4':'#e63946';
     document.getElementById('rpTotal').textContent=totalAtts;
     document.getElementById('rpPercentile').textContent=`${percentile}%`;
     document.getElementById('rpPercentile').style.color=percentile>=90?'#00c853':percentile>=70?'#4285f4':'#e63946';
-    const {data:top10} = await sb.from('test_attempts').select('score,user_id')
-      .eq('test_name',testName).order('score',{ascending:false}).limit(10);
-    if (top10&&top10.length>0) {
-      const uids=[...new Set(top10.map(r=>r.user_id))];
-      const nm = await fetchNames(uids);
+    const top10 = uniqueUsers.slice(0, 10);
+    if (top10.length > 0) {
       const medals=['🥇','🥈','🥉'];
       document.getElementById('lbList').innerHTML=top10.map((r,i)=>{
         const isMe=r.user_id===currentUser.id;
-        const name=nm[r.user_id]||(isMe?(currentUser.user_metadata?.full_name||'You'):'Student '+(i+1));
+        const name=r.full_name||(isMe?(currentUser.user_metadata?.full_name||'You'):'Student '+(i+1));
         return `<div class="lb-row${isMe?' lb-me':''}"><span class="lb-pos">${medals[i]||'#'+(i+1)}</span><span class="lb-name">${isMe?'⭐ '+name:name}</span><span class="lb-score">${r.score} pts</span></div>`;
       }).join('');
       document.getElementById('leaderboardBox').style.display='block';
