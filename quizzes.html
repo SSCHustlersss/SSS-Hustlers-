@@ -84,7 +84,7 @@ nav { background:#1a1a2e; padding:0 5%; height:64px; display:flex; align-items:c
 /* ========== NTA STYLE QUIZ ========== */
 .quiz-overlay { display:none; position:fixed; inset:0; z-index:200; background:#f0f0f0; flex-direction:column; }
 .quiz-overlay.show { display:flex; }
-.quiz-modal { display:flex; flex-direction:column; width:100%; height:100vh; overflow:hidden; }
+.quiz-modal { display:flex; flex-direction:column; width:100%; height:100vh; overflow:hidden; position:relative; }
 .quiz-header { background:#1a1a2e; padding:6px 14px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; flex-wrap:wrap; gap:8px; }
 .quiz-title { font-size:0.88rem; font-weight:700; color:#fff; }
 .quiz-title span { color:#e63946; }
@@ -358,6 +358,64 @@ body.dark .lb-name { color:#e8eaf0; }
 .opt-wrong   .aq-opt-label { background:#e63946; color:#fff; }
 .aq-explanation { background:#fff; border:1px solid #b7f0c8; border-radius:8px; padding:10px 12px; font-size:0.8rem; line-height:1.6; color:#333; margin-top:8px; }
 .aq-explanation strong { color:#00a040; }
+
+/* PAUSE BUTTON */
+.btn-pause { background:#ffb300; color:#1a1a2e; border:none; padding:5px 13px; border-radius:6px; font-size:0.78rem; font-weight:800; cursor:pointer; font-family:inherit; }
+.btn-pause:hover { background:#ffa000; }
+/* OFFLINE BAR */
+#offlineBar { display:none; position:fixed; top:64px; left:0; right:0; background:#ff6b35; color:#fff; text-align:center; padding:6px; font-size:0.8rem; font-weight:700; z-index:999; }
+#offlineBar.show { display:block; }
+
+/* ===== TOP 3 PODIUM ===== */
+.lb-podium { display:flex; justify-content:center; align-items:flex-end; gap:12px; margin:10px 0 22px; }
+.lb-podium-item { display:flex; flex-direction:column; align-items:center; gap:6px; }
+.lb-podium-circle {
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-weight:900; color:#fff; position:relative; flex-shrink:0;
+  box-shadow:0 6px 20px rgba(0,0,0,0.18);
+  overflow:hidden;
+}
+.lb-podium-circle img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.lb-podium-1 { width:80px; height:80px; background:linear-gradient(135deg,#f7971e,#ffd200); font-size:1.15rem; border:3px solid #ffd200; }
+.lb-podium-2 { width:66px; height:66px; background:linear-gradient(135deg,#bdc3c7,#636e72); font-size:1rem; border:3px solid #bdc3c7; }
+.lb-podium-3 { width:58px; height:58px; background:linear-gradient(135deg,#cd7f32,#e67e22); font-size:0.9rem; border:3px solid #cd7f32; }
+.lb-podium-rank { font-size:1.3rem; }
+.lb-podium-name { font-size:0.72rem; font-weight:800; color:#1a1a2e; text-align:center; max-width:80px; word-break:break-word; }
+.lb-podium-score { font-size:0.7rem; font-weight:700; color:#e63946; }
+.lb-podium-item.p1 { order:2; }
+.lb-podium-item.p2 { order:1; }
+.lb-podium-item.p3 { order:3; }
+.lb-podium-base { width:100%; padding:4px 6px; border-radius:0 0 8px 8px; text-align:center; font-size:0.65rem; font-weight:800; color:#fff; margin-top:-2px; }
+.p1 .lb-podium-base { background:linear-gradient(135deg,#f7971e,#ffd200); }
+.p2 .lb-podium-base { background:linear-gradient(135deg,#bdc3c7,#636e72); }
+.p3 .lb-podium-base { background:linear-gradient(135deg,#cd7f32,#e67e22); }
+body.dark .lb-podium-name { color:#e8eaf0; }
+
+/* ===== FIREWORKS ===== */
+@keyframes firework {
+  0%   { transform:translate(0,0) scale(1); opacity:1; }
+  100% { transform:translate(var(--fx),var(--fy)) scale(0); opacity:0; }
+}
+@keyframes burst-fade { 0%{opacity:1;} 100%{opacity:0;} }
+.firework-container { position:fixed; inset:0; pointer-events:none; z-index:9999; overflow:hidden; }
+.spark {
+  position:absolute; width:6px; height:6px; border-radius:50%;
+  animation:firework 0.9s ease-out forwards;
+}
+
+/* PROFILE UPLOAD MODAL */
+.profile-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:400; align-items:center; justify-content:center; }
+.profile-modal-overlay.show { display:flex; }
+.profile-modal { background:#fff; border-radius:20px; padding:28px 24px; width:90%; max-width:360px; text-align:center; }
+.profile-modal h3 { font-size:1rem; font-weight:800; margin-bottom:6px; }
+.profile-modal p { font-size:0.8rem; color:#888; margin-bottom:16px; }
+.profile-preview { width:90px; height:90px; border-radius:50%; background:#e63946; margin:0 auto 16px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:800; color:#fff; overflow:hidden; border:3px solid #e63946; cursor:pointer; }
+.profile-preview img { width:100%; height:100%; object-fit:cover; }
+.btn-upload-photo { background:#e63946; color:#fff; border:none; padding:10px 24px; border-radius:10px; font-weight:700; font-size:0.85rem; cursor:pointer; font-family:inherit; width:100%; margin-bottom:8px; }
+.btn-close-profile { background:#f5f5f5; color:#666; border:none; padding:9px 24px; border-radius:10px; font-weight:600; font-size:0.82rem; cursor:pointer; font-family:inherit; width:100%; }
+body.dark .profile-modal { background:#1a1e28; color:#e8eaf0; }
+body.dark .profile-modal p { color:#9ca3af; }
+body.dark .btn-close-profile { background:#252932; color:#9ca3af; }
 </style>
 </head>
 <body>
@@ -365,11 +423,17 @@ body.dark .lb-name { color:#e8eaf0; }
 <nav>
   <a class="logo" href="dashboard.html">SSC <span>HUSTLERS</span></a>
   <div class="nav-right">
+    <div style="display:flex;align-items:center;gap:8px;">
+    <div id="navAvatar" onclick="openProfileUpload()" title="Profile photo change karo" style="width:32px;height:32px;border-radius:50%;background:#e63946;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;color:#fff;cursor:pointer;overflow:hidden;flex-shrink:0;border:2px solid rgba(255,255,255,0.3);">
+      <span id="navAvatarInitials">?</span>
+    </div>
     <span class="user-name-nav" id="userNameNav">...</span>
+  </div>
     <button class="btn-theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Dark/Light Mode">🌙</button>
     <a class="btn-back-nav" href="dashboard.html">← Dashboard</a>
   </div>
 </nav>
+<div id="offlineBar">📡 Network nahi hai — answers save ho rahe hain locally</div>
 
 <div class="container">
   <div class="page-header">
@@ -405,6 +469,19 @@ body.dark .lb-name { color:#e8eaf0; }
 <!-- ========== QUIZ MODAL ========== -->
 <div class="quiz-overlay" id="quizOverlay">
   <div class="quiz-modal">
+    
+<!-- PAUSE OVERLAY -->
+<div id="pauseOverlay" style="display:none;position:absolute;inset:0;background:rgba(26,26,46,0.97);z-index:100;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;padding:20px;">
+  <div style="font-size:3rem;">⏸️</div>
+  <div style="color:#fff;font-size:1.3rem;font-weight:800;">Test Paused</div>
+  <div style="color:rgba(255,255,255,0.6);font-size:0.85rem;">Teri progress safe hai — wahi se continue kar</div>
+  <div id="pauseTimeDisplay" style="color:#ffb300;font-size:1.6rem;font-weight:800;">--:--</div>
+  <div id="pauseOfflineMsg" style="display:none;background:rgba(255,179,0,0.12);border:1px solid #ffb300;color:#ffb300;padding:10px 20px;border-radius:10px;font-size:0.82rem;">
+    ⚠️ Network nahi — online aane pe answers sync honge
+  </div>
+  <button onclick="resumeQuiz()" style="background:#e63946;color:#fff;border:none;padding:14px 40px;border-radius:12px;font-size:1rem;font-weight:800;cursor:pointer;font-family:inherit;margin-top:8px;">▶️ Resume Test</button>
+</div>
+
     <!-- TOP BAR -->
     <div class="quiz-header">
       <div class="quiz-title" id="quizTitle">Quiz</div>
@@ -417,6 +494,7 @@ body.dark .lb-name { color:#e8eaf0; }
           <button class="lang-btn" id="langHI" onclick="setLang('hi')">हि</button>
         </div>
         <button class="btn-toggle-panel" onclick="togglePanel()" id="btnTogglePanel">📋 Panel</button>
+        <button class="btn-pause" id="btnPause" onclick="pauseQuiz()">⏸ Pause</button>
         <button class="btn-exit" onclick="exitQuiz()">✕ Exit</button>
       </div>
     </div>
@@ -524,6 +602,9 @@ const EXAM_LABELS = { ssc_cgl:'SSC CGL', ssc_chsl:'SSC CHSL', ssc_mts:'SSC MTS',
 let currentExam = 'ssc_cgl', currentSubject = null, currentUser = null;
 let questions = [], currentQ = 0, answers = {}, timerInterval = null;
 let timeLeft = 0, posMarking = 1, negMarking = 0, activeTestName = '';
+let isPaused = false;
+let isOnline = navigator.onLine;
+let pendingSync = false; // offline mein answers hain jo sync nahi hue
 let lockedAnswers = new Set(); // questions where answer is revealed
 let pendingAnswer = null;      // selected but not yet revealed
 
@@ -589,7 +670,18 @@ function getLangText(text) {
   if (!hasHindi) return text || '';
   const split = splitLang(text);
   if (currentLang === 'en') return split.en || text || '';
-  return split.hi || split.en || text || '';
+  if (!split.hi) return split.en || text || '';
+
+  // Hindi mode: agar Hindi part numbered point se shuru ho
+  // toh English ka intro part (pehli numbered line se pehle) bhi dikhao
+  if (/^\d+[.)\s]/.test(split.hi.trim())) {
+    const enLines = split.en.split('\n');
+    const firstNumIdx = enLines.findIndex(l => /^\d+[.)\s]/.test(l.trim()));
+    const intro = firstNumIdx > 0 ? enLines.slice(0, firstNumIdx).join('\n').trim() : '';
+    return intro ? intro + '\n' + split.hi : split.hi;
+  }
+
+  return split.hi;
 }
 
 function setLang(lang) {
@@ -677,6 +769,7 @@ async function init() {
     session.user.user_metadata?.full_name || session.user.email.split('@')[0];
   renderSubjects();
   updateBreadcrumb();
+  loadNavAvatar();
 }
 
 // ============ EXAM TAB ============
@@ -867,6 +960,26 @@ async function startQuiz(testName) {
   if (window.innerWidth <= 600) sidebar.classList.remove('mob-open');
   document.getElementById('btnTogglePanel').textContent = window.innerWidth > 600 ? '📋 Hide' : '📋 Panel';
   await loadSavedForTest();
+
+  // ── localStorage se resume check karo ──
+  const savedState = loadQuizState(testName);
+  if (savedState && savedState.timeLeft > 0) {
+    const resume = confirm(`⏸ Tera "${testName}" test pause tha!\nTime remaining: ${Math.floor(savedState.timeLeft/60)}:${String(savedState.timeLeft%60).padStart(2,'0')}\n\nWahi se resume karna chahte ho?`);
+    if (resume) {
+      answers = savedState.answers || {};
+      timeLeft = savedState.timeLeft;
+      currentQ = savedState.currentQ || 0;
+      qStatus = savedState.qStatus || {};
+    } else {
+      clearQuizState(testName);
+    }
+  }
+
+  // Network listeners
+  window.addEventListener('online', handleOnline);
+  window.addEventListener('offline', handleOffline);
+  updateOnlineStatus();
+
   currentLang = 'en';
   document.getElementById('langEN').classList.add('active');
   document.getElementById('langHI').classList.remove('active');
@@ -894,6 +1007,7 @@ function selectOption(opt) {
   }
   answers[currentQ] = opt; // save answer
   if (qStatus[currentQ]!=='ans_marked') qStatus[currentQ]='answered';
+  saveQuizState(); // Offline ke liye turant save
   // Just highlight selected
   document.querySelectorAll('.option-btn').forEach(b => {
     b.classList.remove('selected');
@@ -929,7 +1043,13 @@ function renderQNavDots() {
 // ============ TIMER ============
 function startTimer() {
   clearInterval(timerInterval); updateTimerDisplay();
-  timerInterval = setInterval(() => { timeLeft--; updateTimerDisplay(); if(timeLeft<=0){clearInterval(timerInterval);submitQuiz();} }, 1000);
+  timerInterval = setInterval(() => {
+    if (isPaused) return;
+    timeLeft--;
+    updateTimerDisplay();
+    if (timeLeft % 10 === 0) saveQuizState(); // Har 10 second pe save
+    if (timeLeft <= 0) { clearInterval(timerInterval); submitQuiz(); }
+  }, 1000);
 }
 function updateTimerDisplay() {
   const m=Math.floor(timeLeft/60).toString().padStart(2,'0'), s=(timeLeft%60).toString().padStart(2,'0');
@@ -940,24 +1060,42 @@ function updateTimerDisplay() {
 // ── LEADERBOARD HELPER: Unique students, best score per user ──
 async function getLeaderboardData(testName) {
   const { data: allAttempts } = await sb.from('test_attempts')
-    .select('user_id, score, full_name')
+    .select('user_id, score, full_name, avatar_url')
     .eq('test_name', testName)
     .order('score', { ascending: false });
   if (!allAttempts || allAttempts.length === 0) return { uniqueUsers: [], totalStudents: 0 };
+
   // Per user sirf best score rakh lo (deduplicate)
   const bestMap = {};
   allAttempts.forEach(r => {
     if (!bestMap[r.user_id] || r.score > bestMap[r.user_id].score) {
-      bestMap[r.user_id] = { user_id: r.user_id, score: r.score, full_name: r.full_name };
+      bestMap[r.user_id] = { user_id: r.user_id, score: r.score, full_name: r.full_name, avatar_url: r.avatar_url || null };
     }
   });
+
   const uniqueUsers = Object.values(bestMap).sort((a, b) => b.score - a.score);
+
+  // Profiles table se latest avatar_url fetch karo (overwrite karo agar naya hai)
+  try {
+    const uids = uniqueUsers.map(u => u.user_id);
+    const { data: profiles } = await sb.from('profiles').select('user_id, avatar_url, full_name').in('user_id', uids);
+    if (profiles) {
+      const profileMap = {};
+      profiles.forEach(p => { profileMap[p.user_id] = p; });
+      uniqueUsers.forEach(u => {
+        if (profileMap[u.user_id]?.avatar_url) u.avatar_url = profileMap[u.user_id].avatar_url;
+        if (profileMap[u.user_id]?.full_name) u.full_name = profileMap[u.user_id].full_name;
+      });
+    }
+  } catch(e) {}
+
   return { uniqueUsers, totalStudents: uniqueUsers.length };
 }
 
 // ============ SUBMIT ============
 async function submitQuiz() {
   clearInterval(timerInterval);
+  clearQuizState(activeTestName); // Submit pe state clear
   // Save any pending selection
   let correct=0,wrong=0,skip=0,score=0;
   questions.forEach((q,i)=>{const a=answers[i];if(!a)skip++;else if(a===q.correct_answer){correct++;score+=posMarking;}else{wrong++;score-=negMarking;}});
@@ -978,7 +1116,8 @@ async function submitQuiz() {
   document.getElementById('rSkip').textContent=skip;
   try {
     const _uName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Student';
-    await sb.from('test_attempts').insert({ user_id:currentUser.id, full_name:_uName, test_name:activeTestName, score:parseFloat(score.toFixed(1)), total_marks:totalMarks, correct_answers:correct, wrong_answers:wrong, questions_attempted:questions.length-skip });
+    const _avatarUrl = currentUser.user_metadata?.avatar_url || null;
+    await sb.from('test_attempts').insert({ user_id:currentUser.id, full_name:_uName, avatar_url:_avatarUrl, test_name:activeTestName, score:parseFloat(score.toFixed(1)), total_marks:totalMarks, correct_answers:correct, wrong_answers:wrong, questions_attempted:questions.length-skip });
 
     // ── Leaderboard update karo (naam bhi save karo) ──
     const userName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Student';
@@ -1018,17 +1157,7 @@ async function submitQuiz() {
     // Top 10 — unique users only
     const top10 = uniqueUsers.slice(0, 10);
     if (top10.length > 0) {
-      const medals = ['🥇','🥈','🥉'];
-      document.getElementById('lbList').innerHTML = top10.map((row, i) => {
-        const isMe = row.user_id === currentUser.id;
-        const name = row.full_name || (isMe ? (currentUser.user_metadata?.full_name||'You') : 'Student '+(i+1));
-        return `<div class="lb-row${isMe?' lb-me':''}">
-          <span class="lb-pos">${medals[i]||'#'+(i+1)}</span>
-          <span class="lb-name">${isMe?'⭐ '+name:name}</span>
-          <span class="lb-score">${row.score} pts</span>
-        </div>`;
-      }).join('');
-      document.getElementById('leaderboardBox').style.display = 'block';
+      renderLeaderboard(top10, currentUser.id);
     }
   } catch(e){}
 }
@@ -1121,19 +1250,24 @@ async function viewResult(testName) {
     document.getElementById('rpPercentile').style.color=percentile>=90?'#00c853':percentile>=70?'#4285f4':'#e63946';
     const top10 = uniqueUsers.slice(0, 10);
     if (top10.length > 0) {
-      const medals=['🥇','🥈','🥉'];
-      document.getElementById('lbList').innerHTML=top10.map((r,i)=>{
-        const isMe=r.user_id===currentUser.id;
-        const name=r.full_name||(isMe?(currentUser.user_metadata?.full_name||'You'):'Student '+(i+1));
-        return `<div class="lb-row${isMe?' lb-me':''}"><span class="lb-pos">${medals[i]||'#'+(i+1)}</span><span class="lb-name">${isMe?'⭐ '+name:name}</span><span class="lb-score">${r.score} pts</span></div>`;
-      }).join('');
-      document.getElementById('leaderboardBox').style.display='block';
+      renderLeaderboard(top10, currentUser.id);
     }
   } catch(e){console.error(e);}
 }
 
 function exitQuiz() {
   clearInterval(timerInterval);
+  // Bina pause kiye exit → state save rakho taaki timer background mein chalta rahe concept ke liye
+  // Actually: agar result nahi dikh raha (test chal raha tha) toh state save karo
+  const resultShowing = document.getElementById('resultScreen').classList.contains('show');
+  if (!resultShowing && questions.length > 0 && timeLeft > 0) {
+    saveQuizState(); // State save karo — wapas aayega toh resume milega
+  } else {
+    clearQuizState(activeTestName); // Test khatam — state clear karo
+  }
+  window.removeEventListener('online', handleOnline);
+  window.removeEventListener('offline', handleOffline);
+  isPaused = false;
   document.getElementById('quizOverlay').classList.remove('show');
   document.body.style.overflow='';
   document.getElementById('resultScreen').classList.remove('show');
@@ -1442,6 +1576,288 @@ function closeAnalysis() {
   document.getElementById('analysisOverlay').classList.remove('show');
 }
 
+
+// ============ PAUSE / RESUME ============
+function pauseQuiz() {
+  if (isPaused) return;
+  isPaused = true;
+  saveQuizState();
+  const overlay = document.getElementById('pauseOverlay');
+  overlay.style.display = 'flex';
+  // Time display update karo
+  const m = Math.floor(timeLeft/60).toString().padStart(2,'0');
+  const s = (timeLeft%60).toString().padStart(2,'0');
+  document.getElementById('pauseTimeDisplay').textContent = m + ':' + s;
+  // Offline msg
+  document.getElementById('pauseOfflineMsg').style.display = isOnline ? 'none' : 'block';
+}
+
+function resumeQuiz() {
+  isPaused = false;
+  document.getElementById('pauseOverlay').style.display = 'none';
+}
+
+// ============ LOCALSTORAGE STATE ============
+function saveQuizState() {
+  if (!activeTestName || questions.length === 0) return;
+  const key = 'quizState_' + currentUser?.id + '_' + activeTestName;
+  const state = {
+    testName: activeTestName,
+    exam: currentExam,
+    subject: currentSubject,
+    answers,
+    timeLeft,
+    currentQ,
+    qStatus,
+    savedAt: Date.now()
+  };
+  try { localStorage.setItem(key, JSON.stringify(state)); } catch(e) {}
+}
+
+function loadQuizState(testName) {
+  const key = 'quizState_' + currentUser?.id + '_' + testName;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const state = JSON.parse(raw);
+    // 24 ghante se purana state ignore karo
+    if (Date.now() - state.savedAt > 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return state;
+  } catch(e) { return null; }
+}
+
+function clearQuizState(testName) {
+  if (!testName) return;
+  const key = 'quizState_' + currentUser?.id + '_' + testName;
+  try { localStorage.removeItem(key); } catch(e) {}
+}
+
+// ============ ONLINE / OFFLINE ============
+function handleOnline() {
+  isOnline = true;
+  document.getElementById('offlineBar').classList.remove('show');
+  document.getElementById('pauseOfflineMsg').style.display = 'none';
+}
+
+function handleOffline() {
+  isOnline = false;
+  document.getElementById('offlineBar').classList.add('show');
+  if (isPaused) document.getElementById('pauseOfflineMsg').style.display = 'block';
+  // Auto pause karo taaki student aware ho
+  if (!isPaused && questions.length > 0 && timeLeft > 0) {
+    pauseQuiz();
+  }
+}
+
+function updateOnlineStatus() {
+  if (!navigator.onLine) handleOffline();
+  else handleOnline();
+}
+
+
+// ============ RENDER LEADERBOARD (podium + list) ============
+function renderLeaderboard(top10, myUserId) {
+  const medals = ['🥇','🥈','🥉'];
+  const top3 = top10.slice(0, 3);
+  const rest = top10.slice(3);
+
+  // Podium HTML
+  const podiumOrder = [
+    { idx:1, cls:'p2', size:'lb-podium-2' },
+    { idx:0, cls:'p1', size:'lb-podium-1' },
+    { idx:2, cls:'p3', size:'lb-podium-3' },
+  ];
+  const podiumHtml = top3.length >= 1 ? `
+    <div class="lb-podium">
+      ${podiumOrder.filter(p => top3[p.idx]).map(p => {
+        const r = top3[p.idx];
+        const isMe = r.user_id === myUserId;
+        const name = r.full_name || (isMe ? 'You' : 'Student');
+        const initials = name.slice(0,2).toUpperCase();
+        const localAvatar = localStorage.getItem('avatar_' + r.user_id);
+        const photoHtml = (localAvatar || r.avatar_url)
+          ? `<img src="${localAvatar || r.avatar_url}" alt="${name}"/>`
+          : initials;
+        return `<div class="lb-podium-item ${p.cls}">
+          <span class="lb-podium-rank">${medals[p.idx]||''}</span>
+          <div class="lb-podium-circle ${p.size}">${photoHtml}</div>
+          <div class="lb-podium-name">${isMe?'⭐ '+name:name}</div>
+          <div class="lb-podium-score">${r.score} pts</div>
+        </div>`;
+      }).join('')}
+    </div>` : '';
+
+  // Rest list
+  const restHtml = rest.map((r,i) => {
+    const isMe = r.user_id === myUserId;
+    const name = r.full_name || (isMe ? 'You' : 'Student '+(i+4));
+    return `<div class="lb-row${isMe?' lb-me':''}">
+      <span class="lb-pos">#${i+4}</span>
+      <span class="lb-name">${isMe?'⭐ '+name:name}</span>
+      <span class="lb-score">${r.score} pts</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('lbList').innerHTML = podiumHtml + restHtml;
+  document.getElementById('leaderboardBox').style.display = 'block';
+
+  // Fireworks agar rank 1,2,3 mein hoon
+  const myRank = top10.findIndex(r => r.user_id === myUserId);
+  if (myRank >= 0 && myRank < 3) launchFireworks();
+}
+
+function launchFireworks() {
+  // Container
+  let container = document.getElementById('fireworkContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'fireworkContainer';
+    container.className = 'firework-container';
+    document.body.appendChild(container);
+  }
+  container.innerHTML = '';
+
+  const colors = ['#e63946','#ffd200','#00c853','#4285f4','#ff6b35','#a259ff','#fff'];
+  let count = 0;
+  const interval = setInterval(() => {
+    if (count++ > 5) { clearInterval(interval); setTimeout(()=>container.innerHTML='', 2000); return; }
+    const cx = 20 + Math.random() * 60; // % from left
+    const cy = 10 + Math.random() * 50; // % from top
+    for (let i = 0; i < 18; i++) {
+      const spark = document.createElement('div');
+      spark.className = 'spark';
+      const angle = (i / 18) * 360;
+      const dist = 60 + Math.random() * 80;
+      const fx = Math.cos(angle * Math.PI/180) * dist + 'px';
+      const fy = Math.sin(angle * Math.PI/180) * dist + 'px';
+      spark.style.cssText = `left:${cx}%;top:${cy}%;background:${colors[i%colors.length]};--fx:${fx};--fy:${fy};animation-delay:${Math.random()*0.3}s;animation-duration:${0.7+Math.random()*0.5}s`;
+      container.appendChild(spark);
+    }
+  }, 400);
+}
+
+
+// ============ PROFILE PHOTO ============
+let selectedPhotoFile = null;
+
+function openProfileUpload() {
+  const modal = document.getElementById('profileModal');
+  modal.classList.add('show');
+  // Current photo dikhao
+  const initials = (currentUser?.user_metadata?.full_name || currentUser?.email || 'U').slice(0,2).toUpperCase();
+  const preview = document.getElementById('profilePreview');
+  const savedPhoto = localStorage.getItem('avatar_' + currentUser?.id);
+  if (savedPhoto) {
+    preview.innerHTML = `<img src="${savedPhoto}" alt="photo">`;
+  } else {
+    preview.innerHTML = `<span id="profilePreviewInitials">${initials}</span>`;
+  }
+}
+
+function closeProfileUpload() {
+  document.getElementById('profileModal').classList.remove('show');
+  selectedPhotoFile = null;
+}
+
+function handlePhotoSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  // Max 2MB check
+  if (file.size > 2 * 1024 * 1024) { alert('⚠️ Photo 2MB se chhoti honi chahiye!'); return; }
+  selectedPhotoFile = file;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const preview = document.getElementById('profilePreview');
+    preview.innerHTML = `<img src="${e.target.result}" alt="photo">`;
+    await savePhotoLocally(e.target.result); // local preview
+    await uploadPhotoToSupabase(file);       // Supabase upload
+  };
+  reader.readAsDataURL(file);
+}
+
+async function savePhotoLocally(dataUrl) {
+  // LocalStorage mein bhi save karo (fast preview ke liye)
+  try { localStorage.setItem('avatar_' + currentUser?.id, dataUrl); } catch(e) {}
+  updateNavAvatar(dataUrl);
+}
+
+async function uploadPhotoToSupabase(file) {
+  const btn = document.querySelector('.btn-upload-photo');
+  btn.textContent = '⏳ Upload ho raha hai...';
+  btn.disabled = true;
+
+  try {
+    const ext = file.name.split('.').pop() || 'jpg';
+    const filePath = `avatars/${currentUser.id}.${ext}`;
+
+    // Supabase storage mein upload karo
+    const { error: uploadErr } = await sb.storage
+      .from('avatars')
+      .upload(filePath, file, { upsert: true, contentType: file.type });
+
+    if (uploadErr) throw uploadErr;
+
+    // Public URL lo
+    const { data: urlData } = sb.storage.from('avatars').getPublicUrl(filePath);
+    const publicUrl = urlData.publicUrl + '?t=' + Date.now(); // cache bust
+
+    // profiles table mein save karo
+    await sb.from('profiles').upsert({
+      user_id: currentUser.id,
+      full_name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Student',
+      avatar_url: publicUrl
+    }, { onConflict: 'user_id' });
+
+    // LocalStorage bhi update
+    try { localStorage.setItem('avatar_' + currentUser.id, publicUrl); } catch(e) {}
+    updateNavAvatar(publicUrl);
+
+    btn.textContent = '📷 Photo Choose Karo';
+    btn.disabled = false;
+    alert('✅ Photo upload ho gayi! Sab leaderboard pe dekh sakte hain.');
+    closeProfileUpload();
+
+  } catch(e) {
+    console.error('Upload error:', e);
+    btn.textContent = '📷 Photo Choose Karo';
+    btn.disabled = false;
+    alert('⚠️ Upload failed: ' + (e.message || 'Try again'));
+  }
+}
+
+function updateNavAvatar(photoUrl) {
+  const navAvatar = document.getElementById('navAvatar');
+  if (!navAvatar) return;
+  if (photoUrl) {
+    navAvatar.innerHTML = `<img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  } else {
+    const initials = (currentUser?.user_metadata?.full_name || currentUser?.email || 'U').slice(0,2).toUpperCase();
+    navAvatar.innerHTML = `<span id="navAvatarInitials">${initials}</span>`;
+  }
+}
+
+async function loadNavAvatar() {
+  const initials = (currentUser?.user_metadata?.full_name || currentUser?.email || 'U').slice(0,2).toUpperCase();
+  // Pehle local cache dikhao (fast)
+  const cached = localStorage.getItem('avatar_' + currentUser?.id);
+  updateNavAvatar(cached || null);
+  if (!cached) {
+    const el = document.getElementById('navAvatarInitials');
+    if (el) el.textContent = initials;
+  }
+  // Phir Supabase se latest fetch karo
+  try {
+    const { data } = await sb.from('profiles').select('avatar_url').eq('user_id', currentUser.id).single();
+    if (data?.avatar_url) {
+      try { localStorage.setItem('avatar_' + currentUser.id, data.avatar_url); } catch(e) {}
+      updateNavAvatar(data.avatar_url);
+    }
+  } catch(e) {}
+}
+
 init();
 loadTheme();
 </script>
@@ -1470,5 +1886,20 @@ loadTheme();
     </div>
   </div>
 </div>
+
+<!-- PROFILE UPLOAD MODAL -->
+<div class="profile-modal-overlay" id="profileModal">
+  <div class="profile-modal">
+    <h3>📸 Profile Photo</h3>
+    <p>Photo leaderboard mein dikhegi</p>
+    <div class="profile-preview" id="profilePreview" onclick="document.getElementById('photoFileInput').click()">
+      <span id="profilePreviewInitials">?</span>
+    </div>
+    <input type="file" id="photoFileInput" accept="image/*" style="display:none" onchange="handlePhotoSelect(event)">
+    <button class="btn-upload-photo" onclick="document.getElementById('photoFileInput').click()">📷 Photo Choose Karo</button>
+    <button class="btn-close-profile" onclick="closeProfileUpload()">Cancel</button>
+  </div>
+</div>
+
 </body>
 </html>
