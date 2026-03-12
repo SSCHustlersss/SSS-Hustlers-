@@ -80,99 +80,79 @@ nav { background:#1a1a2e; padding:0 5%; height:64px; display:flex; align-items:c
 .spinner { display:inline-block; width:20px; height:20px; border:2px solid #e8e8e8; border-top-color:#e63946; border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px; vertical-align:middle; }
 @keyframes spin { to{transform:rotate(360deg);} }
 
-/* ========== NTA STYLE QUIZ OVERLAY ========== */
-.quiz-overlay { display:none; position:fixed; inset:0; z-index:200; background:#f0f0f0; }
-.quiz-overlay.show { display:flex; flex-direction:column; }
-/* NTA Wrapper */
-.nta-wrapper { display:flex; flex-direction:column; height:100vh; overflow:hidden; }
-/* NTA Top Bar */
-.quiz-header { background:#1a1a2e; padding:6px 14px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+/* ========== NTA STYLE QUIZ ========== */
+.quiz-overlay { display:none; position:fixed; inset:0; z-index:200; background:#f0f0f0; flex-direction:column; }
+.quiz-overlay.show { display:flex; }
+.quiz-modal { display:flex; flex-direction:column; width:100%; height:100vh; overflow:hidden; }
+.quiz-header { background:#1a1a2e; padding:6px 14px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; flex-wrap:wrap; gap:8px; }
 .quiz-title { font-size:0.88rem; font-weight:700; color:#fff; }
 .quiz-title span { color:#e63946; }
-.quiz-meta-row { display:flex; gap:8px; align-items:center; }
-.quiz-timer { background:transparent; color:#ffcc02; font-size:1rem; font-weight:800; min-width:60px; text-align:center; }
+.quiz-meta-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.quiz-timer { color:#ffcc02; font-size:1rem; font-weight:800; min-width:60px; text-align:center; }
 .quiz-progress-text { font-size:0.75rem; color:rgba(255,255,255,0.55); }
-.btn-exit { background:rgba(255,255,255,0.12); color:rgba(255,255,255,0.8); border:1px solid rgba(255,255,255,0.2); padding:5px 13px; border-radius:6px; font-size:0.78rem; cursor:pointer; font-family:inherit; }
+.btn-exit { background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:5px 13px; border-radius:6px; font-size:0.78rem; cursor:pointer; font-family:inherit; }
+.btn-toggle-panel { background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:5px 10px; border-radius:6px; font-size:0.78rem; cursor:pointer; font-family:inherit; }
 .quiz-progress-bar { height:3px; background:#2a2e3a; flex-shrink:0; }
 .quiz-progress-fill { height:100%; background:#e63946; transition:width 0.3s; }
-/* NTA Marks bar */
-.nta-marks-bar { background:#e3f2fd; padding:5px 16px; font-size:0.78rem; display:flex; align-items:center; gap:6px; border-bottom:1px solid #bbdefb; flex-shrink:0; }
-.nta-marks-bar .ml { margin-left:auto; color:#555; font-weight:700; }
-/* NTA Blue Strip */
-.nta-blue-strip { background:#1565c0; height:26px; flex-shrink:0; }
-/* NTA Content split */
-.nta-content { display:flex; flex:1; overflow:hidden; }
-/* NTA Main (left) */
-.nta-main { flex:1; display:flex; flex-direction:column; overflow:hidden; background:#fafafa; }
-/* Quiz body - question area */
-.quiz-body { flex:1; overflow-y:auto; padding:18px 20px 12px; }
-.q-number { font-size:0.75rem; font-weight:700; color:#1565c0; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px; }
-.q-text { font-size:0.95rem; font-weight:600; line-height:1.75; margin-bottom:20px; white-space:pre-line; color:#1a1a2e; }
-.options-list { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
-.option-btn { display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:6px; border:1.5px solid #e0e0e0; background:#fff; font-size:0.88rem; font-family:inherit; cursor:pointer; transition:all 0.12s; text-align:left; width:100%; }
+/* NTA two-panel layout */
+.nta-body { display:flex; flex:1; overflow:hidden; }
+/* Left panel */
+.nta-left { flex:1; display:flex; flex-direction:column; overflow:hidden; background:#fff; }
+.nta-marks-bar { background:#e3f2fd; padding:5px 14px; font-size:0.78rem; border-bottom:1px solid #bbdefb; flex-shrink:0; }
+.nta-blue-strip { background:#1565c0; height:6px; flex-shrink:0; }
+.quiz-body { flex:1; overflow-y:auto; padding:16px 18px 10px; }
+.q-number { font-size:0.75rem; font-weight:700; color:#1565c0; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
+.q-text { font-size:0.95rem; font-weight:600; line-height:1.75; margin-bottom:18px; white-space:pre-line; }
+.options-list { display:flex; flex-direction:column; gap:9px; margin-bottom:16px; }
+.option-btn { display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:6px; border:1.5px solid #e0e0e0; background:#fff; font-size:0.86rem; font-family:inherit; cursor:pointer; transition:all 0.12s; text-align:left; width:100%; }
 .option-btn:hover:not(:disabled) { border-color:#1565c0; background:#e3f2fd; }
 .option-label { width:28px; height:28px; border-radius:50%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:800; flex-shrink:0; transition:all 0.12s; color:#555; }
 .option-btn.selected { border-color:#1565c0; background:#e3f2fd; }
 .option-btn.selected .option-label { background:#1565c0; color:#fff; }
-.option-btn.correct { border-color:#2e7d32; background:#f1f8e9; }
-.option-btn.correct .option-label { background:#2e7d32; color:#fff; }
-.option-btn.wrong { border-color:#c62828; background:#fff3e0; }
-.option-btn.wrong .option-label { background:#c62828; color:#fff; }
+.option-btn.correct { border-color:#00c853; background:#f0fff4; }
+.option-btn.correct .option-label { background:#00c853; color:#fff; }
+.option-btn.wrong { border-color:#e63946; background:#fff0f0; }
+.option-btn.wrong .option-label { background:#e63946; color:#fff; }
 .option-btn:disabled { cursor:default; }
-.explanation-box { background:#f1f8e9; border:1px solid #a5d6a7; border-radius:8px; padding:12px 14px; font-size:0.8rem; line-height:1.6; color:#333; margin-bottom:12px; display:none; }
+.explanation-box { background:#f0fff4; border:1px solid #b7f0c8; border-radius:10px; padding:13px 15px; font-size:0.8rem; line-height:1.6; color:#333; margin-bottom:14px; display:none; }
 .explanation-box.show { display:block; }
-.explanation-box strong { color:#2e7d32; }
-/* NTA Footer */
-.quiz-footer { padding:10px 14px; border-top:1.5px solid #ccc; display:flex; justify-content:space-between; align-items:center; background:#e8e8e8; flex-shrink:0; flex-wrap:wrap; gap:8px; }
-.marking-info-row { font-size:0.73rem; color:#888; display:none; }
+.explanation-box strong { color:#00a040; }
+/* Footer */
+.quiz-footer { padding:10px 14px; border-top:1px solid #ccc; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; background:#e8e8e8; flex-shrink:0; }
+.marking-info-row { font-size:0.73rem; color:#888; }
 .marking-info-row span { font-weight:700; }
-.nta-footer-left { display:flex; gap:8px; }
-.nta-footer-right { display:flex; gap:8px; align-items:center; }
-.btn-mark-review { background:#7b1fa2; color:#fff; border:none; padding:8px 14px; border-radius:5px; font-size:0.78rem; font-weight:700; cursor:pointer; font-family:inherit; }
-.btn-clear-resp  { background:#fff; color:#333; border:1px solid #999; padding:8px 13px; border-radius:5px; font-size:0.78rem; cursor:pointer; font-family:inherit; }
-.btn-prev,.btn-next,.btn-submit { padding:8px 18px; border-radius:5px; font-size:0.82rem; font-weight:700; cursor:pointer; font-family:inherit; border:none; }
+.quiz-nav { display:flex; gap:8px; flex-wrap:wrap; }
+.btn-mark-review { background:#7b1fa2; color:#fff; border:none; padding:8px 12px; border-radius:5px; font-size:0.78rem; font-weight:700; cursor:pointer; font-family:inherit; }
+.btn-clear-resp { background:#fff; color:#333; border:1px solid #999; padding:8px 12px; border-radius:5px; font-size:0.78rem; cursor:pointer; font-family:inherit; }
+.btn-prev,.btn-next,.btn-submit { padding:8px 16px; border-radius:5px; font-size:0.82rem; font-weight:700; cursor:pointer; font-family:inherit; border:none; }
 .btn-prev { background:#fff; color:#333; border:1px solid #ccc; }
 .btn-next { background:#2e7d32; color:#fff; }
 .btn-submit { background:#1565c0; color:#fff; }
-/* SIDEBAR TOGGLE BUTTON */
-.btn-sidebar-toggle { background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.25); padding:5px 10px; border-radius:6px; font-size:0.8rem; font-weight:700; cursor:pointer; font-family:inherit; white-space:nowrap; }
-.btn-sidebar-toggle:hover { background:rgba(255,255,255,0.25); }
-/* NTA SIDEBAR (right) */
-.nta-sidebar { width:220px; min-width:220px; background:#fff; border-left:1px solid #ccc; display:flex; flex-direction:column; overflow:hidden; flex-shrink:0; transition:width 0.25s, min-width 0.25s; }
-.nta-sidebar.hidden { width:0; min-width:0; border-left:none; overflow:hidden; }
-.nta-legend { padding:10px 12px; border-bottom:1px solid #e0e0e0; }
-.legend-row { display:flex; align-items:center; gap:8px; margin-bottom:5px; font-size:0.72rem; color:#444; white-space:nowrap; }
-.ls { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; flex-shrink:0; color:#fff; }
-.ls.answered    { background:#2e7d32; }
-.ls.not-answered{ background:#c62828; }
-.ls.not-visited { background:#9e9e9e; color:#fff; }
-.ls.marked      { background:#7b1fa2; }
-.ls.ans-marked  { background:#7b1fa2; outline:2px solid #2e7d32; outline-offset:1px; }
-.nta-section-hdr { background:#1565c0; color:#fff; padding:6px 10px; font-size:0.78rem; font-weight:700; flex-shrink:0; white-space:nowrap; }
-.nta-choose-q { padding:6px 10px; font-size:0.75rem; color:#555; font-weight:700; border-bottom:1px solid #e0e0e0; text-align:center; flex-shrink:0; white-space:nowrap; }
-/* Question Palette */
+/* Right sidebar */
+.nta-sidebar { width:215px; min-width:215px; background:#fff; border-left:1px solid #ccc; display:flex; flex-direction:column; overflow:hidden; transition:width 0.2s, min-width 0.2s; flex-shrink:0; }
+.nta-sidebar.collapsed { width:0; min-width:0; border-left:none; }
+.nta-legend { padding:8px 10px; border-bottom:1px solid #e0e0e0; flex-shrink:0; }
+.legend-row { display:flex; align-items:center; gap:7px; margin-bottom:4px; font-size:0.7rem; color:#444; white-space:nowrap; }
+.legend-dot { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:700; color:#fff; flex-shrink:0; }
+.ld-green  { background:#2e7d32; }
+.ld-red    { background:#c62828; }
+.ld-grey   { background:#9e9e9e; }
+.ld-purple { background:#7b1fa2; }
+.ld-purgreen { background:#7b1fa2; outline:2px solid #2e7d32; outline-offset:1px; }
+.nta-sec-hdr { background:#1565c0; color:#fff; padding:5px 10px; font-size:0.75rem; font-weight:700; flex-shrink:0; }
+.nta-choose { padding:5px 10px; font-size:0.72rem; color:#555; font-weight:700; border-bottom:1px solid #e0e0e0; text-align:center; flex-shrink:0; }
+/* Question palette */
 .q-nav-dots { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; padding:8px; overflow-y:auto; flex:1; align-content:start; }
-.q-dot { width:100%; height:36px; border-radius:4px; font-size:0.78rem; font-weight:700; cursor:pointer; border:1.5px solid #ccc; background:#e0e0e0; color:#555; display:flex; align-items:center; justify-content:center; transition:all 0.12s; }
+.q-dot { height:34px; border-radius:4px; font-size:0.75rem; font-weight:700; cursor:pointer; border:1.5px solid #ccc; background:#e0e0e0; color:#555; display:flex; align-items:center; justify-content:center; transition:all 0.12s; }
 .q-dot.answered     { background:#2e7d32; border-color:#2e7d32; color:#fff; }
 .q-dot.not-answered { background:#c62828; border-color:#c62828; color:#fff; }
 .q-dot.marked       { background:#7b1fa2; border-color:#7b1fa2; color:#fff; }
 .q-dot.ans-marked   { background:#7b1fa2; border-color:#2e7d32; color:#fff; }
 .q-dot.current      { outline:2px solid #e65100; outline-offset:2px; }
-/* Sidebar submit */
-.nta-submit-wrap { padding:10px; border-top:1px solid #e0e0e0; flex-shrink:0; }
-.nta-submit-btn { width:100%; background:#1565c0; color:#fff; border:none; padding:10px; border-radius:5px; cursor:pointer; font-weight:700; font-size:0.88rem; font-family:inherit; white-space:nowrap; }
-/* Mobile: sidebar hidden by default */
-@media(max-width:600px) {
-  .nta-sidebar { width:0; min-width:0; border-left:none; }
-  .nta-sidebar.show-mobile { width:220px; min-width:220px; border-left:1px solid #ccc; position:absolute; right:0; top:0; bottom:0; z-index:10; box-shadow:-4px 0 16px rgba(0,0,0,0.15); }
-  .nta-content { position:relative; }
-  .quiz-footer { flex-wrap:wrap; gap:5px; }
-  .nta-footer-left, .nta-footer-right { flex-wrap:wrap; gap:5px; }
-  .btn-mark-review { font-size:0.72rem; padding:7px 10px; }
-  .btn-clear-resp { font-size:0.72rem; padding:7px 10px; }
-}
+.nta-submit-wrap { padding:8px; border-top:1px solid #e0e0e0; flex-shrink:0; }
+.nta-submit-btn { width:100%; background:#1565c0; color:#fff; border:none; padding:9px; border-radius:5px; cursor:pointer; font-weight:700; font-size:0.85rem; font-family:inherit; }
 /* Result screen */
-.result-screen { flex:1; overflow-y:auto; padding:28px 22px; text-align:center; display:none; background:#fff; }
+.result-screen { padding:28px 22px; text-align:center; display:none; overflow-y:auto; flex:1; }
 .result-screen.show { display:block; }
 .result-icon { font-size:3.5rem; margin-bottom:14px; }
 .result-title { font-size:1.3rem; font-weight:800; margin-bottom:6px; }
@@ -191,9 +171,9 @@ nav { background:#1a1a2e; padding:0 5%; height:64px; display:flex; align-items:c
 .btn-done  { background:#e63946; color:#fff; }
 @media(max-width:600px) {
   .subject-grid { grid-template-columns:1fr 1fr; }
-  .quiz-body { padding:14px 14px 10px; }
-  .quiz-footer { padding:10px 14px; }
-  .q-nav-dots { padding:10px 14px 4px; }
+  .nta-sidebar { width:0; min-width:0; border-left:none; }
+  .nta-sidebar.mob-open { width:200px; min-width:200px; position:absolute; right:0; top:0; bottom:0; z-index:20; box-shadow:-4px 0 16px rgba(0,0,0,0.2); border-left:1px solid #ccc; }
+  .nta-body { position:relative; }
 }
 
 /* THEME TOGGLE BUTTON */
@@ -228,32 +208,29 @@ body.dark .bc-current { color:#9ca3af; }
 body.dark .bc-btn { background:rgba(230,57,70,0.1); color:#e63946; border-color:rgba(230,57,70,0.2); }
 
 /* Dark Mode - Quiz Modal */
+body.dark .quiz-modal { background:#13161e; }
 body.dark .quiz-header { background:#0a0c10; }
 body.dark .quiz-progress-bar { background:#1a1e28; }
-body.dark .nta-marks-bar { background:#1a1e28; border-bottom-color:#2a2e3a; color:#9ca3af; }
-body.dark .nta-blue-strip { background:#0d47a1; }
-body.dark .nta-main { background:#0d0f14; }
-body.dark .quiz-body { background:#0d0f14; }
-body.dark .q-number { color:#4fc3f7; }
+body.dark .q-nav-dots { background:#13161e; }
+body.dark .q-dot { background:#1a1e28; border-color:#2a2e3a; color:#9ca3af; }
+body.dark .q-dot.answered { background:#e63946; border-color:#e63946; color:#fff; }
+body.dark .q-dot.current { border-color:#e8eaf0; }
+body.dark .quiz-body { background:#13161e; }
+body.dark .q-number { color:#e63946; }
 body.dark .q-text { color:#e8eaf0; }
 body.dark .option-btn { background:#1a1e28; border-color:#2a2e3a; color:#e8eaf0; }
-body.dark .option-btn:hover:not(:disabled) { border-color:#4fc3f7; background:rgba(79,195,247,0.08); }
+body.dark .option-btn:hover:not(:disabled) { border-color:#e63946; background:rgba(230,57,70,0.08); }
 body.dark .option-label { background:#252932; color:#9ca3af; }
-body.dark .option-btn.selected { border-color:#1565c0; background:rgba(21,101,192,0.15); }
-body.dark .option-btn.selected .option-label { background:#1565c0; color:#fff; }
-body.dark .option-btn.correct { border-color:#2e7d32; background:rgba(46,125,50,0.1); }
-body.dark .option-btn.correct .option-label { background:#2e7d32; color:#fff; }
-body.dark .option-btn.wrong { border-color:#c62828; background:rgba(198,40,40,0.1); }
-body.dark .explanation-box { background:rgba(46,125,50,0.1); border-color:rgba(46,125,50,0.3); color:#e8eaf0; }
-body.dark .quiz-footer { background:#0a0c10; border-top-color:#2a2e3a; }
-body.dark .btn-clear-resp { background:#1a1e28; color:#9ca3af; border-color:#2a2e3a; }
+body.dark .option-btn.selected { border-color:#e63946; background:rgba(230,57,70,0.08); }
+body.dark .option-btn.selected .option-label { background:#e63946; color:#fff; }
+body.dark .option-btn.correct { border-color:#00c853; background:rgba(0,200,83,0.08); }
+body.dark .option-btn.correct .option-label { background:#00c853; color:#fff; }
+body.dark .option-btn.wrong { border-color:#e63946; background:rgba(230,57,70,0.08); }
+body.dark .explanation-box { background:rgba(0,200,83,0.08); border-color:rgba(0,200,83,0.2); color:#e8eaf0; }
+body.dark .quiz-footer { background:#13161e; border-top-color:#2a2e3a; }
+body.dark .marking-info-row { color:#9ca3af; }
 body.dark .btn-prev { background:#1a1e28; color:#9ca3af; border-color:#2a2e3a; }
-body.dark .nta-sidebar { background:#13161e; border-left-color:#2a2e3a; }
-body.dark .nta-legend { border-bottom-color:#2a2e3a; }
-body.dark .legend-row { color:#9ca3af; }
-body.dark .nta-choose-q { color:#9ca3af; border-bottom-color:#2a2e3a; }
-body.dark .q-dot { background:#252932; border-color:#2a2e3a; color:#9ca3af; }
-body.dark .nta-submit-wrap { border-top-color:#2a2e3a; }
+body.dark .btn-prev:hover { color:#e8eaf0; }
 
 /* Dark Mode - Result Screen */
 body.dark .result-screen { background:#13161e; }
@@ -406,23 +383,23 @@ body.dark .lb-name { color:#e8eaf0; }
   </div>
 </div>
 
-<!-- ========== NTA STYLE QUIZ OVERLAY ========== -->
+<!-- ========== QUIZ MODAL ========== -->
 <div class="quiz-overlay" id="quizOverlay">
-  <div class="nta-wrapper">
+  <div class="quiz-modal">
     <!-- TOP BAR -->
     <div class="quiz-header">
       <div class="quiz-title" id="quizTitle">Quiz</div>
       <div class="quiz-meta-row">
-        <span style="font-size:0.72rem;color:rgba(255,255,255,0.5)">Time Left</span>
+        <span style="font-size:0.7rem;color:rgba(255,255,255,0.5)">Time Left</span>
         <div class="quiz-timer" id="quizTimer">--:--</div>
-        <div class="quiz-progress-text" id="quizProgressText2">0/0</div>
-        <button class="btn-sidebar-toggle" onclick="toggleSidebar()" id="btnSidebarToggle">📋 Panel</button>
+        <div class="quiz-progress-text" id="quizProgressText">0/0</div>
+        <button class="btn-toggle-panel" onclick="togglePanel()" id="btnTogglePanel">📋 Panel</button>
         <button class="btn-exit" onclick="exitQuiz()">✕ Exit</button>
       </div>
     </div>
     <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quizProgressFill"></div></div>
 
-    <!-- RESULT SCREEN (full width when shown) -->
+    <!-- RESULT SCREEN -->
     <div class="result-screen" id="resultScreen">
       <div class="result-icon" id="resultIcon">🎉</div>
       <div class="result-title" id="resultTitle">Test Complete!</div>
@@ -450,56 +427,46 @@ body.dark .lb-name { color:#e8eaf0; }
       </div>
     </div>
 
-    <!-- NTA TWO-PANEL LAYOUT -->
-    <div class="nta-content">
-      <!-- LEFT: Question Area -->
-      <div class="nta-main">
-        <!-- Marks bar -->
+    <!-- NTA TWO-PANEL -->
+    <div class="nta-body">
+      <!-- LEFT: Question -->
+      <div class="nta-left">
         <div class="nta-marks-bar">
           Marks for correct answer <strong style="color:#2e7d32">+<span id="mPos">1</span></strong>
           &nbsp;|&nbsp; Negative Marks <strong style="color:#c62828">-<span id="mNeg">0</span></strong>
         </div>
         <div class="nta-blue-strip"></div>
-
-        <!-- Question body -->
         <div class="quiz-body" id="quizBody">
           <div class="q-number" id="qNumber">Question 1</div>
           <div class="q-text" id="qText"></div>
           <div class="options-list" id="optionsList"></div>
           <div class="explanation-box" id="explanationBox"><strong>💡 Explanation:</strong> <span id="explanationText"></span></div>
         </div>
-
-        <!-- NTA Footer buttons -->
         <div class="quiz-footer" id="quizFooter">
-          <div class="marking-info-row">✅ <span id="mPosHidden">+1</span> &nbsp;❌ <span id="mNegHidden">-0</span></div>
-          <div class="nta-footer-left">
+          <div class="marking-info-row">✅ <span id="mPosInfo">+1</span> &nbsp;❌ <span id="mNegInfo">-0</span></div>
+          <div class="quiz-nav">
             <button class="btn-mark-review" onclick="ntaMarkReview()">Mark for Review &amp; Next</button>
-            <button class="btn-clear-resp" onclick="ntaClearResponse()">Clear Response</button>
-          </div>
-          <div class="nta-footer-right">
-            <button class="btn-bookmark" id="btnBookmark" onclick="toggleBookmark()" title="Save this question">🔖</button>
+            <button class="btn-clear-resp" onclick="ntaClearResp()">Clear Response</button>
+            <button class="btn-bookmark" id="btnBookmark" onclick="toggleBookmark()" title="Save">🔖</button>
             <button class="btn-prev" id="btnPrev" onclick="prevQ()">← Prev</button>
-            <button class="btn-next" id="btnNext" onclick="ntaSaveAndNext()">Save &amp; Next</button>
+            <button class="btn-next" id="btnNext" onclick="nextQ()">Save &amp; Next</button>
             <button class="btn-submit" id="btnSubmit" onclick="submitQuiz()" style="display:none;">✅ Submit</button>
           </div>
         </div>
       </div>
 
-      <!-- RIGHT: Sidebar Palette -->
+      <!-- RIGHT: Sidebar -->
       <div class="nta-sidebar" id="ntaSidebar">
-        <!-- Legend -->
         <div class="nta-legend">
-          <div class="legend-row"><span class="ls answered" id="cnt-answered">0</span> Answered</div>
-          <div class="legend-row"><span class="ls not-answered" id="cnt-not-answered">0</span> Not Answered</div>
-          <div class="legend-row"><span class="ls not-visited" id="cnt-not-visited">0</span> Not Visited</div>
-          <div class="legend-row"><span class="ls marked" id="cnt-marked">0</span> Marked for Review</div>
-          <div class="legend-row"><span class="ls ans-marked" id="cnt-ans-marked">0</span> Ans &amp; Marked</div>
+          <div class="legend-row"><span class="legend-dot ld-green" id="cntAnswered">0</span> Answered</div>
+          <div class="legend-row"><span class="legend-dot ld-red" id="cntNotAnswered">0</span> Not Answered</div>
+          <div class="legend-row"><span class="legend-dot ld-grey" id="cntNotVisited">0</span> Not Visited</div>
+          <div class="legend-row"><span class="legend-dot ld-purple" id="cntMarked">0</span> Marked for Review</div>
+          <div class="legend-row"><span class="legend-dot ld-purgreen" id="cntAnsMarked">0</span> Ans &amp; Marked</div>
         </div>
-        <div class="nta-section-hdr">Section 1</div>
-        <div class="nta-choose-q">Choose a Question</div>
-        <!-- Question Palette -->
+        <div class="nta-sec-hdr">Section 1</div>
+        <div class="nta-choose">Choose a Question</div>
         <div class="q-nav-dots" id="qNavDots"></div>
-        <!-- Saved Questions Panel -->
         <div class="saved-panel" id="savedPanel">
           <div class="saved-panel-title">
             🔖 Saved <span id="savedCount">0</span>
@@ -507,7 +474,6 @@ body.dark .lb-name { color:#e8eaf0; }
           </div>
           <div class="saved-q-list" id="savedQList"></div>
         </div>
-        <!-- Submit -->
         <div class="nta-submit-wrap">
           <button class="nta-submit-btn" onclick="submitQuiz()">Submit Test</button>
         </div>
@@ -537,71 +503,30 @@ let timeLeft = 0, posMarking = 1, negMarking = 0, activeTestName = '';
 let lockedAnswers = new Set(); // questions where answer is revealed
 let pendingAnswer = null;      // selected but not yet revealed
 
-// ============ SIDEBAR TOGGLE ============
-let sidebarVisible = window.innerWidth > 600;
-function toggleSidebar() {
-  const sb = document.getElementById('ntaSidebar');
-  const btn = document.getElementById('btnSidebarToggle');
-  if (window.innerWidth <= 600) {
-    // Mobile: overlay mode
-    sidebarVisible = !sidebarVisible;
-    sb.classList.toggle('show-mobile', sidebarVisible);
-  } else {
-    // Desktop: shrink/expand
-    sidebarVisible = !sidebarVisible;
-    sb.classList.toggle('hidden', !sidebarVisible);
-  }
-  btn.textContent = sidebarVisible ? '📋 Hide Panel' : '📋 Panel';
-}
-
-// ============ NTA QUESTION STATUS ============
-let qStatus = {}; // 'not_visited','not_answered','answered','marked','ans_marked'
-
+// ============ NTA STATUS ============
+let qStatus = {};
 function initQStatus() {
   qStatus = {};
-  questions.forEach((q, i) => { qStatus[i] = i === 0 ? 'not_answered' : 'not_visited'; });
+  questions.forEach((q,i) => { qStatus[i] = i===0 ? 'not_answered' : 'not_visited'; });
 }
-
-function ntaSaveAndNext() {
-  qStatus[currentQ] = answers[currentQ] ? 'answered' : 'not_answered';
-  renderQNavDots();
-  if (currentQ < questions.length - 1) showQuestion(currentQ + 1);
-}
-
 function ntaMarkReview() {
   qStatus[currentQ] = answers[currentQ] ? 'ans_marked' : 'marked';
   renderQNavDots();
-  if (currentQ < questions.length - 1) showQuestion(currentQ + 1);
+  if (currentQ < questions.length-1) showQuestion(currentQ+1);
 }
-
-function ntaClearResponse() {
+function ntaClearResp() {
   delete answers[currentQ];
   qStatus[currentQ] = 'not_answered';
   document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
   renderQNavDots();
 }
-
-function renderQNavDots() {
-  const total = questions.length;
-  let counts = { answered:0, 'not-answered':0, 'not-visited':0, marked:0, 'ans-marked':0 };
-  document.getElementById('qNavDots').innerHTML = questions.map((q, i) => {
-    const s = qStatus[i] || 'not_visited';
-    let cls = 'q-dot';
-    if (s === 'answered')     { cls += ' answered';     counts['answered']++; }
-    else if (s === 'marked')  { cls += ' marked';       counts['marked']++; }
-    else if (s === 'ans_marked') { cls += ' ans-marked'; counts['ans-marked']++; }
-    else if (s === 'not_answered') { cls += ' not-answered'; counts['not-answered']++; }
-    else { counts['not-visited']++; }
-    if (i === currentQ) cls += ' current';
-    return `<div class="${cls}" onclick="showQuestion(${i})">${i+1}</div>`;
-  }).join('');
-  // Update legend counts
-  const el = (id) => document.getElementById(id);
-  if (el('cnt-answered'))   el('cnt-answered').textContent   = counts['answered'];
-  if (el('cnt-not-answered')) el('cnt-not-answered').textContent = counts['not-answered'];
-  if (el('cnt-not-visited')) el('cnt-not-visited').textContent = counts['not-visited'];
-  if (el('cnt-marked'))     el('cnt-marked').textContent     = counts['marked'];
-  if (el('cnt-ans-marked')) el('cnt-ans-marked').textContent = counts['ans-marked'];
+function togglePanel() {
+  const s = document.getElementById('ntaSidebar');
+  const isMob = window.innerWidth <= 600;
+  if (isMob) { s.classList.toggle('mob-open'); }
+  else { s.classList.toggle('collapsed'); }
+  const open = isMob ? s.classList.contains('mob-open') : !s.classList.contains('collapsed');
+  document.getElementById('btnTogglePanel').textContent = open ? '📋 Hide' : '📋 Panel';
 }
 
 // ============ INIT ============
@@ -784,7 +709,7 @@ async function startQuiz(testName) {
   if (error || !data || data.length === 0) { alert('⚠️ Questions load nahi hue!'); return; }
 
   questions = data; currentQ = 0; answers = {}; lockedAnswers = new Set(); pendingAnswer = null;
-  savedQuestions = new Set(); // reset saved questions for new test
+  savedQuestions = new Set();
   initQStatus();
   posMarking = questions[0].positive_marking || 1;
   negMarking = questions[0].negative_marking || 0;
@@ -796,31 +721,27 @@ async function startQuiz(testName) {
   document.getElementById('resultScreen').classList.remove('show');
   document.getElementById('quizBody').style.display = 'block';
   document.getElementById('quizFooter').style.display = 'flex';
-  document.getElementById('qNavDots').style.display = 'flex';
+  document.getElementById('qNavDots').style.display = 'grid';
+  // Setup sidebar
+  const sidebar = document.getElementById('ntaSidebar');
+  sidebar.classList.remove('collapsed','mob-open');
+  if (window.innerWidth <= 600) sidebar.classList.remove('mob-open');
+  document.getElementById('btnTogglePanel').textContent = window.innerWidth > 600 ? '📋 Hide' : '📋 Panel';
   await loadSavedForTest();
   renderQNavDots(); showQuestion(0); startTimer();
   document.getElementById('quizOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
-  // Mobile pe sidebar hidden by default
-  sidebarVisible = window.innerWidth > 600;
-  const sb2 = document.getElementById('ntaSidebar');
-  sb2.classList.toggle('show-mobile', false);
-  sb2.classList.toggle('hidden', !sidebarVisible);
-  document.getElementById('btnSidebarToggle').textContent = sidebarVisible ? '📋 Hide Panel' : '📋 Panel';
 }
 
 // ============ QUESTION ============
 function showQuestion(idx) {
   currentQ = idx;
   pendingAnswer = null;
-  // Mark as not_answered when first visited
-  if (qStatus[idx] === 'not_visited' || qStatus[idx] === undefined) {
-    qStatus[idx] = 'not_answered';
-  }
+  if (!qStatus[idx] || qStatus[idx]==='not_visited') qStatus[idx]='not_answered';
   const q = questions[idx], total = questions.length;
   document.getElementById('qNumber').textContent = `Question ${idx+1} of ${total}`;
   document.getElementById('qText').innerHTML = q.question_text;
-  document.getElementById('quizProgressText2').textContent = `${idx+1}/${total}`;
+  document.getElementById('quizProgressText').textContent = `${idx+1}/${total}`;
   document.getElementById('quizProgressFill').style.width = ((idx+1)/total*100) + '%';
 
   const selected = answers[idx]; // previously selected answer
@@ -853,6 +774,7 @@ function selectOption(opt) {
     return;
   }
   answers[currentQ] = opt; // save answer
+  if (qStatus[currentQ]!=='ans_marked') qStatus[currentQ]='answered';
   // Just highlight selected
   document.querySelectorAll('.option-btn').forEach(b => {
     b.classList.remove('selected');
@@ -864,10 +786,25 @@ function selectOption(opt) {
 function prevQ() { if (currentQ>0) showQuestion(currentQ-1); }
 function nextQ() { if (currentQ<questions.length-1) showQuestion(currentQ+1); }
 function renderQNavDots() {
+  let counts = {answered:0, not_answered:0, not_visited:0, marked:0, ans_marked:0};
   document.getElementById('qNavDots').innerHTML = questions.map((q,i) => {
-    let cls = 'q-dot' + (answers[i]!==undefined?' answered':'') + (i===currentQ?' current':'');
+    const s = qStatus[i] || 'not_visited';
+    counts[s] = (counts[s]||0) + 1;
+    let cls = 'q-dot';
+    if (s==='answered')     cls += ' answered';
+    else if (s==='marked')  cls += ' marked';
+    else if (s==='ans_marked') cls += ' ans-marked';
+    else if (s==='not_answered') cls += ' not-answered';
+    if (i===currentQ) cls += ' current';
     return `<div class="${cls}" onclick="showQuestion(${i})">${i+1}</div>`;
   }).join('');
+  // Update legend counts
+  const set = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('cntAnswered', counts.answered||0);
+  set('cntNotAnswered', counts.not_answered||0);
+  set('cntNotVisited', counts.not_visited||0);
+  set('cntMarked', counts.marked||0);
+  set('cntAnsMarked', counts.ans_marked||0);
 }
 
 // ============ TIMER ============
@@ -955,7 +892,6 @@ async function submitQuiz() {
 function reattemptOnce() {
   answers={}; lockedAnswers=new Set(); pendingAnswer=null; currentQ=0;
   timeLeft=(questions[0].test_duration||30)*60;
-  initQStatus();
   document.getElementById('resultScreen').classList.remove('show');
   document.getElementById('quizBody').style.display='block';
   document.getElementById('quizFooter').style.display='flex';
@@ -1011,76 +947,47 @@ async function viewResult(testName) {
   document.getElementById('rWrong').textContent   = wrong;
   document.getElementById('rSkip').textContent    = skip;
 
-  // Reset rank/leaderboard before fresh fetch
+  // Hide reattempt btn here (handled from test list)
+  document.getElementById('reattemptBtn').style.display = 'none';
+  // answers object blank
+  answers = {};
+  // Reset rank/lb
   document.getElementById('rankPercentileRow').style.display = 'none';
   document.getElementById('leaderboardBox').style.display = 'none';
   document.getElementById('lbList').innerHTML = '';
 
-  // Hide reattempt btn here (handled from test list)
-  document.getElementById('reattemptBtn').style.display = 'none';
-
-  // answers object blank (for analysis)
-  answers = {};
-
-  // ── RANK + PERCENTILE + LEADERBOARD (real time) ──
-  try {
-    // Kitne log higher score pe hain
-    const { count: higherCount } = await sb.from('test_attempts')
-      .select('*', { count:'exact', head:true })
-      .eq('test_name', testName)
-      .gt('score', score);
-
-    // Total attempts
-    const { count: totalCount } = await sb.from('test_attempts')
-      .select('*', { count:'exact', head:true })
-      .eq('test_name', testName);
-
-    const rank       = (higherCount || 0) + 1;
-    const totalAtts  = totalCount || 1;
-    const percentile = Math.round(((totalAtts - rank) / totalAtts) * 100);
-
-    document.getElementById('rankPercentileRow').style.display = 'grid';
-    document.getElementById('rpRank').textContent = `#${rank}`;
-    document.getElementById('rpRank').style.color = rank===1?'#ffb300':rank<=3?'#4285f4':'#e63946';
-    document.getElementById('rpTotal').textContent = totalAtts;
-    document.getElementById('rpPercentile').textContent = `${percentile}%`;
-    document.getElementById('rpPercentile').style.color = percentile>=90?'#00c853':percentile>=70?'#4285f4':'#e63946';
-
-    // Top 10 real students with names
-    const { data: top10Raw } = await sb.from('test_attempts')
-      .select('score, user_id')
-      .eq('test_name', testName)
-      .order('score', { ascending: false })
-      .limit(10);
-
-    if (top10Raw && top10Raw.length > 0) {
-      // Fetch user names from profiles/leaderboard
-      const userIds = [...new Set(top10Raw.map(r => r.user_id))];
-      const { data: profiles } = await sb.from('leaderboard')
-        .select('user_id, full_name')
-        .in('user_id', userIds);
-
-      const nameMap = {};
-      (profiles || []).forEach(p => { nameMap[p.user_id] = p.full_name; });
-
-      const medals = ['🥇','🥈','🥉'];
-      const lbHtml = top10Raw.map((row, i) => {
-        const isMe = row.user_id === currentUser.id;
-        const name = nameMap[row.user_id] || (isMe ? 'You' : 'Student '+(i+1));
-        return `<div class="lb-row${isMe?' lb-me':''}">
-          <span class="lb-pos">${medals[i]||'#'+(i+1)}</span>
-          <span class="lb-name">${isMe ? '⭐ '+name : name}</span>
-          <span class="lb-score">${row.score} pts</span>
-        </div>`;
-      }).join('');
-
-      document.getElementById('lbList').innerHTML = lbHtml;
-      document.getElementById('leaderboardBox').style.display = 'block';
-    }
-  } catch(e) { console.error('Rank/leaderboard error:', e); }
-
   document.getElementById('quizOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
+
+  // ── RANK + LEADERBOARD ──
+  try {
+    const { count: higherCount } = await sb.from('test_attempts')
+      .select('*',{count:'exact',head:true}).eq('test_name',testName).gt('score',score);
+    const { count: totalCount } = await sb.from('test_attempts')
+      .select('*',{count:'exact',head:true}).eq('test_name',testName);
+    const rank = (higherCount||0)+1, totalAtts = totalCount||1;
+    const percentile = Math.round(((totalAtts-rank)/totalAtts)*100);
+    document.getElementById('rankPercentileRow').style.display='grid';
+    document.getElementById('rpRank').textContent=`#${rank}`;
+    document.getElementById('rpRank').style.color=rank===1?'#ffb300':rank<=3?'#4285f4':'#e63946';
+    document.getElementById('rpTotal').textContent=totalAtts;
+    document.getElementById('rpPercentile').textContent=`${percentile}%`;
+    document.getElementById('rpPercentile').style.color=percentile>=90?'#00c853':percentile>=70?'#4285f4':'#e63946';
+    const {data:top10} = await sb.from('test_attempts').select('score,user_id')
+      .eq('test_name',testName).order('score',{ascending:false}).limit(10);
+    if (top10&&top10.length>0) {
+      const uids=[...new Set(top10.map(r=>r.user_id))];
+      const {data:profiles} = await sb.from('leaderboard').select('user_id,full_name').in('user_id',uids);
+      const nm={}; (profiles||[]).forEach(p=>{nm[p.user_id]=p.full_name;});
+      const medals=['🥇','🥈','🥉'];
+      document.getElementById('lbList').innerHTML=top10.map((r,i)=>{
+        const isMe=r.user_id===currentUser.id;
+        const name=nm[r.user_id]||(isMe?'You':'Student '+(i+1));
+        return `<div class="lb-row${isMe?' lb-me':''}"><span class="lb-pos">${medals[i]||'#'+(i+1)}</span><span class="lb-name">${isMe?'⭐ '+name:name}</span><span class="lb-score">${r.score} pts</span></div>`;
+      }).join('');
+      document.getElementById('leaderboardBox').style.display='block';
+    }
+  } catch(e){console.error(e);}
 }
 
 function exitQuiz() {
