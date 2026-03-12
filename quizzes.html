@@ -428,7 +428,6 @@ body.dark .lb-name { color:#e8eaf0; }
       <div class="result-title" id="resultTitle">Test Complete!</div>
       <div class="result-score" id="resultScore">0</div>
       <div class="result-sub" id="resultSub">out of 0 marks</div>
-      <!-- RANK + PERCENTILE ROW -->
       <div class="rank-percentile-row" id="rankPercentileRow" style="display:none;">
         <div class="rp-card rp-rank"><div class="rp-val" id="rpRank">--</div><div class="rp-label">🏆 Your Rank</div></div>
         <div class="rp-card rp-total"><div class="rp-val" id="rpTotal">--</div><div class="rp-label">👥 Total Students</div></div>
@@ -439,36 +438,6 @@ body.dark .lb-name { color:#e8eaf0; }
         <div class="r-stat r-wrong"><div class="r-stat-val" id="rWrong">0</div><div class="r-stat-label">Wrong</div></div>
         <div class="r-stat r-skip"><div class="r-stat-val" id="rSkip">0</div><div class="r-stat-label">Skipped</div></div>
       </div>
-      <!-- TOP 10 LEADERBOARD -->
-      <div class="leaderboard-box" id="leaderboardBox" style="display:none;">
-        <div class="lb-title">🥇 Top 10 Students</div>
-        <div id="lbList"></div>
-      </div>
-      <div class="result-icon" id="resultIcon">🎉</div>
-      <div class="result-title" id="resultTitle">Test Complete!</div>
-      <div class="result-score" id="resultScore">0</div>
-      <div class="result-sub" id="resultSub">out of 0 marks</div>
-      <!-- RANK + PERCENTILE ROW -->
-      <div class="rank-percentile-row" id="rankPercentileRow" style="display:none;">
-        <div class="rp-card rp-rank">
-          <div class="rp-val" id="rpRank">--</div>
-          <div class="rp-label">🏆 Your Rank</div>
-        </div>
-        <div class="rp-card rp-total">
-          <div class="rp-val" id="rpTotal">--</div>
-          <div class="rp-label">👥 Total Students</div>
-        </div>
-        <div class="rp-card rp-pct">
-          <div class="rp-val" id="rpPercentile">--</div>
-          <div class="rp-label">📊 Percentile</div>
-        </div>
-      </div>
-      <div class="result-stats">
-        <div class="r-stat r-correct"><div class="r-stat-val" id="rCorrect">0</div><div class="r-stat-label">Correct</div></div>
-        <div class="r-stat r-wrong"><div class="r-stat-val" id="rWrong">0</div><div class="r-stat-label">Wrong</div></div>
-        <div class="r-stat r-skip"><div class="r-stat-val" id="rSkip">0</div><div class="r-stat-label">Skipped</div></div>
-      </div>
-      <!-- TOP 10 LEADERBOARD -->
       <div class="leaderboard-box" id="leaderboardBox" style="display:none;">
         <div class="lb-title">🥇 Top 10 Students</div>
         <div id="lbList"></div>
@@ -851,7 +820,6 @@ function showQuestion(idx) {
   const q = questions[idx], total = questions.length;
   document.getElementById('qNumber').textContent = `Question ${idx+1} of ${total}`;
   document.getElementById('qText').innerHTML = q.question_text;
-  document.getElementById('quizProgressText').textContent = `${idx+1}/${total}`;
   document.getElementById('quizProgressText2').textContent = `${idx+1}/${total}`;
   document.getElementById('quizProgressFill').style.width = ((idx+1)/total*100) + '%';
 
