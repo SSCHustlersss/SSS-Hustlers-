@@ -54,9 +54,6 @@ nav { background:#1a1a2e; padding:0 5%; height:64px; display:flex; align-items:c
 .subject-card.ga       { --clr:#ffb300; }
 .subject-card.ca       { --clr:#9c27b0; }
 .subject-card.fulltest { --clr:#e65100; }
-/* Locked test badge */
-.locked-badge { background:#f5f5f5; border:1.5px solid #e0e0e0; border-radius:10px; padding:8px 14px; font-size:0.82rem; font-weight:700; color:#888; text-align:center; cursor:not-allowed; }
-.unlock-time { font-size:0.7rem; font-weight:500; color:#e63946; margin-top:3px; white-space:nowrap; }
 .sc-icon  { font-size:2rem; margin-bottom:10px; }
 .sc-name  { font-size:0.9rem; font-weight:800; margin-bottom:4px; }
 .sc-count { font-size:0.75rem; color:#aaa; margin-bottom:12px; min-height:18px; }
@@ -454,7 +451,6 @@ body.dark .btn-close-profile { background:#252932; color:#9ca3af; }
     <button class="exam-tab" onclick="switchExam('ntpc',this)">🚂 NTPC</button>
     <button class="exam-tab" onclick="switchExam('ssc_steno',this)">✍️ SSC Steno</button>
     <button class="exam-tab" onclick="switchExam('ssc_phase14',this)">📋 Phase XIV</button>
-    <button class="exam-tab" onclick="switchExam('civil',this)">🏛️ Civil Exams</button>
   </div>
 
   <!-- BREADCRUMB -->
@@ -651,22 +647,9 @@ const SUBJECTS_MAP = {
     { key:'current_affairs', label:'Current Affairs', icon:'📰', cls:'ca' },
     { key:'full_test', label:'Full Test', icon:'📋', cls:'fulltest' },
   ],
-  civil: [
-    { key:'ancient_history',  label:'Ancient History',  icon:'🏛️', cls:'maths' },
-    { key:'medieval_history', label:'Medieval History', icon:'⚔️', cls:'reasoning' },
-    { key:'modern_history',   label:'Modern History',   icon:'🗺️', cls:'english' },
-    { key:'geography',        label:'Geography',        icon:'🌍', cls:'ga' },
-    { key:'polity',           label:'Polity',           icon:'⚖️', cls:'ca' },
-    { key:'economics',        label:'Economics',        icon:'📈', cls:'fulltest' },
-    { key:'physics',          label:'Physics',          icon:'⚡', cls:'maths' },
-    { key:'chemistry',        label:'Chemistry',        icon:'🧪', cls:'reasoning' },
-    { key:'maths',            label:'Maths',            icon:'🔢', cls:'english' },
-    { key:'statistics',       label:'Statistics',       icon:'📊', cls:'ga' },
-    { key:'full_test',        label:'Full Test',        icon:'📋', cls:'fulltest' },
-  ],
 };
 function getSubjects() { return SUBJECTS_MAP[currentExam] || SUBJECTS_MAP['ssc_cgl']; }
-const EXAM_LABELS = { ssc_cgl:'SSC CGL', ssc_chsl:'SSC CHSL', ssc_mts:'SSC MTS', ssc_gd:'SSC GD', ntpc:'NTPC', ssc_steno:'SSC Steno', ssc_phase14:'Phase XIV', civil:'Civil Exams' };
+const EXAM_LABELS = { ssc_cgl:'SSC CGL', ssc_chsl:'SSC CHSL', ssc_mts:'SSC MTS', ssc_gd:'SSC GD', ntpc:'NTPC', ssc_steno:'SSC Steno', ssc_phase14:'Phase XIV' };
 
 let currentExam = 'ssc_cgl', currentSubject = null, currentUser = null;
 let questions = [], currentQ = 0, answers = {}, timerInterval = null;
@@ -706,7 +689,20 @@ function hasDevanagari(text) {
 function splitLang(text) {
   if (!text) return { en: '', hi: '' };
 
-  // Line by line check — pehli Hindi line dhundo
+  // ── FORMAT A: "English / हिंदी" — option format (single line, ' / ' separator) ──
+  // Sirf tab use karo jab ek hi line ho aur ' / ' ke baad Devanagari ho
+  if (!text.includes('\n') && text.includes(' / ')) {
+    const slashIdx = text.indexOf(' / ');
+    const afterSlash = text.slice(slashIdx + 3);
+    if (/[\u0900-\u097F]/.test(afterSlash)) {
+      return {
+        en: text.slice(0, slashIdx).trim(),
+        hi: afterSlash.trim()
+      };
+    }
+  }
+
+  // ── FORMAT B: \n separator (CSV/Supabase questions) ──
   const lines = text.split('\n');
   let firstHindiIdx = -1;
   for (let i = 0; i < lines.length; i++) {
@@ -717,7 +713,7 @@ function splitLang(text) {
   }
   if (firstHindiIdx === -1) return { en: text, hi: '' };
 
-  // Pehli Hindi line se pehle agar sirf number/bullet lines hain (jaise "1.") to unhe Hindi mein daal do
+  // Pehli Hindi line se pehle agar sirf number/bullet lines hain to unhe Hindi mein daal do
   let splitAt = firstHindiIdx;
   while (splitAt > 0) {
     const prev = lines[splitAt - 1].trim();
@@ -737,6 +733,26 @@ function splitLang(text) {
 // Current language mein text return karo
 function getLangText(text) {
   if (!hasHindi) return text || '';
+
+  // ── FORMAT 1: <span class="hindi">...</span> wala format ──
+  // Agar text mein HTML span.hindi hai to CSS se handle hoga
+  // EN mode: span.hindi ka content strip karo
+  // HI mode: sirf span.hindi ka content dikhao
+  if (/<span[^>]*class=["'][^"']*hindi[^"']*["'][^>]*>/i.test(text)) {
+    if (currentLang === 'en') {
+      // Remove <span class="hindi">...</span> aur uske aas-paas <br> bhi
+      return text
+        .replace(/<br\s*\/?>\s*<span[^>]*class=["'][^"']*hindi[^"']*["'][^>]*>[\s\S]*?<\/span>/gi, '')
+        .replace(/<span[^>]*class=["'][^"']*hindi[^"']*["'][^>]*>[\s\S]*?<\/span>/gi, '')
+        .trim();
+    } else {
+      // HI mode: sirf hindi span ka andar wala content nikalo
+      const hiMatch = text.match(/<span[^>]*class=["'][^"']*hindi[^"']*["'][^>]*>([\s\S]*?)<\/span>/i);
+      return hiMatch ? hiMatch[1].trim() : text;
+    }
+  }
+
+  // ── FORMAT 2: \n separator wala format (Supabase CSV questions) ──
   const split = splitLang(text);
   if (currentLang === 'en') return split.en || text || '';
   if (!split.hi) return split.en || text || '';
@@ -883,7 +899,7 @@ async function openSubject(key, label, icon) {
   document.getElementById('testList').innerHTML = '<div class="loading-box"><span class="spinner"></span>Loading tests...</div>';
 
   const { data, error } = await sb.from('quizzes')
-    .select('test_name, positive_marking, negative_marking, test_duration, difficulty, unlock_at')
+    .select('test_name, positive_marking, negative_marking, test_duration, difficulty')
     .eq('exam_type', currentExam).eq('subject', key)
     .not('test_name', 'is', null)
     .order('created_at', { ascending: true });
@@ -898,7 +914,7 @@ async function openSubject(key, label, icon) {
   const testMap = {};
   data.forEach(row => {
     if (!row.test_name) return;
-    if (!testMap[row.test_name]) testMap[row.test_name] = { count:0, pos:row.positive_marking, neg:row.negative_marking, dur:row.test_duration, diff:row.difficulty, unlock_at:row.unlock_at };
+    if (!testMap[row.test_name]) testMap[row.test_name] = { count:0, pos:row.positive_marking, neg:row.negative_marking, dur:row.test_duration, diff:row.difficulty };
     testMap[row.test_name].count++;
   });
 
@@ -931,17 +947,7 @@ async function openSubject(key, label, icon) {
       let actionBtn = '';
       let statusTag = '';
 
-      // Check unlock_at — agar future mein hai toh lock karo
-      const now = new Date();
-      const unlockDate = info.unlock_at ? new Date(info.unlock_at) : null;
-      const isLocked = unlockDate && unlockDate > now;
-
-      if (isLocked) {
-        // Format date/time in Indian style
-        const opts = { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:true };
-        const unlockStr = unlockDate.toLocaleString('en-IN', opts);
-        actionBtn = `<div class="locked-badge">🔒 Locked<div class="unlock-time">Opens: ${unlockStr}</div></div>`;
-      } else if (attemptCount === 0) {
+      if (attemptCount === 0) {
         // Never attempted
         actionBtn = `<button class="btn-start-test" onclick="event.stopPropagation();startQuiz('${esc(name)}')">Start Test →</button>`;
       } else {
