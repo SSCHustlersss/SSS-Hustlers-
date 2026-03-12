@@ -277,20 +277,147 @@ body.dark .as-card-label { color:#9ca3af; } padding:11px 24px; border-radius:10p
 body.dark .rp-card { background:#1a1e28; border-color:#2a2e3a; }
 body.dark .rp-label { color:#9ca3af; }
 
-/* LEADERBOARD */
-.leaderboard-box { background:#f9f9f9; border-radius:14px; padding:14px 16px; margin:12px 0; border:2px solid #e8e8e8; text-align:left; }
-.lb-title { font-size:0.88rem; font-weight:800; margin-bottom:10px; color:#1a1a2e; }
-.lb-row { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; margin-bottom:6px; background:#fff; border:1.5px solid #f0f0f0; font-size:0.82rem; }
-.lb-row.lb-me { background:#fff5f5; border-color:#e63946; font-weight:700; }
-.lb-pos { font-size:1rem; width:28px; flex-shrink:0; text-align:center; }
-.lb-name { flex:1; font-weight:600; color:#1a1a2e; }
-.lb-score { font-weight:800; color:#e63946; }
-.lb-row.lb-me .lb-name { color:#e63946; }
-body.dark .leaderboard-box { background:#1a1e28; border-color:#2a2e3a; }
-body.dark .lb-title { color:#e8eaf0; }
-body.dark .lb-row { background:#252932; border-color:#2a2e3a; }
-body.dark .lb-row.lb-me { background:rgba(230,57,70,0.1); border-color:#e63946; }
-body.dark .lb-name { color:#e8eaf0; }
+/* ===== LEADERBOARD — DARK GAMING STYLE ===== */
+.leaderboard-box {
+  background: linear-gradient(160deg, #0d0d1a 0%, #1a1a2e 100%);
+  border-radius: 18px;
+  padding: 20px 14px 16px;
+  margin: 14px 0;
+  border: 1.5px solid rgba(255,255,255,0.08);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.leaderboard-box::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(45deg, transparent, transparent 18px, rgba(255,255,255,0.018) 18px, rgba(255,255,255,0.018) 20px),
+    repeating-linear-gradient(-45deg, transparent, transparent 18px, rgba(255,200,0,0.018) 18px, rgba(255,200,0,0.018) 20px);
+  pointer-events: none;
+}
+.lb-title {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.lb-subtitle {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+/* ── TOP 3 PODIUM ── */
+.lb-podium {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 14px;
+  margin-bottom: 22px;
+  position: relative;
+  z-index: 1;
+}
+.lb-podium-item { display:flex; flex-direction:column; align-items:center; gap:5px; }
+.lb-podium-item.p1 { order:2; }
+.lb-podium-item.p2 { order:1; margin-bottom: -8px; }
+.lb-podium-item.p3 { order:3; margin-bottom: -8px; }
+
+.lb-podium-rank-num {
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: rgba(255,255,255,0.7);
+}
+.lb-podium-circle {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.lb-podium-circle img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+
+/* Gold #1 */
+.lb-podium-item.p1 .lb-podium-circle {
+  width: 78px; height: 78px;
+  background: linear-gradient(145deg, #f5e642, #e6a817);
+  border: 3px solid #ffd700;
+  box-shadow: 0 0 22px rgba(255,215,0,0.45);
+}
+/* Silver #2 */
+.lb-podium-item.p2 .lb-podium-circle {
+  width: 62px; height: 62px;
+  background: linear-gradient(145deg, #d0d0d0, #8a8a8a);
+  border: 3px solid #c0c0c0;
+  box-shadow: 0 0 14px rgba(192,192,192,0.35);
+}
+/* Bronze #3 */
+.lb-podium-item.p3 .lb-podium-circle {
+  width: 58px; height: 58px;
+  background: linear-gradient(145deg, #d4956a, #8b5a2b);
+  border: 3px solid #cd7f32;
+  box-shadow: 0 0 14px rgba(205,127,50,0.35);
+}
+
+.lb-podium-name {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+  max-width: 82px;
+  word-break: break-word;
+  line-height: 1.2;
+}
+.lb-podium-name.lb-me-name { color: #ffd700; }
+.lb-podium-score-badge {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* ── REST LIST (pill rows) ── */
+.lb-rest-list { display:flex; flex-direction:column; gap:7px; position:relative; z-index:1; }
+.lb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 50px;
+  background: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.lb-row.lb-me {
+  background: linear-gradient(90deg, #ffd70022, #ffd70011);
+  border: 1.5px solid #ffd700;
+}
+.lb-pos {
+  font-size: 0.82rem;
+  font-weight: 900;
+  color: #333;
+  width: 28px;
+  flex-shrink: 0;
+  text-align: center;
+}
+.lb-row.lb-me .lb-pos { color: #ffd700; }
+.lb-name { flex:1; font-weight:700; color:#1a1a2e; text-align:left; }
+.lb-row.lb-me .lb-name { color:#ffd700; }
+.lb-score { font-weight:800; color:#e63946; font-size:0.82rem; }
+.lb-row.lb-me .lb-score { color:#ffd700; }
 
 /* BOOKMARK / SAVE */
 .btn-bookmark { background:transparent; border:none; cursor:pointer; font-size:1.2rem; padding:4px 8px; border-radius:8px; transition:all 0.15s; color:#ccc; flex-shrink:0; }
@@ -1112,13 +1239,19 @@ function updateTimerDisplay() {
 
 // ── LEADERBOARD HELPER: Unique students, best score per user ──
 async function getLeaderboardData(testName) {
-  const { data: allAttempts } = await sb.from('test_attempts')
-    .select('user_id, score, full_name, avatar_url')
-    .ilike('test_name', testName.trim())
-    .order('score', { ascending: false });
+  // Step 1: test_attempts se data fetch karo
+  let allAttempts = null;
+  try {
+    const { data, error } = await sb.from('test_attempts')
+      .select('user_id, score, full_name, avatar_url')
+      .ilike('test_name', testName.trim())
+      .order('score', { ascending: false });
+    if (!error) allAttempts = data;
+  } catch(e) {}
+
   if (!allAttempts || allAttempts.length === 0) return { uniqueUsers: [], totalStudents: 0 };
 
-  // Per user sirf best score rakh lo (deduplicate)
+  // Step 2: Per user sirf best score rakh lo (deduplicate)
   const bestMap = {};
   allAttempts.forEach(r => {
     if (!bestMap[r.user_id] || r.score > bestMap[r.user_id].score) {
@@ -1128,19 +1261,21 @@ async function getLeaderboardData(testName) {
 
   const uniqueUsers = Object.values(bestMap).sort((a, b) => b.score - a.score);
 
-  // Profiles table se latest avatar_url fetch karo (overwrite karo agar naya hai)
+  // Step 3: Profiles table se avatar fetch karo — ye optional hai, fail hone pe leaderboard block nahi hoga
   try {
     const uids = uniqueUsers.map(u => u.user_id);
-    const { data: profiles } = await sb.from('profiles').select('user_id, avatar_url, full_name').in('user_id', uids);
-    if (profiles) {
+    const { data: profiles, error: profErr } = await sb.from('profiles')
+      .select('user_id, avatar_url, full_name')
+      .in('user_id', uids);
+    if (!profErr && profiles) {
       const profileMap = {};
       profiles.forEach(p => { profileMap[p.user_id] = p; });
       uniqueUsers.forEach(u => {
         if (profileMap[u.user_id]?.avatar_url) u.avatar_url = profileMap[u.user_id].avatar_url;
-        if (profileMap[u.user_id]?.full_name) u.full_name = profileMap[u.user_id].full_name;
+        if (profileMap[u.user_id]?.full_name && !u.full_name) u.full_name = profileMap[u.user_id].full_name;
       });
     }
-  } catch(e) {}
+  } catch(e) { /* profiles table nahi bani abhi tak — koi baat nahi */ }
 
   return { uniqueUsers, totalStudents: uniqueUsers.length };
 }
@@ -1713,53 +1848,62 @@ function updateOnlineStatus() {
 }
 
 
-// ============ RENDER LEADERBOARD (podium + list) ============
+// ============ RENDER LEADERBOARD (dark gaming style) ============
 function renderLeaderboard(top10, myUserId) {
-  const medals = ['🥇','🥈','🥉'];
   const top3 = top10.slice(0, 3);
   const rest = top10.slice(3);
 
-  // Podium HTML
-  const podiumOrder = [
-    { idx:1, cls:'p2', size:'lb-podium-2' },
-    { idx:0, cls:'p1', size:'lb-podium-1' },
-    { idx:2, cls:'p3', size:'lb-podium-3' },
+  // Helper: avatar html
+  function avatarHtml(r, size) {
+    const localAvatar = localStorage.getItem('avatar_' + r.user_id);
+    const src = localAvatar || r.avatar_url;
+    const name = r.full_name || 'Student';
+    const initials = name.slice(0,2).toUpperCase();
+    return src
+      ? `<img src="${src}" alt="${name}" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:50%;">`
+      : `<span style="font-size:${Math.round(size*0.36)}px">${initials}</span>`;
+  }
+
+  // Podium order: #2 left, #1 center (tallest), #3 right
+  const podiumSlots = [
+    { idx:1, cls:'p2', rankLabel:'#2' },
+    { idx:0, cls:'p1', rankLabel:'#1' },
+    { idx:2, cls:'p3', rankLabel:'#3' },
   ];
-  const podiumHtml = top3.length >= 1 ? `
+  const podiumHtml = top3.length > 0 ? `
     <div class="lb-podium">
-      ${podiumOrder.filter(p => top3[p.idx]).map(p => {
-        const r = top3[p.idx];
+      ${podiumSlots.filter(s => top3[s.idx]).map(s => {
+        const r = top3[s.idx];
         const isMe = r.user_id === myUserId;
         const name = r.full_name || (isMe ? 'You' : 'Student');
-        const initials = name.slice(0,2).toUpperCase();
-        const localAvatar = localStorage.getItem('avatar_' + r.user_id);
-        const photoHtml = (localAvatar || r.avatar_url)
-          ? `<img src="${localAvatar || r.avatar_url}" alt="${name}"/>`
-          : initials;
-        return `<div class="lb-podium-item ${p.cls}">
-          <span class="lb-podium-rank">${medals[p.idx]||''}</span>
-          <div class="lb-podium-circle ${p.size}">${photoHtml}</div>
-          <div class="lb-podium-name">${isMe?'⭐ '+name:name}</div>
-          <div class="lb-podium-score">${r.score} pts</div>
+        const sz = s.idx === 0 ? 72 : s.idx === 1 ? 58 : 54;
+        return `<div class="lb-podium-item ${s.cls}">
+          <div class="lb-podium-rank-num">${s.rankLabel}</div>
+          <div class="lb-podium-circle">${avatarHtml(r, sz)}</div>
+          <div class="lb-podium-name${isMe?' lb-me-name':''}">${isMe?'★ '+name:name}</div>
+          <div class="lb-podium-score-badge">${r.score} pts</div>
         </div>`;
       }).join('')}
     </div>` : '';
 
-  // Rest list
-  const restHtml = rest.map((r,i) => {
-    const isMe = r.user_id === myUserId;
-    const name = r.full_name || (isMe ? 'You' : 'Student '+(i+4));
-    return `<div class="lb-row${isMe?' lb-me':''}">
-      <span class="lb-pos">#${i+4}</span>
-      <span class="lb-name">${isMe?'⭐ '+name:name}</span>
-      <span class="lb-score">${r.score} pts</span>
-    </div>`;
-  }).join('');
+  // Rest: white pill rows
+  const restHtml = rest.length > 0 ? `
+    <div class="lb-rest-list">
+      ${rest.map((r,i) => {
+        const isMe = r.user_id === myUserId;
+        const name = r.full_name || (isMe ? 'You' : 'Student '+(i+4));
+        return `<div class="lb-row${isMe?' lb-me':''}">
+          <span class="lb-pos">#${i+4}</span>
+          <span class="lb-name">${isMe?'★ '+name:name}</span>
+          <span class="lb-score">${r.score} pts</span>
+        </div>`;
+      }).join('')}
+    </div>` : '';
 
   document.getElementById('lbList').innerHTML = podiumHtml + restHtml;
   document.getElementById('leaderboardBox').style.display = 'block';
 
-  // Fireworks agar rank 1,2,3 mein hoon
+  // Fireworks agar top 3 mein hoon
   const myRank = top10.findIndex(r => r.user_id === myUserId);
   if (myRank >= 0 && myRank < 3) launchFireworks();
 }
