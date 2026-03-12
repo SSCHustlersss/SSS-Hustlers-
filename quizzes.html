@@ -555,12 +555,32 @@ function hasDevanagari(text) {
 // Split bilingual text — English part aur Hindi part alag karo
 function splitLang(text) {
   if (!text) return { en: '', hi: '' };
-  // Hindi text detect karo — Devanagari characters ke aage se split karo
-  const devanagariStart = text.search(/[\u0900-\u097F]/);
-  if (devanagariStart === -1) return { en: text, hi: '' };
+
+  // Line by line check — pehli Hindi line dhundo
+  const lines = text.split('\n');
+  let firstHindiIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (/[\u0900-\u097F]/.test(lines[i])) {
+      firstHindiIdx = i;
+      break;
+    }
+  }
+  if (firstHindiIdx === -1) return { en: text, hi: '' };
+
+  // Pehli Hindi line se pehle agar sirf number/bullet lines hain (jaise "1.") to unhe Hindi mein daal do
+  let splitAt = firstHindiIdx;
+  while (splitAt > 0) {
+    const prev = lines[splitAt - 1].trim();
+    if (/^\d+\.?$/.test(prev) || prev === '') {
+      splitAt--;
+    } else {
+      break;
+    }
+  }
+
   return {
-    en: text.slice(0, devanagariStart).trim(),
-    hi: text.slice(devanagariStart).trim()
+    en: lines.slice(0, splitAt).join('\n').trim(),
+    hi: lines.slice(splitAt).join('\n').trim()
   };
 }
 
@@ -1039,6 +1059,7 @@ async function viewResult(testName) {
 
   if (error || !data || data.length === 0) { alert('⚠️ Questions load nahi hue!'); return; }
   questions = data;
+  detectHindi(); // Language toggle aur split ke liye
 
   // Get last attempt data
   const { data: attData } = await sb.from('test_attempts')
