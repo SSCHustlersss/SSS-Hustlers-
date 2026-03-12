@@ -134,21 +134,25 @@ nav { background:#1a1a2e; padding:0 5%; height:64px; display:flex; align-items:c
 .btn-prev { background:#fff; color:#333; border:1px solid #ccc; }
 .btn-next { background:#2e7d32; color:#fff; }
 .btn-submit { background:#1565c0; color:#fff; }
+/* SIDEBAR TOGGLE BUTTON */
+.btn-sidebar-toggle { background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.25); padding:5px 10px; border-radius:6px; font-size:0.8rem; font-weight:700; cursor:pointer; font-family:inherit; white-space:nowrap; }
+.btn-sidebar-toggle:hover { background:rgba(255,255,255,0.25); }
 /* NTA SIDEBAR (right) */
-.nta-sidebar { width:225px; background:#fff; border-left:1px solid #ccc; display:flex; flex-direction:column; overflow:hidden; flex-shrink:0; }
+.nta-sidebar { width:220px; min-width:220px; background:#fff; border-left:1px solid #ccc; display:flex; flex-direction:column; overflow:hidden; flex-shrink:0; transition:width 0.25s, min-width 0.25s; }
+.nta-sidebar.hidden { width:0; min-width:0; border-left:none; overflow:hidden; }
 .nta-legend { padding:10px 12px; border-bottom:1px solid #e0e0e0; }
-.legend-row { display:flex; align-items:center; gap:8px; margin-bottom:5px; font-size:0.72rem; color:#444; }
+.legend-row { display:flex; align-items:center; gap:8px; margin-bottom:5px; font-size:0.72rem; color:#444; white-space:nowrap; }
 .ls { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; flex-shrink:0; color:#fff; }
 .ls.answered    { background:#2e7d32; }
 .ls.not-answered{ background:#c62828; }
 .ls.not-visited { background:#9e9e9e; color:#fff; }
 .ls.marked      { background:#7b1fa2; }
 .ls.ans-marked  { background:#7b1fa2; outline:2px solid #2e7d32; outline-offset:1px; }
-.nta-section-hdr { background:#1565c0; color:#fff; padding:6px 10px; font-size:0.78rem; font-weight:700; flex-shrink:0; }
-.nta-choose-q { padding:6px 10px; font-size:0.75rem; color:#555; font-weight:700; border-bottom:1px solid #e0e0e0; text-align:center; flex-shrink:0; }
+.nta-section-hdr { background:#1565c0; color:#fff; padding:6px 10px; font-size:0.78rem; font-weight:700; flex-shrink:0; white-space:nowrap; }
+.nta-choose-q { padding:6px 10px; font-size:0.75rem; color:#555; font-weight:700; border-bottom:1px solid #e0e0e0; text-align:center; flex-shrink:0; white-space:nowrap; }
 /* Question Palette */
-.q-nav-dots { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; padding:10px; overflow-y:auto; flex:1; align-content:start; }
-.q-dot { width:100%; aspect-ratio:1; border-radius:4px; font-size:0.78rem; font-weight:700; cursor:pointer; border:1.5px solid #ccc; background:#e0e0e0; color:#555; display:flex; align-items:center; justify-content:center; transition:all 0.12s; }
+.q-nav-dots { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; padding:8px; overflow-y:auto; flex:1; align-content:start; }
+.q-dot { width:100%; height:36px; border-radius:4px; font-size:0.78rem; font-weight:700; cursor:pointer; border:1.5px solid #ccc; background:#e0e0e0; color:#555; display:flex; align-items:center; justify-content:center; transition:all 0.12s; }
 .q-dot.answered     { background:#2e7d32; border-color:#2e7d32; color:#fff; }
 .q-dot.not-answered { background:#c62828; border-color:#c62828; color:#fff; }
 .q-dot.marked       { background:#7b1fa2; border-color:#7b1fa2; color:#fff; }
@@ -156,7 +160,17 @@ nav { background:#1a1a2e; padding:0 5%; height:64px; display:flex; align-items:c
 .q-dot.current      { outline:2px solid #e65100; outline-offset:2px; }
 /* Sidebar submit */
 .nta-submit-wrap { padding:10px; border-top:1px solid #e0e0e0; flex-shrink:0; }
-.nta-submit-btn { width:100%; background:#1565c0; color:#fff; border:none; padding:10px; border-radius:5px; cursor:pointer; font-weight:700; font-size:0.88rem; font-family:inherit; }
+.nta-submit-btn { width:100%; background:#1565c0; color:#fff; border:none; padding:10px; border-radius:5px; cursor:pointer; font-weight:700; font-size:0.88rem; font-family:inherit; white-space:nowrap; }
+/* Mobile: sidebar hidden by default */
+@media(max-width:600px) {
+  .nta-sidebar { width:0; min-width:0; border-left:none; }
+  .nta-sidebar.show-mobile { width:220px; min-width:220px; border-left:1px solid #ccc; position:absolute; right:0; top:0; bottom:0; z-index:10; box-shadow:-4px 0 16px rgba(0,0,0,0.15); }
+  .nta-content { position:relative; }
+  .quiz-footer { flex-wrap:wrap; gap:5px; }
+  .nta-footer-left, .nta-footer-right { flex-wrap:wrap; gap:5px; }
+  .btn-mark-review { font-size:0.72rem; padding:7px 10px; }
+  .btn-clear-resp { font-size:0.72rem; padding:7px 10px; }
+}
 /* Result screen */
 .result-screen { flex:1; overflow-y:auto; padding:28px 22px; text-align:center; display:none; background:#fff; }
 .result-screen.show { display:block; }
@@ -401,7 +415,8 @@ body.dark .lb-name { color:#e8eaf0; }
       <div class="quiz-meta-row">
         <span style="font-size:0.72rem;color:rgba(255,255,255,0.5)">Time Left</span>
         <div class="quiz-timer" id="quizTimer">--:--</div>
-        <div class="quiz-progress-text" id="quizProgressText">0/0</div>
+        <div class="quiz-progress-text" id="quizProgressText2">0/0</div>
+        <button class="btn-sidebar-toggle" onclick="toggleSidebar()" id="btnSidebarToggle">📋 Panel</button>
         <button class="btn-exit" onclick="exitQuiz()">✕ Exit</button>
       </div>
     </div>
@@ -474,7 +489,6 @@ body.dark .lb-name { color:#e8eaf0; }
         <div class="nta-marks-bar">
           Marks for correct answer <strong style="color:#2e7d32">+<span id="mPos">1</span></strong>
           &nbsp;|&nbsp; Negative Marks <strong style="color:#c62828">-<span id="mNeg">0</span></strong>
-          <span class="ml" id="quizProgressText">0/0</span>
         </div>
         <div class="nta-blue-strip"></div>
 
@@ -503,7 +517,7 @@ body.dark .lb-name { color:#e8eaf0; }
       </div>
 
       <!-- RIGHT: Sidebar Palette -->
-      <div class="nta-sidebar">
+      <div class="nta-sidebar" id="ntaSidebar">
         <!-- Legend -->
         <div class="nta-legend">
           <div class="legend-row"><span class="ls answered" id="cnt-answered">0</span> Answered</div>
@@ -553,6 +567,23 @@ let questions = [], currentQ = 0, answers = {}, timerInterval = null;
 let timeLeft = 0, posMarking = 1, negMarking = 0, activeTestName = '';
 let lockedAnswers = new Set(); // questions where answer is revealed
 let pendingAnswer = null;      // selected but not yet revealed
+
+// ============ SIDEBAR TOGGLE ============
+let sidebarVisible = window.innerWidth > 600;
+function toggleSidebar() {
+  const sb = document.getElementById('ntaSidebar');
+  const btn = document.getElementById('btnSidebarToggle');
+  if (window.innerWidth <= 600) {
+    // Mobile: overlay mode
+    sidebarVisible = !sidebarVisible;
+    sb.classList.toggle('show-mobile', sidebarVisible);
+  } else {
+    // Desktop: shrink/expand
+    sidebarVisible = !sidebarVisible;
+    sb.classList.toggle('hidden', !sidebarVisible);
+  }
+  btn.textContent = sidebarVisible ? '📋 Hide Panel' : '📋 Panel';
+}
 
 // ============ NTA QUESTION STATUS ============
 let qStatus = {}; // 'not_visited','not_answered','answered','marked','ans_marked'
@@ -801,6 +832,12 @@ async function startQuiz(testName) {
   renderQNavDots(); showQuestion(0); startTimer();
   document.getElementById('quizOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
+  // Mobile pe sidebar hidden by default
+  sidebarVisible = window.innerWidth > 600;
+  const sb2 = document.getElementById('ntaSidebar');
+  sb2.classList.toggle('show-mobile', false);
+  sb2.classList.toggle('hidden', !sidebarVisible);
+  document.getElementById('btnSidebarToggle').textContent = sidebarVisible ? '📋 Hide Panel' : '📋 Panel';
 }
 
 // ============ QUESTION ============
@@ -815,6 +852,7 @@ function showQuestion(idx) {
   document.getElementById('qNumber').textContent = `Question ${idx+1} of ${total}`;
   document.getElementById('qText').innerHTML = q.question_text;
   document.getElementById('quizProgressText').textContent = `${idx+1}/${total}`;
+  document.getElementById('quizProgressText2').textContent = `${idx+1}/${total}`;
   document.getElementById('quizProgressFill').style.width = ((idx+1)/total*100) + '%';
 
   const selected = answers[idx]; // previously selected answer
