@@ -85,7 +85,7 @@ nav { background:#1a1a2e; padding:0 5%; height:64px; display:flex; align-items:c
 .quiz-overlay { display:none; position:fixed; inset:0; z-index:200; background:#f0f0f0; flex-direction:column; }
 .quiz-overlay.show { display:flex; }
 .quiz-modal { display:flex; flex-direction:column; width:100%; height:100vh; overflow:hidden; position:relative; }
-.quiz-header { background:#1a1a2e; padding:6px 14px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; flex-wrap:wrap; gap:8px; }
+.quiz-header { background:#1a1a2e; padding:6px 14px; display:none; align-items:center; justify-content:space-between; flex-shrink:0; flex-wrap:wrap; gap:8px; }
 .quiz-title { font-size:0.88rem; font-weight:700; color:#fff; }
 .quiz-title span { color:#e63946; }
 .quiz-meta-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
@@ -367,24 +367,25 @@ body.dark .lb-name { color:#e8eaf0; }
 #offlineBar.show { display:block; }
 
 /* ===== TOP 3 PODIUM ===== */
-.lb-podium { display:flex; justify-content:center; align-items:flex-end; gap:12px; margin:10px 0 22px; }
-.lb-podium-item { display:flex; flex-direction:column; align-items:center; gap:6px; }
+.lb-podium { display:flex; justify-content:center; align-items:flex-end; gap:18px; margin:16px 0 24px; padding:10px 0; }
+.lb-podium-item { display:flex; flex-direction:column; align-items:center; gap:8px; transition: transform 0.3s; }
+.lb-podium-item:hover { transform: translateY(-4px); }
 .lb-podium-circle {
   border-radius:50%; display:flex; align-items:center; justify-content:center;
   font-weight:900; color:#fff; position:relative; flex-shrink:0;
-  box-shadow:0 6px 20px rgba(0,0,0,0.18);
+  box-shadow:0 8px 28px rgba(0,0,0,0.22);
   overflow:hidden;
 }
 .lb-podium-circle img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
-.lb-podium-1 { width:80px; height:80px; background:linear-gradient(135deg,#f7971e,#ffd200); font-size:1.15rem; border:3px solid #ffd200; }
-.lb-podium-2 { width:66px; height:66px; background:linear-gradient(135deg,#bdc3c7,#636e72); font-size:1rem; border:3px solid #bdc3c7; }
-.lb-podium-3 { width:58px; height:58px; background:linear-gradient(135deg,#cd7f32,#e67e22); font-size:0.9rem; border:3px solid #cd7f32; }
-.lb-podium-rank { font-size:1.3rem; }
-.lb-podium-name { font-size:0.72rem; font-weight:800; color:#1a1a2e; text-align:center; max-width:80px; word-break:break-word; }
-.lb-podium-score { font-size:0.7rem; font-weight:700; color:#e63946; }
-.lb-podium-item.p1 { order:2; }
-.lb-podium-item.p2 { order:1; }
-.lb-podium-item.p3 { order:3; }
+.lb-podium-1 { width:96px; height:96px; background:linear-gradient(135deg,#f7971e,#ffd200); font-size:1.4rem; border:4px solid #ffd200; box-shadow:0 0 0 6px rgba(255,210,0,0.18), 0 8px 28px rgba(0,0,0,0.22); }
+.lb-podium-2 { width:76px; height:76px; background:linear-gradient(135deg,#bdc3c7,#636e72); font-size:1.1rem; border:3px solid #bdc3c7; box-shadow:0 0 0 5px rgba(189,195,199,0.18), 0 6px 20px rgba(0,0,0,0.18); }
+.lb-podium-3 { width:68px; height:68px; background:linear-gradient(135deg,#cd7f32,#e67e22); font-size:1rem; border:3px solid #cd7f32; box-shadow:0 0 0 5px rgba(205,127,50,0.18), 0 6px 20px rgba(0,0,0,0.18); }
+.lb-podium-rank { font-size:1.6rem; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.15)); }
+.lb-podium-name { font-size:0.75rem; font-weight:800; color:#1a1a2e; text-align:center; max-width:90px; word-break:break-word; line-height:1.3; }
+.lb-podium-score { font-size:0.72rem; font-weight:800; color:#e63946; background:rgba(230,57,70,0.08); padding:2px 8px; border-radius:20px; }
+.lb-podium-item.p1 { order:2; margin-bottom:16px; }
+.lb-podium-item.p2 { order:1; margin-bottom:0; }
+.lb-podium-item.p3 { order:3; margin-bottom:0; }
 .lb-podium-base { width:100%; padding:4px 6px; border-radius:0 0 8px 8px; text-align:center; font-size:0.65rem; font-weight:800; color:#fff; margin-top:-2px; }
 .p1 .lb-podium-base { background:linear-gradient(135deg,#f7971e,#ffd200); }
 .p2 .lb-podium-base { background:linear-gradient(135deg,#bdc3c7,#636e72); }
@@ -519,7 +520,7 @@ body.dark .btn-close-profile { background:#252932; color:#9ca3af; }
         <div class="r-stat r-skip"><div class="r-stat-val" id="rSkip">0</div><div class="r-stat-label">Skipped</div></div>
       </div>
       <div class="leaderboard-box" id="leaderboardBox" style="display:none;">
-        <div class="lb-title">🥇 Top 10 Students</div>
+        <div class="lb-title" style="text-align:center; font-size:1rem; font-weight:900; margin-bottom:4px; letter-spacing:0.5px;">🏆 Leaderboard</div>
         <div id="lbList"></div>
       </div>
       <div>
@@ -1037,6 +1038,7 @@ async function startQuiz(testName) {
   detectHindi();
   renderQNavDots(); showQuestion(0); startTimer();
   document.getElementById('quizOverlay').classList.add('show');
+  document.querySelector('.quiz-header').style.display='flex';
   document.body.style.overflow = 'hidden';
 }
 
@@ -1156,6 +1158,7 @@ async function submitQuiz() {
   document.getElementById('quizBody').style.display='none';
   document.getElementById('quizFooter').style.display='none';
   document.getElementById('qNavDots').style.display='none';
+  document.querySelector('.quiz-header').style.display='none';
   document.getElementById('resultScreen').classList.add('show');
   document.querySelector('.nta-body').style.display='none';
   document.getElementById('resultIcon').textContent  = pct>=70?'🎉':pct>=40?'😊':'😔';
@@ -1222,6 +1225,7 @@ function reattemptOnce() {
   document.getElementById('quizFooter').style.display='flex';
   document.getElementById('qNavDots').style.display='flex';
   document.querySelector('.nta-body').style.display='flex';
+  document.querySelector('.quiz-header').style.display='flex';
   renderQNavDots(); showQuestion(0); startTimer();
 }
 
@@ -1285,6 +1289,7 @@ async function viewResult(testName) {
   document.getElementById('lbList').innerHTML = '';
 
   document.getElementById('quizOverlay').classList.add('show');
+  document.querySelector('.quiz-header').style.display='flex';
   document.body.style.overflow = 'hidden';
 
   // ── RANK + LEADERBOARD (deduplicated) ──
@@ -1326,6 +1331,7 @@ function exitQuiz() {
   document.getElementById('quizFooter').style.display='flex';
   document.getElementById('qNavDots').style.display='flex';
   document.querySelector('.nta-body').style.display='flex';
+  document.querySelector('.quiz-header').style.display='flex';
   document.getElementById('reattemptBtn').style.display='';
   // Refresh test list to show updated attempt status
   if (currentSubject) openSubject(currentSubject.key, currentSubject.label, currentSubject.icon);
