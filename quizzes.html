@@ -53,6 +53,7 @@ nav { background:#1a1a2e; padding:0 5%; height:64px; display:flex; align-items:c
 .subject-card.reasoning{ --clr:#00c853; }
 .subject-card.ga       { --clr:#ffb300; }
 .subject-card.ca       { --clr:#9c27b0; }
+.subject-card.fulltest { --clr:#e65100; }
 .sc-icon  { font-size:2rem; margin-bottom:10px; }
 .sc-name  { font-size:0.9rem; font-weight:800; margin-bottom:4px; }
 .sc-count { font-size:0.75rem; color:#aaa; margin-bottom:12px; min-height:18px; }
@@ -92,6 +93,11 @@ nav { background:#1a1a2e; padding:0 5%; height:64px; display:flex; align-items:c
 .quiz-progress-text { font-size:0.75rem; color:rgba(255,255,255,0.55); }
 .btn-exit { background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:5px 13px; border-radius:6px; font-size:0.78rem; cursor:pointer; font-family:inherit; }
 .btn-toggle-panel { background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:5px 10px; border-radius:6px; font-size:0.78rem; cursor:pointer; font-family:inherit; }
+/* Language Toggle */
+.lang-toggle { display:flex; background:rgba(255,255,255,0.1); border-radius:6px; overflow:hidden; border:1px solid rgba(255,255,255,0.2); }
+.lang-btn { background:transparent; color:rgba(255,255,255,0.7); border:none; padding:5px 10px; font-size:0.78rem; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+.lang-btn.active { background:#e63946; color:#fff; }
+.lang-btn:hover:not(.active) { background:rgba(255,255,255,0.15); color:#fff; }
 .quiz-progress-bar { height:3px; background:#2a2e3a; flex-shrink:0; }
 .quiz-progress-fill { height:100%; background:#e63946; transition:width 0.3s; }
 /* NTA two-panel layout */
@@ -304,11 +310,24 @@ body.dark .lb-name { color:#e8eaf0; }
 .saved-q-chip:hover { background:#bf360c; }
 .analysis-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:300; overflow-y:auto; padding:20px; }
 .analysis-overlay.show { display:block; }
-.analysis-box { background:#fff; border-radius:20px; width:100%; max-width:720px; margin:0 auto; overflow:hidden; animation:popIn 0.3s ease; }
-.analysis-header { background:#1a1a2e; padding:16px 22px; display:flex; align-items:center; justify-content:space-between; }
+.analysis-box { background:#fff; border-radius:20px; width:100%; max-width:720px; margin:0 auto; overflow:hidden; animation:popIn 0.3s ease; display:flex; flex-direction:column; max-height:90vh; }
+.analysis-header { background:#1a1a2e; padding:16px 22px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
 .analysis-header h2 { font-size:1rem; font-weight:800; color:#fff; }
 .btn-close-analysis { background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:7px 16px; border-radius:8px; font-size:0.82rem; cursor:pointer; font-family:inherit; }
-.analysis-body { padding:20px; }
+/* Filter Tabs */
+.analysis-tabs { display:flex; gap:0; border-bottom:2px solid #e8e8e8; flex-shrink:0; overflow-x:auto; }
+.a-tab { flex:1; min-width:80px; padding:11px 8px; font-size:0.78rem; font-weight:700; cursor:pointer; font-family:inherit; border:none; background:#fff; color:#888; border-bottom:3px solid transparent; margin-bottom:-2px; transition:all 0.15s; white-space:nowrap; }
+.a-tab:hover { color:#1a1a2e; background:#f5f5f5; }
+.a-tab.active { color:#e63946; border-bottom-color:#e63946; background:#fff; }
+/* Body */
+.analysis-body { padding:20px; overflow-y:auto; flex:1; }
+/* Nav */
+.analysis-nav { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; border-top:1px solid #e8e8e8; background:#f9f9f9; flex-shrink:0; }
+.a-nav-btn { background:#1a1a2e; color:#fff; border:none; padding:9px 22px; border-radius:8px; font-size:0.85rem; font-weight:700; cursor:pointer; font-family:inherit; }
+.a-nav-btn:disabled { background:#ccc; cursor:not-allowed; }
+.a-nav-next { background:#e63946; }
+.a-nav-next:disabled { background:#ccc; }
+.a-nav-counter { font-size:0.85rem; font-weight:700; color:#555; }
 .analysis-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; }
 .as-card { border-radius:12px; padding:14px; text-align:center; }
 .as-card.correct { background:#f0fff4; border:2px solid #b7f0c8; }
@@ -393,6 +412,10 @@ body.dark .lb-name { color:#e8eaf0; }
         <span style="font-size:0.7rem;color:rgba(255,255,255,0.5)">Time Left</span>
         <div class="quiz-timer" id="quizTimer">--:--</div>
         <div class="quiz-progress-text" id="quizProgressText">0/0</div>
+        <div class="lang-toggle" id="langToggle" style="display:none;">
+          <button class="lang-btn active" id="langEN" onclick="setLang('en')">EN</button>
+          <button class="lang-btn" id="langHI" onclick="setLang('hi')">हि</button>
+        </div>
         <button class="btn-toggle-panel" onclick="togglePanel()" id="btnTogglePanel">📋 Panel</button>
         <button class="btn-exit" onclick="exitQuiz()">✕ Exit</button>
       </div>
@@ -494,6 +517,7 @@ const SUBJECTS = [
   { key:'reasoning',      label:'Reasoning',             icon:'🧠', cls:'reasoning' },
   { key:'ga',             label:'General Awareness',     icon:'🌍', cls:'ga' },
   { key:'current_affairs',label:'Current Affairs',       icon:'📰', cls:'ca' },
+  { key:'full_test',      label:'Full Test',             icon:'📋', cls:'fulltest' },
 ];
 const EXAM_LABELS = { ssc_cgl:'SSC CGL', ssc_chsl:'SSC CHSL', ssc_mts:'SSC MTS', ssc_gd:'SSC GD', ntpc:'NTPC' };
 
@@ -503,7 +527,101 @@ let timeLeft = 0, posMarking = 1, negMarking = 0, activeTestName = '';
 let lockedAnswers = new Set(); // questions where answer is revealed
 let pendingAnswer = null;      // selected but not yet revealed
 
-// ============ NTA STATUS ============
+// ── Helper: user_ids se names fetch karo ──
+async function fetchNames(userIds) {
+  const nm = {};
+  try {
+    const { data: lb } = await sb.from('leaderboard').select('user_id,full_name').in('user_id', userIds);
+    (lb||[]).forEach(p => { if(p.full_name) nm[p.user_id] = p.full_name; });
+  } catch(e) {}
+  // Jo missing hain unke liye auth metadata se fallback
+  userIds.forEach(id => {
+    if (!nm[id] && id === currentUser?.id) {
+      nm[id] = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'You';
+    }
+  });
+  return nm;
+}
+
+// ============ LANGUAGE TOGGLE ============
+let currentLang = 'en';
+let hasHindi = false;
+
+// Devanagari Unicode range check
+function hasDevanagari(text) {
+  return /[\u0900-\u097F]/.test(text || '');
+}
+
+// Split bilingual text — English part aur Hindi part alag karo
+function splitLang(text) {
+  if (!text) return { en: '', hi: '' };
+  // Hindi text detect karo — Devanagari characters ke aage se split karo
+  const devanagariStart = text.search(/[\u0900-\u097F]/);
+  if (devanagariStart === -1) return { en: text, hi: '' };
+  return {
+    en: text.slice(0, devanagariStart).trim(),
+    hi: text.slice(devanagariStart).trim()
+  };
+}
+
+// Current language mein text return karo
+function getLangText(text) {
+  if (!hasHindi || currentLang === 'en') return text || '';
+  const split = splitLang(text);
+  return (split.hi || split.en) || text || '';
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  document.getElementById('langEN').classList.toggle('active', lang === 'en');
+  document.getElementById('langHI').classList.toggle('active', lang === 'hi');
+  // Current question re-render karo
+  renderQuestionContent(currentQ);
+}
+
+// Check karo kya koi bhi question mein Hindi hai
+function detectHindi() {
+  hasHindi = questions.some(q =>
+    hasDevanagari(q.question_text) ||
+    hasDevanagari(q.option_a) ||
+    hasDevanagari(q.option_b)
+  );
+  const toggle = document.getElementById('langToggle');
+  toggle.style.display = hasHindi ? 'flex' : 'none';
+  if (!hasHindi) currentLang = 'en';
+}
+
+// Question content render (language aware)
+function renderQuestionContent(idx) {
+  const q = questions[idx];
+  const total = questions.length;
+  document.getElementById('qNumber').textContent = `Question ${idx+1} of ${total}`;
+  document.getElementById('qText').innerHTML = getLangText(q.question_text);
+  document.getElementById('quizProgressText').textContent = `${idx+1}/${total}`;
+  document.getElementById('quizProgressFill').style.width = ((idx+1)/total*100) + '%';
+
+  const selected = answers[idx];
+  const opts = [
+    {k:'A', v: getLangText(q.option_a)},
+    {k:'B', v: getLangText(q.option_b)},
+    {k:'C', v: getLangText(q.option_c)},
+    {k:'D', v: getLangText(q.option_d)}
+  ];
+
+  document.getElementById('optionsList').innerHTML = opts.map(o => {
+    let cls = 'option-btn';
+    if (o.k === selected) cls += ' selected';
+    return `<button class="${cls}" onclick="selectOption('${o.k}')">
+      <span class="option-label">${o.k}</span><span>${o.v||''}</span></button>`;
+  }).join('');
+
+  document.getElementById('explanationBox').classList.remove('show');
+  document.getElementById('btnPrev').style.display   = idx===0 ? 'none':'inline-block';
+  document.getElementById('btnNext').style.display   = idx===total-1 ? 'none':'inline-block';
+  document.getElementById('btnSubmit').style.display = idx===total-1 ? 'inline-block':'none';
+  updateBookmarkBtn();
+  renderQNavDots();
+}
 let qStatus = {};
 function initQStatus() {
   qStatus = {};
@@ -728,6 +846,10 @@ async function startQuiz(testName) {
   if (window.innerWidth <= 600) sidebar.classList.remove('mob-open');
   document.getElementById('btnTogglePanel').textContent = window.innerWidth > 600 ? '📋 Hide' : '📋 Panel';
   await loadSavedForTest();
+  currentLang = 'en';
+  document.getElementById('langEN').classList.add('active');
+  document.getElementById('langHI').classList.remove('active');
+  detectHindi();
   renderQNavDots(); showQuestion(0); startTimer();
   document.getElementById('quizOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
@@ -738,31 +860,7 @@ function showQuestion(idx) {
   currentQ = idx;
   pendingAnswer = null;
   if (!qStatus[idx] || qStatus[idx]==='not_visited') qStatus[idx]='not_answered';
-  const q = questions[idx], total = questions.length;
-  document.getElementById('qNumber').textContent = `Question ${idx+1} of ${total}`;
-  document.getElementById('qText').innerHTML = q.question_text;
-  document.getElementById('quizProgressText').textContent = `${idx+1}/${total}`;
-  document.getElementById('quizProgressFill').style.width = ((idx+1)/total*100) + '%';
-
-  const selected = answers[idx]; // previously selected answer
-
-  document.getElementById('optionsList').innerHTML = [
-    {k:'A',v:q.option_a},{k:'B',v:q.option_b},{k:'C',v:q.option_c},{k:'D',v:q.option_d}
-  ].map(o => {
-    let cls = 'option-btn';
-    if (o.k === selected) cls += ' selected'; // just show selection, no correct/wrong
-    return `<button class="${cls}" onclick="selectOption('${o.k}')">
-      <span class="option-label">${o.k}</span><span>${o.v||''}</span></button>`;
-  }).join('');
-
-  // No explanation during exam
-  document.getElementById('explanationBox').classList.remove('show');
-
-  document.getElementById('btnPrev').style.display   = idx===0 ? 'none':'inline-block';
-  document.getElementById('btnNext').style.display   = idx===total-1 ? 'none':'inline-block';
-  document.getElementById('btnSubmit').style.display = idx===total-1 ? 'inline-block':'none';
-  updateBookmarkBtn();
-  renderQNavDots();
+  renderQuestionContent(idx);
 }
 
 function selectOption(opt) {
@@ -831,6 +929,7 @@ async function submitQuiz() {
   document.getElementById('quizFooter').style.display='none';
   document.getElementById('qNavDots').style.display='none';
   document.getElementById('resultScreen').classList.add('show');
+  document.querySelector('.nta-body').style.display='none';
   document.getElementById('resultIcon').textContent  = pct>=70?'🎉':pct>=40?'😊':'😔';
   document.getElementById('resultTitle').textContent = pct>=70?'Bahut Badhiya!':pct>=40?'Achha Kiya!':'Aur Practice Karo!';
   document.getElementById('resultScore').textContent = score.toFixed(1);
@@ -840,6 +939,26 @@ async function submitQuiz() {
   document.getElementById('rSkip').textContent=skip;
   try {
     await sb.from('test_attempts').insert({ user_id:currentUser.id, test_name:activeTestName, score:parseFloat(score.toFixed(1)), total_marks:totalMarks, correct_answers:correct, wrong_answers:wrong, questions_attempted:questions.length-skip });
+
+    // ── Leaderboard update karo (naam bhi save karo) ──
+    const userName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Student';
+    try {
+      const { data: existing } = await sb.from('leaderboard').select('total_score,tests_attempted').eq('user_id', currentUser.id).single();
+      if (existing) {
+        await sb.from('leaderboard').update({
+          full_name: userName,
+          total_score: (existing.total_score || 0) + parseFloat(score.toFixed(1)),
+          tests_attempted: (existing.tests_attempted || 0) + 1
+        }).eq('user_id', currentUser.id);
+      } else {
+        await sb.from('leaderboard').insert({
+          user_id: currentUser.id,
+          full_name: userName,
+          total_score: parseFloat(score.toFixed(1)),
+          tests_attempted: 1
+        });
+      }
+    } catch(e) { console.error('Leaderboard update error:', e); }
     // ── RANK + PERCENTILE + LEADERBOARD ──
     const finalScore = parseFloat(score.toFixed(1));
 
@@ -874,16 +993,18 @@ async function submitQuiz() {
       .limit(10);
 
     if (top10 && top10.length > 0) {
+      const uids = [...new Set(top10.map(r => r.user_id))];
+      const nm = await fetchNames(uids);
       const medals = ['🥇','🥈','🥉'];
-      const lbHtml = top10.map((row, i) => {
+      document.getElementById('lbList').innerHTML = top10.map((row, i) => {
         const isMe = row.user_id === currentUser.id;
+        const name = nm[row.user_id] || (isMe ? (currentUser.user_metadata?.full_name||'You') : 'Student '+(i+1));
         return `<div class="lb-row${isMe?' lb-me':''}">
           <span class="lb-pos">${medals[i]||'#'+(i+1)}</span>
-          <span class="lb-name">${isMe ? '⭐ You' : 'Student '+(i+1)}</span>
+          <span class="lb-name">${isMe?'⭐ '+name:name}</span>
           <span class="lb-score">${row.score} pts</span>
         </div>`;
       }).join('');
-      document.getElementById('lbList').innerHTML = lbHtml;
       document.getElementById('leaderboardBox').style.display = 'block';
     }
   } catch(e){}
@@ -892,10 +1013,12 @@ async function submitQuiz() {
 function reattemptOnce() {
   answers={}; lockedAnswers=new Set(); pendingAnswer=null; currentQ=0;
   timeLeft=(questions[0].test_duration||30)*60;
+  initQStatus();
   document.getElementById('resultScreen').classList.remove('show');
   document.getElementById('quizBody').style.display='block';
   document.getElementById('quizFooter').style.display='flex';
   document.getElementById('qNavDots').style.display='flex';
+  document.querySelector('.nta-body').style.display='flex';
   renderQNavDots(); showQuestion(0); startTimer();
 }
 
@@ -938,6 +1061,7 @@ async function viewResult(testName) {
   document.getElementById('quizFooter').style.display = 'none';
   document.getElementById('qNavDots').style.display = 'none';
   document.getElementById('resultScreen').classList.add('show');
+  document.querySelector('.nta-body').style.display='none';
 
   document.getElementById('resultIcon').textContent  = pct>=70?'🎉':pct>=40?'😊':'😔';
   document.getElementById('resultTitle').textContent = pct>=70?'Bahut Badhiya!':pct>=40?'Achha Kiya!':'Aur Practice Karo!';
@@ -977,12 +1101,11 @@ async function viewResult(testName) {
       .eq('test_name',testName).order('score',{ascending:false}).limit(10);
     if (top10&&top10.length>0) {
       const uids=[...new Set(top10.map(r=>r.user_id))];
-      const {data:profiles} = await sb.from('leaderboard').select('user_id,full_name').in('user_id',uids);
-      const nm={}; (profiles||[]).forEach(p=>{nm[p.user_id]=p.full_name;});
+      const nm = await fetchNames(uids);
       const medals=['🥇','🥈','🥉'];
       document.getElementById('lbList').innerHTML=top10.map((r,i)=>{
         const isMe=r.user_id===currentUser.id;
-        const name=nm[r.user_id]||(isMe?'You':'Student '+(i+1));
+        const name=nm[r.user_id]||(isMe?(currentUser.user_metadata?.full_name||'You'):'Student '+(i+1));
         return `<div class="lb-row${isMe?' lb-me':''}"><span class="lb-pos">${medals[i]||'#'+(i+1)}</span><span class="lb-name">${isMe?'⭐ '+name:name}</span><span class="lb-score">${r.score} pts</span></div>`;
       }).join('');
       document.getElementById('leaderboardBox').style.display='block';
@@ -998,6 +1121,7 @@ function exitQuiz() {
   document.getElementById('quizBody').style.display='block';
   document.getElementById('quizFooter').style.display='flex';
   document.getElementById('qNavDots').style.display='flex';
+  document.querySelector('.nta-body').style.display='flex';
   document.getElementById('reattemptBtn').style.display='';
   // Refresh test list to show updated attempt status
   if (currentSubject) openSubject(currentSubject.key, currentSubject.label, currentSubject.icon);
@@ -1156,57 +1280,144 @@ function loadTheme() {
 
 
 // ============ ANALYSIS ============
+let analysisFilter = 'all';
+let analysisIdx = 0;
+let analysisFiltered = [];
+
 function showAnalysis() {
-  const body = document.getElementById('analysisBody');
+  // Build filtered list
+  analysisFilter = 'all';
+  buildFilteredList();
+  analysisIdx = 0;
+  renderAnalysisQuestion();
+  updateAnalysisTabs();
+  document.getElementById('analysisOverlay').classList.add('show');
+}
+
+function buildFilteredList() {
+  analysisFiltered = [];
+  questions.forEach((q, i) => {
+    const a = answers[i];
+    const status = !a ? 'skip' : (a === q.correct_answer ? 'correct' : 'wrong');
+    if (analysisFilter === 'all' || analysisFilter === status) {
+      analysisFiltered.push({ q, i, status, userAns: a });
+    }
+  });
+}
+
+function setAnalysisFilter(f) {
+  analysisFilter = f;
+  buildFilteredList();
+  analysisIdx = 0;
+  renderAnalysisQuestion();
+  updateAnalysisTabs();
+}
+
+function updateAnalysisTabs() {
   let correct=0, wrong=0, skip=0;
   questions.forEach((q,i) => {
     const a = answers[i];
-    if (!a) skip++;
-    else if (a === q.correct_answer) correct++;
-    else wrong++;
+    if (!a) skip++; else if (a===q.correct_answer) correct++; else wrong++;
   });
+  document.getElementById('aTabAll').textContent    = `All (${questions.length})`;
+  document.getElementById('aTabCorrect').textContent = `✅ Correct (${correct})`;
+  document.getElementById('aTabWrong').textContent   = `❌ Wrong (${wrong})`;
+  document.getElementById('aTabSkip').textContent    = `⏭ Skipped (${skip})`;
+  ['all','correct','wrong','skip'].forEach(f => {
+    document.getElementById('aTab'+f.charAt(0).toUpperCase()+f.slice(1))
+      .classList.toggle('active', analysisFilter === f);
+  });
+  renderAnalysisQuestion();
+}
 
-  let html = `<div class="analysis-summary">
-    <div class="as-card correct"><div class="as-card-val">${correct}</div><div class="as-card-label">✅ Correct</div></div>
-    <div class="as-card wrong"><div class="as-card-val">${wrong}</div><div class="as-card-label">❌ Wrong</div></div>
-    <div class="as-card skip"><div class="as-card-val">${skip}</div><div class="as-card-label">⏭ Skipped</div></div>
-  </div>`;
+function renderAnalysisQuestion() {
+  const body = document.getElementById('analysisBody');
+  if (analysisFiltered.length === 0) {
+    body.innerHTML = `<div style="text-align:center;padding:40px;color:#aaa;font-size:0.9rem;">Koi question nahi is filter mein</div>`;
+    document.getElementById('analysisPrev').disabled = true;
+    document.getElementById('analysisNext').disabled = true;
+    document.getElementById('analysisCounter').textContent = '0 / 0';
+    return;
+  }
+  if (analysisIdx >= analysisFiltered.length) analysisIdx = analysisFiltered.length - 1;
+  if (analysisIdx < 0) analysisIdx = 0;
 
-  html += questions.map((q, i) => {
-    const userAns = answers[i];
-    const isCorrect = userAns === q.correct_answer;
-    const isSkip = !userAns;
-    const status = isSkip ? 'skip' : isCorrect ? 'correct' : 'wrong';
-    const badge  = isSkip ? 'Skipped' : isCorrect ? 'Correct ✅' : 'Wrong ❌';
+  const { q, i, status, userAns } = analysisFiltered[analysisIdx];
+  const opts = [
+    {k:'A', v: getLangText(q.option_a)},
+    {k:'B', v: getLangText(q.option_b)},
+    {k:'C', v: getLangText(q.option_c)},
+    {k:'D', v: getLangText(q.option_d)}
+  ];
+  const badge = status==='skip' ? '<span class="aq-badge skip">Skipped</span>' : status==='correct' ? '<span class="aq-badge correct">Correct ✅</span>' : '<span class="aq-badge wrong">Wrong ❌</span>';
 
-    const opts = [{k:'A',v:q.option_a},{k:'B',v:q.option_b},{k:'C',v:q.option_c},{k:'D',v:q.option_d}];
-
-    const optsHtml = opts.map(o => {
-      let cls = 'aq-opt';
-      if (o.k === q.correct_answer) cls += ' opt-correct';
-      else if (o.k === userAns && !isCorrect) cls += ' opt-wrong';
-      return `<div class="${cls}">
-        <span class="aq-opt-label">${o.k}</span>
-        <span>${esc(o.v||'')}</span>
-        ${o.k === q.correct_answer ? '<span style="margin-left:auto;font-size:0.75rem;font-weight:700;color:#00c853;">✓ Correct</span>' : ''}
-        ${o.k === userAns && !isCorrect ? '<span style="margin-left:auto;font-size:0.75rem;font-weight:700;color:#e63946;">✗ Your Answer</span>' : ''}
-      </div>`;
-    }).join('');
-
-    return `<div class="analysis-q aq-${status}">
-      <div class="aq-header">
-        <span class="aq-num">Q${i+1}</span>
-        <span class="aq-badge ${status}">${badge}</span>
-      </div>
-      <div class="aq-question">${esc(q.question_text)}</div>
-      <div class="aq-options">${optsHtml}</div>
-      ${q.explanation ? `<div class="aq-explanation"><strong>💡 Explanation:</strong> ${esc(q.explanation)}</div>` : ''}
+  const optsHtml = opts.map(o => {
+    let cls = 'aq-opt';
+    if (o.k === q.correct_answer) cls += ' opt-correct';
+    else if (o.k === userAns && status==='wrong') cls += ' opt-wrong';
+    return `<div class="${cls}">
+      <span class="aq-opt-label">${o.k}</span>
+      <span>${esc(o.v||'')}</span>
+      ${o.k === q.correct_answer ? '<span style="margin-left:auto;font-size:0.75rem;font-weight:700;color:#00c853;">✓ Correct</span>' : ''}
+      ${o.k === userAns && status==='wrong' ? '<span style="margin-left:auto;font-size:0.75rem;font-weight:700;color:#e63946;">✗ Your Answer</span>' : ''}
     </div>`;
   }).join('');
 
-  body.innerHTML = html;
-  document.getElementById('analysisOverlay').classList.add('show');
+  body.innerHTML = `
+    <div class="analysis-q aq-${status}">
+      <div class="aq-header">
+        <span class="aq-num">Q${i+1} of ${questions.length}</span>
+        ${badge}
+        <button class="btn-bookmark aq-bookmark ${savedQuestions.has(i)?'saved':''}" onclick="toggleAnalysisBookmark(${i})" title="Save this question" style="margin-left:auto;font-size:1.1rem;padding:4px 8px;">🔖</button>
+      </div>
+      <div class="aq-question">${esc(getLangText(q.question_text))}</div>
+      <div class="aq-options">${optsHtml}</div>
+      ${q.explanation ? `<div class="aq-explanation"><strong>💡 Explanation:</strong> ${esc(q.explanation)}</div>` : ''}
+    </div>`;
+
+  document.getElementById('analysisCounter').textContent = `${analysisIdx+1} / ${analysisFiltered.length}`;
+  document.getElementById('analysisPrev').disabled = analysisIdx === 0;
+  document.getElementById('analysisNext').disabled = analysisIdx === analysisFiltered.length - 1;
 }
+
+async function toggleAnalysisBookmark(idx) {
+  const q = questions[idx];
+  const btn = document.querySelector('.aq-bookmark');
+  if (savedQuestions.has(idx)) {
+    savedQuestions.delete(idx);
+    btn.classList.remove('saved');
+    btn.style.color = '';
+    try {
+      const rowId = savedQIds[idx];
+      if (rowId) {
+        await sb.from('saved_questions').delete().eq('id', rowId);
+        delete savedQIds[idx];
+      }
+    } catch(e) {}
+  } else {
+    savedQuestions.add(idx);
+    btn.classList.add('saved');
+    btn.style.color = '#e63946';
+    try {
+      const { data } = await sb.from('saved_questions').insert({
+        user_id: currentUser.id,
+        question_id: q.id || String(idx),
+        question_text: q.question_text,
+        option_a: q.option_a, option_b: q.option_b,
+        option_c: q.option_c, option_d: q.option_d,
+        correct_answer: q.correct_answer,
+        explanation: q.explanation || '',
+        subject: currentSubject?.key || '',
+        exam_type: currentExam,
+        test_name: activeTestName
+      }).select('id').single();
+      if (data) savedQIds[idx] = data.id;
+    } catch(e) {}
+  }
+}
+
+function analysisPrev() { if(analysisIdx>0){analysisIdx--;renderAnalysisQuestion();} }
+function analysisNext() { if(analysisIdx<analysisFiltered.length-1){analysisIdx++;renderAnalysisQuestion();} }
 
 function closeAnalysis() {
   document.getElementById('analysisOverlay').classList.remove('show');
@@ -1223,7 +1434,21 @@ loadTheme();
       <h2>📊 Answer Analysis</h2>
       <button class="btn-close-analysis" onclick="closeAnalysis()">✕ Close</button>
     </div>
+    <!-- Filter Tabs -->
+    <div class="analysis-tabs">
+      <button class="a-tab active" id="aTabAll"     onclick="setAnalysisFilter('all')">All</button>
+      <button class="a-tab"        id="aTabCorrect" onclick="setAnalysisFilter('correct')">✅ Correct</button>
+      <button class="a-tab"        id="aTabWrong"   onclick="setAnalysisFilter('wrong')">❌ Wrong</button>
+      <button class="a-tab"        id="aTabSkip"    onclick="setAnalysisFilter('skip')">⏭ Skipped</button>
+    </div>
+    <!-- Question Body -->
     <div class="analysis-body" id="analysisBody"></div>
+    <!-- Navigation -->
+    <div class="analysis-nav">
+      <button class="a-nav-btn" id="analysisPrev" onclick="analysisPrev()">← Prev</button>
+      <span class="a-nav-counter" id="analysisCounter">1 / 1</span>
+      <button class="a-nav-btn a-nav-next" id="analysisNext" onclick="analysisNext()">Next →</button>
+    </div>
   </div>
 </div>
 </body>
