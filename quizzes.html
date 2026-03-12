@@ -566,9 +566,10 @@ function splitLang(text) {
 
 // Current language mein text return karo
 function getLangText(text) {
-  if (!hasHindi || currentLang === 'en') return text || '';
+  if (!hasHindi) return text || '';
   const split = splitLang(text);
-  return (split.hi || split.en) || text || '';
+  if (currentLang === 'en') return split.en || text || '';
+  return split.hi || split.en || text || '';
 }
 
 function setLang(lang) {
