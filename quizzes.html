@@ -1114,7 +1114,7 @@ function updateTimerDisplay() {
 async function getLeaderboardData(testName) {
   const { data: allAttempts } = await sb.from('test_attempts')
     .select('user_id, score, full_name, avatar_url')
-    .eq('test_name', testName)
+    .ilike('test_name', testName.trim())
     .order('score', { ascending: false });
   if (!allAttempts || allAttempts.length === 0) return { uniqueUsers: [], totalStudents: 0 };
 
@@ -1231,7 +1231,7 @@ function reattemptOnce() {
 
 // ============ VIEW RESULT (from test list) ============
 async function viewResult(testName) {
-  activeTestName = testName;
+  activeTestName = testName.trim();
 
   // Load questions for analysis
   const { data, error } = await sb.from('quizzes')
@@ -1289,7 +1289,7 @@ async function viewResult(testName) {
   document.getElementById('lbList').innerHTML = '';
 
   document.getElementById('quizOverlay').classList.add('show');
-  document.querySelector('.quiz-header').style.display='flex';
+  document.querySelector('.quiz-header').style.display='none';
   document.body.style.overflow = 'hidden';
 
   // ── RANK + LEADERBOARD (deduplicated) ──
@@ -1331,7 +1331,7 @@ function exitQuiz() {
   document.getElementById('quizFooter').style.display='flex';
   document.getElementById('qNavDots').style.display='flex';
   document.querySelector('.nta-body').style.display='flex';
-  document.querySelector('.quiz-header').style.display='flex';
+  document.querySelector('.quiz-header').style.display='none';
   document.getElementById('reattemptBtn').style.display='';
   // Refresh test list to show updated attempt status
   if (currentSubject) openSubject(currentSubject.key, currentSubject.label, currentSubject.icon);
