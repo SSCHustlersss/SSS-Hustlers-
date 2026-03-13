@@ -827,24 +827,25 @@ function splitLang(text) {
 
 // Current language mein text return karo
 function getLangText(text) {
-  if (!hasHindi) return text || '';
-  const split = splitLang(text);
+  if (!text) return '';
+  // --SVG-- ya __SVG__ placeholder text hata do
+  text = text.replace(/[-_]{2}SVG[-_]{2}/gi, '').trim();
 
-  // Figures hamesha upar dikhao, dono modes mein
+  if (!hasHindi) return text;
+
+  // English mode — original text hi dikhao (figure already embedded hai)
+  if (currentLang === 'en') return text;
+
+  // Hindi mode — figure extract karo + Hindi text dikhao
+  const split = splitLang(text);
   const figureHtml = split.figures ? split.figures + '\n' : '';
 
-  if (currentLang === 'en') {
-    // English mode: figures + full English text
-    return figureHtml + (split.en || text || '');
-  }
-
-  // Hindi mode
   if (!split.hi) {
-    // Koi Hindi translation nahi — poora English dikhao (figures ke saath)
-    return figureHtml + (split.en || text || '');
+    // Hindi translation nahi — poora English (with figures)
+    return text;
   }
 
-  // Hindi mode: figures + neutral patterns + Hindi text
+  // Hindi mode: figures upar + neutral patterns + Hindi text
   const parts = [];
   if (split.neutral) parts.push(split.neutral);
   parts.push(split.hi);
