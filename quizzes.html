@@ -758,48 +758,40 @@ function extractFigures(text) {
 function getLangText(text) {
   if (!text) return '';
 
-  // SVG placeholder text hata do
+  // SVG placeholder hata do
   text = text.replace(/\s*[-_]{0,2}SVG[-_]{0,2}\s*/gi, ' ').trim();
 
   // Figures alag karo
   const { figures, text: noFig } = extractFigures(text);
   const fig = figures || '';
 
-  // EN mode — original text with figures
-  if (!hasHindi || currentLang === 'en') {
-    return fig + noFig.trim();
-  }
+  // EN mode — original as-is
+  if (!hasHindi || currentLang === 'en') return fig + noFig.trim();
 
-  // HI mode — lines classify karo
+  // HI mode — classify each line
   const lines = noFig.split('\n').map(l => l.trim()).filter(Boolean);
 
-  const hiLines = [];    // Devanagari lines
-  const neutralLines = []; // Numbers, ALL-CAPS patterns, symbols — dono modes mein dikho
-  const enOnlyLines = []; // Pure English sentences — sirf EN mode mein
+  const hiLines = [];
+  const neutralLines = [];
 
   for (const l of lines) {
     if (/[\u0900-\u097F]/.test(l)) {
+      // Devanagari — Hindi line
       hiLines.push(l);
     } else if (!/[a-zA-Z]/.test(l)) {
-      // Sirf numbers/symbols — neutral
+      // No English letters — pure numbers/symbols (3,5,7,? etc.)
       neutralLines.push(l);
-    } else if (/[a-z]{3,}/.test(l) || /[A-Z][a-z]{2,}/.test(l)) {
-      // Lowercase words hain = English sentence
-      enOnlyLines.push(l);
-    } else {
-      // ALL-CAPS, letter patterns, number series = neutral
+    } else if (/^[A-Z0-9\s:,\.?!@#$%&*()\-_+=\[\]{}|<>\/\\'"~`]+$/.test(l)) {
+      // ALL-CAPS only — letter series (ABCDE:PQRST), numbered list (1.Word 2.Word)
       neutralLines.push(l);
     }
+    // Pure English sentences — skip in Hindi mode
   }
 
-  if (hiLines.length === 0) {
-    // Koi Hindi nahi — poora original dikhao
-    return fig + noFig.trim();
-  }
+  // Koi Hindi nahi — poora original dikhao
+  if (hiLines.length === 0) return fig + noFig.trim();
 
-  // HI mode: figures + neutral patterns + Hindi text
-  const parts = [...neutralLines, ...hiLines];
-  return fig + parts.join('\n');
+  return fig + [...neutralLines, ...hiLines].join('\n');
 }
 
 function setLang(lang) {
