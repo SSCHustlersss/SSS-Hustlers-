@@ -7,6 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Quizzes | SSC Hustlers</title>
+<meta name="version" content="v3-figfix">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -743,87 +744,61 @@ function hasDevanagari(text) {
   return /[\u0900-\u097F]/.test(text || '');
 }
 
-// Figure/image/svg tags extract karo — ye dono modes mein dikhni chahiye
+// Figure/SVG/image tags extract karo
 function extractFigures(text) {
   if (!text) return { figures: '', text: '' };
   const figures = [];
   let t = text;
-  // <figure...>...</figure>
-  t = t.replace(/<figure[\s\S]*?<\/figure>/gi, m => { figures.push(m); return '__FIG__'; });
-  // <svg...>...</svg>
-  t = t.replace(/<svg[\s\S]*?<\/svg>/gi, m => { figures.push(m); return '__FIG__'; });
-  // standalone <img...>
-  t = t.replace(/<img[^>]*\/?>/gi, m => { figures.push(m); return '__FIG__'; });
+  t = t.replace(/<figure[\s\S]*?<\/figure>/gi, m => { figures.push(m); return ''; });
+  t = t.replace(/<svg[\s\S]*?<\/svg>/gi, m => { figures.push(m); return ''; });
+  t = t.replace(/<img[^>]*\/?>/gi, m => { figures.push(m); return ''; });
   return { figures: figures.join(''), text: t };
 }
 
-// Split bilingual text
-function splitLang(text) {
-  if (!text) return { en: '', hi: '', neutral: '', figures: '' };
-
-  // Figures pehle nikalo
-  const { figures, text: t } = extractFigures(text);
-
-  // SVG/figure placeholders clean karo
-  const clean = t.replace(/__FIG__/g, '').replace(/[_\-\s]*SVG[_\-\s]*/gi, '').trim();
-
-  const lines = clean.split('\n').map(l => l.trim()).filter(l => l !== '');
-
-  // Pehli Hindi line dhundo
-  let firstHindiIdx = -1;
-  for (let i = 0; i < lines.length; i++) {
-    if (/[\u0900-\u097F]/.test(lines[i])) { firstHindiIdx = i; break; }
-  }
-
-  if (firstHindiIdx === -1) {
-    // Pure English — sab neutral maan lo (series/patterns)
-    return { en: clean, hi: '', neutral: clean, figures };
-  }
-
-  const enLines = lines.slice(0, firstHindiIdx);
-  const hiLines = lines.slice(firstHindiIdx);
-
-  const neutralLines = [], pureEnLines = [];
-  for (const l of enLines) {
-    if (!/[a-zA-Z]/.test(l)) { neutralLines.push(l); continue; }
-    // ALL-CAPS only (letter series like ABCDE, PQRST)
-    if (/^[A-Z0-9\s:,\.?!@#$%&*()\-_+=\[\]{}|<>\/\\'"~`]+$/.test(l)) { neutralLines.push(l); continue; }
-    // No lowercase words (single/double letter patterns)
-    if (!/[a-z]{2,}/.test(l) && !/[A-Z][a-z]/.test(l)) { neutralLines.push(l); continue; }
-    pureEnLines.push(l);
-  }
-
-  return {
-    en:      enLines.join('\n').trim(),
-    hi:      hiLines.join('\n').trim(),
-    neutral: neutralLines.join('\n').trim(),
-    figures
-  };
-}
-
-// Language ke hisaab se text return karo
 function getLangText(text) {
   if (!text) return '';
 
-  const split = splitLang(text);
-  // Figures hamesha sabse upar
-  const fig = split.figures || '';
+  // SVG placeholder text hata do
+  text = text.replace(/\s*[-_]{0,2}SVG[-_]{0,2}\s*/gi, ' ').trim();
 
+  // Figures alag karo
+  const { figures, text: noFig } = extractFigures(text);
+  const fig = figures || '';
+
+  // EN mode — original text with figures
   if (!hasHindi || currentLang === 'en') {
-    // EN mode: figure + English lines (neutral bhi andar hai)
-    return fig + (split.en || text.replace(/[_\-\s]*SVG[_\-\s]*/gi, '').trim());
+    return fig + noFig.trim();
   }
 
-  // HI mode
-  if (!split.hi) {
-    // Koi Hindi nahi — poora English dikhao
-    return fig + (split.en || text.replace(/[_\-\s]*SVG[_\-\s]*/gi, '').trim());
+  // HI mode — lines classify karo
+  const lines = noFig.split('\n').map(l => l.trim()).filter(Boolean);
+
+  const hiLines = [];    // Devanagari lines
+  const neutralLines = []; // Numbers, ALL-CAPS patterns, symbols — dono modes mein dikho
+  const enOnlyLines = []; // Pure English sentences — sirf EN mode mein
+
+  for (const l of lines) {
+    if (/[\u0900-\u097F]/.test(l)) {
+      hiLines.push(l);
+    } else if (!/[a-zA-Z]/.test(l)) {
+      // Sirf numbers/symbols — neutral
+      neutralLines.push(l);
+    } else if (/[a-z]{3,}/.test(l) || /[A-Z][a-z]{2,}/.test(l)) {
+      // Lowercase words hain = English sentence
+      enOnlyLines.push(l);
+    } else {
+      // ALL-CAPS, letter patterns, number series = neutral
+      neutralLines.push(l);
+    }
   }
 
-  // Figure + neutral patterns (series, letter patterns) + Hindi text
-  const parts = [];
-  if (split.neutral) parts.push(split.neutral);
-  parts.push(split.hi);
+  if (hiLines.length === 0) {
+    // Koi Hindi nahi — poora original dikhao
+    return fig + noFig.trim();
+  }
+
+  // HI mode: figures + neutral patterns + Hindi text
+  const parts = [...neutralLines, ...hiLines];
   return fig + parts.join('\n');
 }
 
