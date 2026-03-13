@@ -743,113 +743,88 @@ function hasDevanagari(text) {
   return /[\u0900-\u097F]/.test(text || '');
 }
 
-// Figure/image tags extract karo — ye dono modes mein dikhni chahiye
+// Figure/image/svg tags extract karo — ye dono modes mein dikhni chahiye
 function extractFigures(text) {
   if (!text) return { figures: '', text: '' };
   const figures = [];
-  // <figure...>...</figure> tags nikalo
-  const cleaned = text.replace(/<figure[\s\S]*?<\/figure>/gi, (match) => {
-    figures.push(match);
-    return '\n__FIGURE__\n';
-  });
-  // <img...> tags bhi nikalo (standalone)
-  const cleaned2 = cleaned.replace(/<img[^>]*>/gi, (match) => {
-    figures.push(match);
-    return '\n__FIGURE__\n';
-  });
-  return { figures: figures.join('\n'), text: cleaned2 };
+  let t = text;
+  // <figure...>...</figure>
+  t = t.replace(/<figure[\s\S]*?<\/figure>/gi, m => { figures.push(m); return '__FIG__'; });
+  // <svg...>...</svg>
+  t = t.replace(/<svg[\s\S]*?<\/svg>/gi, m => { figures.push(m); return '__FIG__'; });
+  // standalone <img...>
+  t = t.replace(/<img[^>]*\/?>/gi, m => { figures.push(m); return '__FIG__'; });
+  return { figures: figures.join(''), text: t };
 }
 
-// Split bilingual text — English part aur Hindi part alag karo
+// Split bilingual text
 function splitLang(text) {
   if (!text) return { en: '', hi: '', neutral: '', figures: '' };
 
-  // Pehle figures extract karo
-  const { figures, text: textNoFig } = extractFigures(text);
+  // Figures pehle nikalo
+  const { figures, text: t } = extractFigures(text);
 
-  const lines = textNoFig.split('\n');
+  // SVG/figure placeholders clean karo
+  const clean = t.replace(/__FIG__/g, '').replace(/[_\-\s]*SVG[_\-\s]*/gi, '').trim();
 
-  // Pehli Hindi line ka index dhundo (__FIGURE__ placeholders skip karo)
+  const lines = clean.split('\n').map(l => l.trim()).filter(l => l !== '');
+
+  // Pehli Hindi line dhundo
   let firstHindiIdx = -1;
   for (let i = 0; i < lines.length; i++) {
-    const l = lines[i].trim();
-    if (l === '__FIGURE__' || l === '') continue;
-    if (/[\u0900-\u097F]/.test(l)) { firstHindiIdx = i; break; }
+    if (/[\u0900-\u097F]/.test(lines[i])) { firstHindiIdx = i; break; }
   }
 
-  // Koi Hindi nahi — pure English question
   if (firstHindiIdx === -1) {
-    const cleanEn = textNoFig.replace(/__FIGURE__\n?/g, '').trim();
-    return { en: cleanEn, hi: '', neutral: cleanEn, figures };
+    // Pure English — sab neutral maan lo (series/patterns)
+    return { en: clean, hi: '', neutral: clean, figures };
   }
 
-  // English lines (before first Hindi)
-  const enLines = lines.slice(0, firstHindiIdx)
-    .map(l => l.trim())
-    .filter(l => l !== '' && l !== '__FIGURE__');
+  const enLines = lines.slice(0, firstHindiIdx);
+  const hiLines = lines.slice(firstHindiIdx);
 
-  // Hindi lines (from first Hindi line onwards)
-  const hiLines = lines.slice(firstHindiIdx)
-    .map(l => l.trim())
-    .filter(l => l !== '' && l !== '__FIGURE__');
-
-  const hiText = hiLines.join('\n');
-  const enText = enLines.join('\n');
-
-  // Neutral = jo Hindi mode mein bhi dikhni chahiye (patterns, series, data)
-  // Aggressive detection: ALL-CAPS series, number series, symbol patterns, single-letter patterns
-  const neutralLines = [];
-  const pureEnLines = [];
-
+  const neutralLines = [], pureEnLines = [];
   for (const l of enLines) {
-    // Pure symbols/numbers — always neutral
     if (!/[a-zA-Z]/.test(l)) { neutralLines.push(l); continue; }
-
-    // ALL-CAPS pattern words (ABCDE, PQRST etc.) — letter series, treat as neutral
-    const allCapsPattern = /^[A-Z0-9\s:,\.?!@#$%&*()_+\-=\[\]{}|<>\/\\'"~`]+$/.test(l);
-    if (allCapsPattern) { neutralLines.push(l); continue; }
-
-    // Single/double letter patterns like "A → B", "A:B::C:?"
-    const hasLongWord = /[a-z]{2,}|[A-Z][a-z]+/.test(l); // lowercase words = English sentence
-    if (!hasLongWord) { neutralLines.push(l); continue; }
-
-    // Has actual English words — goes to English only
+    // ALL-CAPS only (letter series like ABCDE, PQRST)
+    if (/^[A-Z0-9\s:,\.?!@#$%&*()\-_+=\[\]{}|<>\/\\'"~`]+$/.test(l)) { neutralLines.push(l); continue; }
+    // No lowercase words (single/double letter patterns)
+    if (!/[a-z]{2,}/.test(l) && !/[A-Z][a-z]/.test(l)) { neutralLines.push(l); continue; }
     pureEnLines.push(l);
   }
 
   return {
-    en: enText,           // Full English (for EN mode)
-    hi: hiText,           // Full Hindi (for HI mode)
-    neutral: neutralLines.join('\n').trim(),  // Patterns shown in both
-    figures               // Figures shown in both
+    en:      enLines.join('\n').trim(),
+    hi:      hiLines.join('\n').trim(),
+    neutral: neutralLines.join('\n').trim(),
+    figures
   };
 }
 
-// Current language mein text return karo
+// Language ke hisaab se text return karo
 function getLangText(text) {
   if (!text) return '';
-  // --SVG-- ya __SVG__ placeholder text hata do
-  text = text.replace(/[-_]{2}SVG[-_]{2}/gi, '').trim();
 
-  if (!hasHindi) return text;
-
-  // English mode — original text hi dikhao (figure already embedded hai)
-  if (currentLang === 'en') return text;
-
-  // Hindi mode — figure extract karo + Hindi text dikhao
   const split = splitLang(text);
-  const figureHtml = split.figures ? split.figures + '\n' : '';
+  // Figures hamesha sabse upar
+  const fig = split.figures || '';
 
-  if (!split.hi) {
-    // Hindi translation nahi — poora English (with figures)
-    return text;
+  if (!hasHindi || currentLang === 'en') {
+    // EN mode: figure + English lines (neutral bhi andar hai)
+    return fig + (split.en || text.replace(/[_\-\s]*SVG[_\-\s]*/gi, '').trim());
   }
 
-  // Hindi mode: figures upar + neutral patterns + Hindi text
+  // HI mode
+  if (!split.hi) {
+    // Koi Hindi nahi — poora English dikhao
+    return fig + (split.en || text.replace(/[_\-\s]*SVG[_\-\s]*/gi, '').trim());
+  }
+
+  // Figure + neutral patterns (series, letter patterns) + Hindi text
   const parts = [];
   if (split.neutral) parts.push(split.neutral);
   parts.push(split.hi);
-  return figureHtml + parts.join('\n');
+  return fig + parts.join('\n');
 }
 
 function setLang(lang) {
