@@ -749,12 +749,28 @@ function hasDevanagari(text) {
 // Figure/SVG/image tags extract karo
 function extractFigures(text) {
   if (!text) return { figures: '', text: '' };
-  // HTML-encoded SVG/HTML ko decode karo (Supabase mein encoded ho sakti hai)
+
+  // HTML-encoded SVG decode karo
   if (text.includes('&lt;svg') || text.includes('&lt;figure') || text.includes('&lt;img')) {
     const tmp = document.createElement('textarea');
     tmp.innerHTML = text;
     text = tmp.value;
   }
+
+  // __SVG__ placeholder hata do (Supabase mein yahi store hota hai)
+  text = text.replace(/__SVG__/gi, '');
+
+  // Fix broken SVG: "< viewBox=..." → "<svg viewBox=..."
+  text = text.replace(/<\s+(viewBox\s*=)/gi, '<svg $1');
+  text = text.replace(/<\s+(xmlns\s*=)/gi, '<svg $1');
+
+  // Missing closing tag fix
+  const openCount  = (text.match(/<svg[\s>]/gi) || []).length;
+  const closeCount = (text.match(/<\/svg>/gi) || []).length;
+  if (openCount > closeCount) {
+    text = text + '</svg>'.repeat(openCount - closeCount);
+  }
+
   const figures = [];
   let t = text;
   t = t.replace(/<figure[\s\S]*?<\/figure>/gi, m => { figures.push(m); return ''; });
@@ -766,7 +782,7 @@ function extractFigures(text) {
 function getLangText(text) {
   if (!text) return '';
 
-  // SVG placeholder hata do
+  // SVG/placeholder hata do
   text = text.replace(/\s*[-_]{0,2}SVG[-_]{0,2}\s*/gi, ' ').trim();
 
   // Figures alag karo
