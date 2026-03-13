@@ -524,6 +524,7 @@ body.dark .btn-close-profile { background:#252932; color:#9ca3af; }
     ⚠️ Network nahi — online aane pe answers sync honge
   </div>
   <button onclick="resumeQuiz()" style="background:#e63946;color:#fff;border:none;padding:14px 40px;border-radius:12px;font-size:1rem;font-weight:800;cursor:pointer;font-family:inherit;margin-top:8px;">▶️ Resume Test</button>
+  <button onclick="exitQuiz()" style="background:transparent;color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.2);padding:10px 28px;border-radius:10px;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:inherit;">✕ Exit Test</button>
 </div>
 
     <!-- TOP BAR -->
@@ -742,55 +743,85 @@ function hasDevanagari(text) {
   return /[\u0900-\u097F]/.test(text || '');
 }
 
+// Figure/image tags extract karo — ye dono modes mein dikhni chahiye
+function extractFigures(text) {
+  if (!text) return { figures: '', text: '' };
+  const figures = [];
+  // <figure...>...</figure> tags nikalo
+  const cleaned = text.replace(/<figure[\s\S]*?<\/figure>/gi, (match) => {
+    figures.push(match);
+    return '\n__FIGURE__\n';
+  });
+  // <img...> tags bhi nikalo (standalone)
+  const cleaned2 = cleaned.replace(/<img[^>]*>/gi, (match) => {
+    figures.push(match);
+    return '\n__FIGURE__\n';
+  });
+  return { figures: figures.join('\n'), text: cleaned2 };
+}
+
 // Split bilingual text — English part aur Hindi part alag karo
 function splitLang(text) {
-  if (!text) return { en: '', hi: '', neutral: '' };
+  if (!text) return { en: '', hi: '', neutral: '', figures: '' };
 
-  const lines = text.split('\n');
+  // Pehle figures extract karo
+  const { figures, text: textNoFig } = extractFigures(text);
 
-  // Pehli Hindi line ka index dhundo
+  const lines = textNoFig.split('\n');
+
+  // Pehli Hindi line ka index dhundo (__FIGURE__ placeholders skip karo)
   let firstHindiIdx = -1;
   for (let i = 0; i < lines.length; i++) {
-    if (/[\u0900-\u097F]/.test(lines[i])) { firstHindiIdx = i; break; }
+    const l = lines[i].trim();
+    if (l === '__FIGURE__' || l === '') continue;
+    if (/[\u0900-\u097F]/.test(l)) { firstHindiIdx = i; break; }
   }
-  if (firstHindiIdx === -1) return { en: text, hi: '', neutral: '' };
 
-  // English block = pehli Hindi line se pehle sab
-  const enLines = lines.slice(0, firstHindiIdx);
-  const hiLines = lines.slice(firstHindiIdx);
+  // Koi Hindi nahi — pure English question
+  if (firstHindiIdx === -1) {
+    const cleanEn = textNoFig.replace(/__FIGURE__\n?/g, '').trim();
+    return { en: cleanEn, hi: '', neutral: cleanEn, figures };
+  }
 
-  // English block mein se neutral lines alag karo
-  // Neutral = koi English alphabet nahi (sirf numbers, symbols, arrows, spaces)
-  // Jaise: "2, 4, 8, 16, ?" ya "A → C, B → D" ya "ABCD : DCBA"
-  // Wait — ABCD mein English letters hain lekin ye pattern hai...
-  // So: neutral = line mein English alpha hain BUT koi English WORD nahi
-  //     (word = 2+ consecutive alphabets forming meaningful text)
+  // English lines (before first Hindi)
+  const enLines = lines.slice(0, firstHindiIdx)
+    .map(l => l.trim())
+    .filter(l => l !== '' && l !== '__FIGURE__');
+
+  // Hindi lines (from first Hindi line onwards)
+  const hiLines = lines.slice(firstHindiIdx)
+    .map(l => l.trim())
+    .filter(l => l !== '' && l !== '__FIGURE__');
+
+  const hiText = hiLines.join('\n');
+  const enText = enLines.join('\n');
+
+  // Neutral = jo Hindi mode mein bhi dikhni chahiye (patterns, series, data)
+  // Aggressive detection: ALL-CAPS series, number series, symbol patterns, single-letter patterns
   const neutralLines = [];
   const pureEnLines = [];
+
   for (const l of enLines) {
-    const trimmed = l.trim();
-    if (trimmed === '') continue;
-    // Pure neutral: sirf numbers/punctuation/symbols — koi alpha nahi
-    const hasAlpha = /[a-zA-Z]/.test(trimmed);
-    if (!hasAlpha) {
-      neutralLines.push(trimmed);
-    } else {
-      // Has alpha — check if it's a pattern (single letters separated by symbols)
-      // vs actual English words (consecutive letters 3+)
-      const hasWord = /[a-zA-Z]{3,}/.test(trimmed);
-      if (!hasWord) {
-        // Single/double letter patterns like "A → C" or "A:B::C:?"
-        neutralLines.push(trimmed);
-      } else {
-        pureEnLines.push(trimmed);
-      }
-    }
+    // Pure symbols/numbers — always neutral
+    if (!/[a-zA-Z]/.test(l)) { neutralLines.push(l); continue; }
+
+    // ALL-CAPS pattern words (ABCDE, PQRST etc.) — letter series, treat as neutral
+    const allCapsPattern = /^[A-Z0-9\s:,\.?!@#$%&*()_+\-=\[\]{}|<>\/\\'"~`]+$/.test(l);
+    if (allCapsPattern) { neutralLines.push(l); continue; }
+
+    // Single/double letter patterns like "A → B", "A:B::C:?"
+    const hasLongWord = /[a-z]{2,}|[A-Z][a-z]+/.test(l); // lowercase words = English sentence
+    if (!hasLongWord) { neutralLines.push(l); continue; }
+
+    // Has actual English words — goes to English only
+    pureEnLines.push(l);
   }
 
   return {
-    en: [...pureEnLines, ...neutralLines].join('\n').trim(),
-    hi: hiLines.join('\n').trim(),
-    neutral: neutralLines.join('\n').trim()  // carry to Hindi mode
+    en: enText,           // Full English (for EN mode)
+    hi: hiText,           // Full Hindi (for HI mode)
+    neutral: neutralLines.join('\n').trim(),  // Patterns shown in both
+    figures               // Figures shown in both
   };
 }
 
@@ -798,13 +829,26 @@ function splitLang(text) {
 function getLangText(text) {
   if (!hasHindi) return text || '';
   const split = splitLang(text);
-  if (currentLang === 'en') return split.en || text || '';
-  if (!split.hi) return split.en || text || '';
-  // Hindi mode: Hindi question + neutral pattern (series/analogy) saath dikhao
-  const hiText = split.hi;
-  const neutral = split.neutral;
-  if (neutral) return hiText + '\n' + neutral;
-  return hiText;
+
+  // Figures hamesha upar dikhao, dono modes mein
+  const figureHtml = split.figures ? split.figures + '\n' : '';
+
+  if (currentLang === 'en') {
+    // English mode: figures + full English text
+    return figureHtml + (split.en || text || '');
+  }
+
+  // Hindi mode
+  if (!split.hi) {
+    // Koi Hindi translation nahi — poora English dikhao (figures ke saath)
+    return figureHtml + (split.en || text || '');
+  }
+
+  // Hindi mode: figures + neutral patterns + Hindi text
+  const parts = [];
+  if (split.neutral) parts.push(split.neutral);
+  parts.push(split.hi);
+  return figureHtml + parts.join('\n');
 }
 
 function setLang(lang) {
