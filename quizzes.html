@@ -1016,6 +1016,8 @@ async function openSubject(key, label, icon) {
     const { data: attData } = await sb.from('test_attempts')
       .select('test_name, score, total_marks, correct_answers, wrong_answers, questions_attempted, created_at')
       .eq('user_id', currentUser.id)
+      .eq('exam_type', currentExam)
+      .eq('subject', currentSubject?.key)
       .in('test_name', testNames)
       .order('created_at', { ascending: true });
     if (attData) {
@@ -1247,6 +1249,8 @@ async function getLeaderboardData(testName) {
   const { data: allAttempts } = await sb.from('test_attempts')
     .select('user_id, score, full_name, avatar_url')
     .ilike('test_name', testName.trim())
+    .eq('exam_type', currentExam)
+    .eq('subject', currentSubject?.key)
     .order('score', { ascending: false });
   if (!allAttempts || allAttempts.length === 0) return { uniqueUsers: [], totalStudents: 0 };
 
@@ -1303,7 +1307,7 @@ async function submitQuiz() {
   try {
     const _uName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Student';
     const _avatarUrl = currentUser.user_metadata?.avatar_url || null;
-    await sb.from('test_attempts').insert({ user_id:currentUser.id, full_name:_uName, avatar_url:_avatarUrl, test_name:activeTestName, score:parseFloat(score.toFixed(1)), total_marks:totalMarks, correct_answers:correct, wrong_answers:wrong, questions_attempted:questions.length-skip });
+    await sb.from('test_attempts').insert({ user_id:currentUser.id, full_name:_uName, avatar_url:_avatarUrl, test_name:activeTestName, exam_type:currentExam, subject:currentSubject?.key, score:parseFloat(score.toFixed(1)), total_marks:totalMarks, correct_answers:correct, wrong_answers:wrong, questions_attempted:questions.length-skip });
 
     // ── Leaderboard update karo (naam bhi save karo) ──
     const userName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Student';
@@ -1382,6 +1386,8 @@ async function viewResult(testName) {
     .select('*')
     .eq('user_id', currentUser.id)
     .eq('test_name', testName)
+    .eq('exam_type', currentExam)
+    .eq('subject', currentSubject?.key)
     .order('created_at', { ascending: false })
     .limit(1);
 
