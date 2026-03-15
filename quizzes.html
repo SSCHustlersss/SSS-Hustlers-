@@ -501,6 +501,12 @@ body.dark .btn-close-profile { background:#252932; color:#9ca3af; }
     <div class="subject-grid" id="subjectGrid"></div>
   </div>
 
+  <!-- VIEW: TOPICS -->
+  <div class="view" id="view-topics">
+    <div class="view-title" id="topicsTitle">Topics</div>
+    <div class="subject-grid" id="topicGrid"></div>
+  </div>
+
   <!-- VIEW: TEST LIST -->
   <div class="view" id="view-tests">
     <div class="view-title" id="testsTitle">Tests</div>
@@ -712,7 +718,83 @@ const SUBJECTS_MAP = {
 function getSubjects() { return SUBJECTS_MAP[currentExam] || SUBJECTS_MAP['ssc_cgl']; }
 const EXAM_LABELS = { ssc_cgl:'SSC CGL', ssc_chsl:'SSC CHSL', ssc_mts:'SSC MTS', ssc_gd:'SSC GD', ntpc:'NTPC', ssc_steno:'SSC Steno', ssc_phase14:'Phase XIV', civil:'Civil Exams' };
 
-let currentExam = 'ssc_cgl', currentSubject = null, currentUser = null;
+const TOPICS_MAP = {
+  english: [
+    { key:'synonyms',        label:'Synonyms',              icon:'🔤', cls:'english' },
+    { key:'antonyms',        label:'Antonyms',              icon:'🔁', cls:'english' },
+    { key:'idioms_phrases',  label:'Idioms & Phrases',      icon:'💬', cls:'english' },
+    { key:'one_word_sub',    label:'One Word Substitution', icon:'📝', cls:'english' },
+    { key:'fill_blanks',     label:'Fill in the Blanks',    icon:'✏️', cls:'english' },
+    { key:'spelling',        label:'Spelling',              icon:'🔡', cls:'english' },
+    { key:'error_detection', label:'Error Detection',       icon:'🔍', cls:'english' },
+    { key:'full_test',       label:'Full Test',             icon:'📋', cls:'fulltest' },
+  ],
+  maths: [
+    { key:'number_system',       label:'Number System',         icon:'🔢', cls:'maths' },
+    { key:'simplification',      label:'Simplification',        icon:'➗', cls:'maths' },
+    { key:'hcf_lcm',             label:'HCF & LCM',             icon:'🔣', cls:'maths' },
+    { key:'percentage',          label:'Percentage',            icon:'💯', cls:'maths' },
+    { key:'profit_loss',         label:'Profit & Loss',         icon:'💰', cls:'maths' },
+    { key:'simple_interest',     label:'Simple Interest',       icon:'🏦', cls:'maths' },
+    { key:'compound_interest',   label:'Compound Interest',     icon:'📈', cls:'maths' },
+    { key:'ratio_proportion',    label:'Ratio & Proportion',    icon:'⚖️', cls:'maths' },
+    { key:'average',             label:'Average',               icon:'📊', cls:'maths' },
+    { key:'age_problems',        label:'Age Problems',          icon:'👴', cls:'maths' },
+    { key:'time_work',           label:'Time & Work',           icon:'⏱️', cls:'maths' },
+    { key:'pipe_cistern',        label:'Pipe & Cistern',        icon:'🚰', cls:'maths' },
+    { key:'time_speed_distance', label:'Time Speed Distance',   icon:'🚗', cls:'maths' },
+    { key:'train_problems',      label:'Train Problems',        icon:'🚂', cls:'maths' },
+    { key:'boat_stream',         label:'Boat & Stream',         icon:'🚤', cls:'maths' },
+    { key:'mensuration_2d',      label:'Mensuration 2D',        icon:'📐', cls:'maths' },
+    { key:'mensuration_3d',      label:'Mensuration 3D',        icon:'📦', cls:'maths' },
+    { key:'algebra',             label:'Algebra',               icon:'🔡', cls:'maths' },
+    { key:'trigonometry',        label:'Trigonometry',          icon:'📐', cls:'maths' },
+    { key:'geometry',            label:'Geometry',              icon:'🔷', cls:'maths' },
+    { key:'data_interpretation', label:'Data Interpretation',   icon:'📉', cls:'maths' },
+    { key:'statistics',          label:'Statistics',            icon:'📋', cls:'maths' },
+    { key:'full_test',           label:'Full Test',             icon:'📋', cls:'fulltest' },
+  ],
+  reasoning: [
+    { key:'analogy',             label:'Analogy',               icon:'🔗', cls:'reasoning' },
+    { key:'classification',      label:'Classification',        icon:'🗂️', cls:'reasoning' },
+    { key:'series',              label:'Series',                icon:'🔢', cls:'reasoning' },
+    { key:'coding_decoding',     label:'Coding-Decoding',       icon:'🔐', cls:'reasoning' },
+    { key:'blood_relations',     label:'Blood Relations',       icon:'👨‍👩‍👧', cls:'reasoning' },
+    { key:'direction_distance',  label:'Direction & Distance',  icon:'🧭', cls:'reasoning' },
+    { key:'ranking_order',       label:'Ranking & Order',       icon:'🏅', cls:'reasoning' },
+    { key:'puzzle',              label:'Puzzle',                icon:'🧩', cls:'reasoning' },
+    { key:'syllogism',           label:'Syllogism',             icon:'💭', cls:'reasoning' },
+    { key:'venn_diagram',        label:'Venn Diagram',          icon:'⭕', cls:'reasoning' },
+    { key:'statement_conclusion',label:'Statement & Conclusion',icon:'📢', cls:'reasoning' },
+    { key:'missing_number',      label:'Missing Number',        icon:'❓', cls:'reasoning' },
+    { key:'mirror_water_image',  label:'Mirror & Water Image',  icon:'🪞', cls:'reasoning' },
+    { key:'paper_folding',       label:'Paper Folding',         icon:'📄', cls:'reasoning' },
+    { key:'dice',                label:'Dice',                  icon:'🎲', cls:'reasoning' },
+    { key:'alphabet_test',       label:'Alphabet Test',         icon:'🔤', cls:'reasoning' },
+    { key:'mathematical_ops',    label:'Mathematical Operations',icon:'➕', cls:'reasoning' },
+    { key:'full_test',           label:'Full Test',             icon:'📋', cls:'fulltest' },
+  ],
+  ga: [
+    { key:'ancient_history',   label:'Ancient History',     icon:'🏛️', cls:'ga' },
+    { key:'medieval_history',  label:'Medieval History',    icon:'⚔️', cls:'ga' },
+    { key:'modern_history',    label:'Modern History',      icon:'🗺️', cls:'ga' },
+    { key:'geography',         label:'Geography',           icon:'🌍', cls:'ga' },
+    { key:'indian_polity',     label:'Indian Polity',       icon:'⚖️', cls:'ga' },
+    { key:'indian_economy',    label:'Indian Economy',      icon:'📈', cls:'ga' },
+    { key:'physics',           label:'Physics',             icon:'⚡', cls:'ga' },
+    { key:'chemistry',         label:'Chemistry',           icon:'🧪', cls:'ga' },
+    { key:'biology',           label:'Biology',             icon:'🧬', cls:'ga' },
+    { key:'computer',          label:'Computer',            icon:'💻', cls:'ga' },
+    { key:'sports',            label:'Sports',              icon:'🏆', cls:'ga' },
+    { key:'awards_honours',    label:'Awards & Honours',    icon:'🎖️', cls:'ga' },
+    { key:'books_authors',     label:'Books & Authors',     icon:'📚', cls:'ga' },
+    { key:'important_days',    label:'Important Days',      icon:'📅', cls:'ga' },
+    { key:'govt_schemes',      label:'Government Schemes',  icon:'🏛️', cls:'ga' },
+    { key:'full_test',         label:'Full Test',           icon:'📋', cls:'fulltest' },
+  ],
+};
+
+let currentExam = 'ssc_cgl', currentSubject = null, currentTopic = null, currentUser = null;
 let questions = [], currentQ = 0, answers = {}, timerInterval = null;
 let timeLeft = 0, posMarking = 1, negMarking = 0, activeTestName = '';
 let isPaused = false;
@@ -948,7 +1030,7 @@ async function init() {
 
 // ============ EXAM TAB ============
 function switchExam(exam, btn) {
-  currentExam = exam; currentSubject = null;
+  currentExam = exam; currentSubject = null; currentTopic = null;
   document.querySelectorAll('.exam-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   showView('subjects');
@@ -979,19 +1061,62 @@ async function loadCounts() {
   }
 }
 
-// ============ OPEN SUBJECT → TESTS ============
+// ============ OPEN SUBJECT → TOPICS or TESTS ============
 async function openSubject(key, label, icon) {
   currentSubject = { key, label, icon };
+  currentTopic = null;
+
+  // Agar is subject ke topics hain toh topics dikhao
+  if (TOPICS_MAP[key]) {
+    showView('topics');
+    updateBreadcrumb();
+    const grid = document.getElementById('topicGrid');
+    document.getElementById('topicsTitle').innerHTML = `${icon} ${label} — <span>Topics</span>`;
+    grid.innerHTML = TOPICS_MAP[key].map(t => `
+      <div class="subject-card ${t.cls}" onclick="openTopic('${t.key}','${t.label}','${t.icon}')">
+        <div class="sc-icon">${t.icon}</div>
+        <div class="sc-name">${t.label}</div>
+        <div class="sc-count" id="tcnt-${t.key}">Loading...</div>
+        <button class="btn-open-subj">View Tests →</button>
+      </div>`).join('');
+    // Count load karo
+    for (const t of TOPICS_MAP[key]) {
+      const { count } = await sb.from('quizzes')
+        .select('*', { count:'exact', head:true })
+        .eq('exam_type', currentExam).eq('subject', key).eq('topic', t.key);
+      const el = document.getElementById('tcnt-' + t.key);
+      if (el) el.textContent = count > 0 ? `${count} Questions` : 'Coming soon!';
+    }
+    return;
+  }
+
+  // Topic nahi hai — seedha tests dikhao
+  await loadTestsForSubject(key, label, icon);
+}
+
+// ============ OPEN TOPIC → TESTS ============
+async function openTopic(key, label, icon) {
+  currentTopic = { key, label, icon };
+  updateBreadcrumb();
+  await loadTestsForSubject(currentSubject.key, label, icon, key);
+}
+
+// ============ LOAD TESTS ============
+async function loadTestsForSubject(subjectKey, label, icon, topicKey) {
   showView('tests');
   updateBreadcrumb();
   document.getElementById('testsTitle').innerHTML = `${icon} ${label} — <span>Tests</span>`;
   document.getElementById('testList').innerHTML = '<div class="loading-box"><span class="spinner"></span>Loading tests...</div>';
 
-  const { data, error } = await sb.from('quizzes')
+  let query = sb.from('quizzes')
     .select('test_name, positive_marking, negative_marking, test_duration, difficulty, unlock_at')
-    .eq('exam_type', currentExam).eq('subject', key)
+    .eq('exam_type', currentExam).eq('subject', subjectKey)
     .not('test_name', 'is', null)
     .order('created_at', { ascending: true });
+
+  if (topicKey) query = query.eq('topic', topicKey);
+
+  const { data, error } = await query;
 
   if (error || !data || data.length === 0) {
     document.getElementById('testList').innerHTML =
@@ -1011,15 +1136,17 @@ async function openSubject(key, label, icon) {
 
   // Fetch all attempts for this user for these tests
   const testNames = tests.map(([name]) => name);
-  let attemptsMap = {}; // testName -> [{score, correct_answers, wrong_answers, ...}]
+  let attemptsMap = {};
   try {
-    const { data: attData } = await sb.from('test_attempts')
+    let attQuery = sb.from('test_attempts')
       .select('test_name, score, total_marks, correct_answers, wrong_answers, questions_attempted, created_at')
       .eq('user_id', currentUser.id)
       .eq('exam_type', currentExam)
       .eq('subject', currentSubject?.key)
       .in('test_name', testNames)
       .order('created_at', { ascending: true });
+    if (currentTopic) attQuery = attQuery.eq('topic', currentTopic.key);
+    const { data: attData } = await attQuery;
     if (attData) {
       attData.forEach(row => {
         if (!attemptsMap[row.test_name]) attemptsMap[row.test_name] = [];
@@ -1096,7 +1223,13 @@ function showView(name) {
 function updateBreadcrumb() {
   const examLabel = EXAM_LABELS[currentExam] || currentExam;
   let html = '';
-  if (currentSubject) {
+  if (currentTopic) {
+    html = `<span class="bc-btn" onclick="goBackToSubjects()">← ${examLabel}</span>
+            <span class="bc-sep">›</span>
+            <span class="bc-btn" onclick="goBackToTopics()">${currentSubject.icon} ${currentSubject.label}</span>
+            <span class="bc-sep">›</span>
+            <span class="bc-current">${currentTopic.icon} ${currentTopic.label}</span>`;
+  } else if (currentSubject) {
     html = `<span class="bc-btn" onclick="goBackToSubjects()">← ${examLabel}</span>
             <span class="bc-sep">›</span>
             <span class="bc-current">${currentSubject.icon} ${currentSubject.label}</span>`;
@@ -1107,8 +1240,14 @@ function updateBreadcrumb() {
 }
 
 function goBackToSubjects() {
-  currentSubject = null;
+  currentSubject = null; currentTopic = null;
   showView('subjects');
+  updateBreadcrumb();
+}
+
+function goBackToTopics() {
+  currentTopic = null;
+  showView('topics');
   updateBreadcrumb();
 }
 
@@ -1117,12 +1256,14 @@ async function startQuiz(testName) {
   if (!currentSubject) return;
   activeTestName = testName;
 
-  const { data, error } = await sb.from('quizzes')
+  let quizQuery = sb.from('quizzes')
     .select('*')
     .eq('exam_type', currentExam)
     .eq('subject', currentSubject.key)
     .eq('test_name', testName)
     .order('created_at', { ascending: true });
+  if (currentTopic) quizQuery = quizQuery.eq('topic', currentTopic.key);
+  const { data, error } = await quizQuery;
 
   if (error || !data || data.length === 0) { alert('⚠️ Questions load nahi hue!'); return; }
 
@@ -1307,7 +1448,7 @@ async function submitQuiz() {
   try {
     const _uName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Student';
     const _avatarUrl = currentUser.user_metadata?.avatar_url || null;
-    await sb.from('test_attempts').insert({ user_id:currentUser.id, full_name:_uName, avatar_url:_avatarUrl, test_name:activeTestName, exam_type:currentExam, subject:currentSubject?.key, score:parseFloat(score.toFixed(1)), total_marks:totalMarks, correct_answers:correct, wrong_answers:wrong, questions_attempted:questions.length-skip });
+    await sb.from('test_attempts').insert({ user_id:currentUser.id, full_name:_uName, avatar_url:_avatarUrl, test_name:activeTestName, exam_type:currentExam, subject:currentSubject?.key, topic:currentTopic?.key||null, score:parseFloat(score.toFixed(1)), total_marks:totalMarks, correct_answers:correct, wrong_answers:wrong, questions_attempted:questions.length-skip });
 
     // ── Leaderboard update karo (naam bhi save karo) ──
     const userName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Student';
@@ -1370,19 +1511,21 @@ async function viewResult(testName) {
   activeTestName = testName.trim();
 
   // Load questions for analysis
-  const { data, error } = await sb.from('quizzes')
+  let vq = sb.from('quizzes')
     .select('*')
     .eq('exam_type', currentExam)
     .eq('subject', currentSubject.key)
     .eq('test_name', testName)
     .order('created_at', { ascending: true });
+  if (currentTopic) vq = vq.eq('topic', currentTopic.key);
+  const { data, error } = await vq;
 
   if (error || !data || data.length === 0) { alert('⚠️ Questions load nahi hue!'); return; }
   questions = data;
-  detectHindi(); // Language toggle aur split ke liye
+  detectHindi();
 
   // Get last attempt data
-  const { data: attData } = await sb.from('test_attempts')
+  let attQ = sb.from('test_attempts')
     .select('*')
     .eq('user_id', currentUser.id)
     .eq('test_name', testName)
@@ -1390,6 +1533,8 @@ async function viewResult(testName) {
     .eq('subject', currentSubject?.key)
     .order('created_at', { ascending: false })
     .limit(1);
+  if (currentTopic) attQ = attQ.eq('topic', currentTopic.key);
+  const { data: attData } = await attQ;
 
   if (!attData || attData.length === 0) { alert('Koi attempt nahi mila!'); return; }
   const att = attData[0];
