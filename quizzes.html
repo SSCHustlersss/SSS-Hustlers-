@@ -501,6 +501,25 @@ body.dark .btn-close-profile { background:#252932; color:#9ca3af; }
     <div class="subject-grid" id="subjectGrid"></div>
   </div>
 
+  <!-- VIEW: CATEGORY -->
+  <div class="view" id="view-category">
+    <div class="view-title" id="categoryTitle">Category <span>Choose Karo</span></div>
+    <div class="subject-grid">
+      <div class="subject-card english" onclick="openCategory('chapter_wise')">
+        <div class="sc-icon">📚</div>
+        <div class="sc-name">Chapter Wise</div>
+        <div class="sc-count">Topic wise practice karo</div>
+        <button class="btn-open-subj">View Topics →</button>
+      </div>
+      <div class="subject-card fulltest" onclick="openCategory('full_test')">
+        <div class="sc-icon">📋</div>
+        <div class="sc-name">Full Test</div>
+        <div class="sc-count">Complete mock tests</div>
+        <button class="btn-open-subj">View Tests →</button>
+      </div>
+    </div>
+  </div>
+
   <!-- VIEW: TOPICS -->
   <div class="view" id="view-topics">
     <div class="view-title" id="topicsTitle">Topics</div>
@@ -794,7 +813,7 @@ const TOPICS_MAP = {
   ],
 };
 
-let currentExam = 'ssc_cgl', currentSubject = null, currentTopic = null, currentUser = null;
+let currentExam = 'ssc_cgl', currentSubject = null, currentCategory = null, currentTopic = null, currentUser = null;
 let questions = [], currentQ = 0, answers = {}, timerInterval = null;
 let timeLeft = 0, posMarking = 1, negMarking = 0, activeTestName = '';
 let isPaused = false;
@@ -1030,7 +1049,7 @@ async function init() {
 
 // ============ EXAM TAB ============
 function switchExam(exam, btn) {
-  currentExam = exam; currentSubject = null; currentTopic = null;
+  currentExam = exam; currentSubject = null; currentCategory = null; currentTopic = null;
   document.querySelectorAll('.exam-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   showView('subjects');
@@ -1061,37 +1080,46 @@ async function loadCounts() {
   }
 }
 
-// ============ OPEN SUBJECT → TOPICS or TESTS ============
+// ============ OPEN SUBJECT → CATEGORY ============
 async function openSubject(key, label, icon) {
   currentSubject = { key, label, icon };
+  currentCategory = null;
   currentTopic = null;
+  showView('category');
+  updateBreadcrumb();
+  document.getElementById('categoryTitle').innerHTML = `${icon} ${label} — <span>Select Category</span>`;
+}
 
-  // Agar is subject ke topics hain toh topics dikhao
-  if (TOPICS_MAP[key]) {
+// ============ OPEN CATEGORY → TOPICS or TESTS ============
+async function openCategory(cat) {
+  currentCategory = cat;
+  currentTopic = null;
+  updateBreadcrumb();
+
+  if (cat === 'chapter_wise' && TOPICS_MAP[currentSubject.key]) {
+    // Chapter wise → topics dikhao (full_test wala topic hata do)
     showView('topics');
-    updateBreadcrumb();
+    document.getElementById('topicsTitle').innerHTML = `📚 ${currentSubject.label} — <span>Chapter Wise</span>`;
     const grid = document.getElementById('topicGrid');
-    document.getElementById('topicsTitle').innerHTML = `${icon} ${label} — <span>Topics</span>`;
-    grid.innerHTML = TOPICS_MAP[key].map(t => `
+    const topics = TOPICS_MAP[currentSubject.key].filter(t => t.key !== 'full_test');
+    grid.innerHTML = topics.map(t => `
       <div class="subject-card ${t.cls}" onclick="openTopic('${t.key}','${t.label}','${t.icon}')">
         <div class="sc-icon">${t.icon}</div>
         <div class="sc-name">${t.label}</div>
         <div class="sc-count" id="tcnt-${t.key}">Loading...</div>
         <button class="btn-open-subj">View Tests →</button>
       </div>`).join('');
-    // Count load karo
-    for (const t of TOPICS_MAP[key]) {
+    for (const t of topics) {
       const { count } = await sb.from('quizzes')
         .select('*', { count:'exact', head:true })
-        .eq('exam_type', currentExam).eq('subject', key).eq('topic', t.key);
+        .eq('exam_type', currentExam).eq('subject', currentSubject.key).eq('topic', t.key);
       const el = document.getElementById('tcnt-' + t.key);
       if (el) el.textContent = count > 0 ? `${count} Questions` : 'Coming soon!';
     }
-    return;
+  } else {
+    // Full Test → seedhe tests dikhao (topic = 'full_test')
+    await loadTestsForSubject(currentSubject.key, currentSubject.label, currentSubject.icon, 'full_test');
   }
-
-  // Topic nahi hai — seedha tests dikhao
-  await loadTestsForSubject(key, label, icon);
 }
 
 // ============ OPEN TOPIC → TESTS ============
@@ -1146,6 +1174,7 @@ async function loadTestsForSubject(subjectKey, label, icon, topicKey) {
       .in('test_name', testNames)
       .order('created_at', { ascending: true });
     if (currentTopic) attQuery = attQuery.eq('topic', currentTopic.key);
+    else if (currentCategory === 'full_test') attQuery = attQuery.eq('topic', 'full_test');
     const { data: attData } = await attQuery;
     if (attData) {
       attData.forEach(row => {
@@ -1226,9 +1255,23 @@ function updateBreadcrumb() {
   if (currentTopic) {
     html = `<span class="bc-btn" onclick="goBackToSubjects()">← ${examLabel}</span>
             <span class="bc-sep">›</span>
-            <span class="bc-btn" onclick="goBackToTopics()">${currentSubject.icon} ${currentSubject.label}</span>
+            <span class="bc-btn" onclick="goBackToCategory()">${currentSubject.icon} ${currentSubject.label}</span>
+            <span class="bc-sep">›</span>
+            <span class="bc-btn" onclick="goBackToTopics()">📚 Chapter Wise</span>
             <span class="bc-sep">›</span>
             <span class="bc-current">${currentTopic.icon} ${currentTopic.label}</span>`;
+  } else if (currentCategory === 'full_test') {
+    html = `<span class="bc-btn" onclick="goBackToSubjects()">← ${examLabel}</span>
+            <span class="bc-sep">›</span>
+            <span class="bc-btn" onclick="goBackToCategory()">${currentSubject.icon} ${currentSubject.label}</span>
+            <span class="bc-sep">›</span>
+            <span class="bc-current">📋 Full Test</span>`;
+  } else if (currentCategory === 'chapter_wise') {
+    html = `<span class="bc-btn" onclick="goBackToSubjects()">← ${examLabel}</span>
+            <span class="bc-sep">›</span>
+            <span class="bc-btn" onclick="goBackToCategory()">${currentSubject.icon} ${currentSubject.label}</span>
+            <span class="bc-sep">›</span>
+            <span class="bc-current">📚 Chapter Wise</span>`;
   } else if (currentSubject) {
     html = `<span class="bc-btn" onclick="goBackToSubjects()">← ${examLabel}</span>
             <span class="bc-sep">›</span>
@@ -1240,8 +1283,14 @@ function updateBreadcrumb() {
 }
 
 function goBackToSubjects() {
-  currentSubject = null; currentTopic = null;
+  currentSubject = null; currentCategory = null; currentTopic = null;
   showView('subjects');
+  updateBreadcrumb();
+}
+
+function goBackToCategory() {
+  currentCategory = null; currentTopic = null;
+  showView('category');
   updateBreadcrumb();
 }
 
