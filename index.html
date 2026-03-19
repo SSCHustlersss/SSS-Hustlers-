@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSC Hustlers | Crack SSC 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Poppins',sans-serif; background:#f5f6fa; color:#1a1a2e; }
+
+/* ---- NAV ---- */
+nav { background:#fff; box-shadow:0 2px 12px rgba(0,0,0,0.08); padding:0 5%; height:64px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+.logo { font-size:1.5rem; font-weight:800; color:#e63946; }
+.logo span { color:#1a1a2e; }
+.nav-right { display:flex; gap:10px; align-items:center; }
+.btn-login { background:transparent; border:2px solid #e63946; color:#e63946; padding:8px 20px; border-radius:8px; font-size:0.88rem; font-weight:600; cursor:pointer; font-family:inherit; transition:all 0.2s; }
+.btn-login:hover { background:#e63946; color:#fff; }
+.btn-signup { background:#e63946; border:2px solid #e63946; color:#fff; padding:8px 20px; border-radius:8px; font-size:0.88rem; font-weight:600; cursor:pointer; font-family:inherit; transition:all 0.2s; }
+.btn-signup:hover { background:#c1121f; }
+
+/* TELEGRAM NAV BUTTON */
+.btn-tg-nav {
+  display:flex; align-items:center; gap:6px;
+  background:#229ED9; color:#fff; border:none;
+  padding:8px 16px; border-radius:8px;
+  font-size:0.85rem; font-weight:700; cursor:pointer;
+  font-family:inherit; text-decoration:none; transition:all 0.2s;
+}
+.btn-tg-nav:hover { background:#1a8cbf; transform:translateY(-1px); }
+.btn-tg-nav svg { width:17px; height:17px; fill:#fff; flex-shrink:0; }
+@media(max-width:520px) { .tg-nav-label { display:none; } .btn-tg-nav { padding:8px 10px; } }
+
+/* ---- HERO ---- */
+.hero { background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%); color:#fff; padding:70px 5% 60px; text-align:center; }
+.hero-tag { display:inline-block; background:rgba(230,57,70,0.2); border:1px solid rgba(230,57,70,0.4); color:#ff8fa3; padding:5px 16px; border-radius:50px; font-size:0.78rem; font-weight:600; margin-bottom:20px; letter-spacing:1px; text-transform:uppercase; }
+.hero h1 { font-size:clamp(2rem,5vw,3rem); font-weight:800; line-height:1.2; margin-bottom:12px; }
+.hero h1 span { color:#e63946; }
+.hero-sub { font-size:0.95rem; color:rgba(255,255,255,0.6); margin-bottom:14px; font-weight:500; }
+.hero p { font-size:1rem; color:rgba(255,255,255,0.75); max-width:520px; margin:0 auto 32px; line-height:1.7; }
+.hero-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+.btn-red { background:#e63946; color:#fff; border:none; padding:13px 30px; border-radius:10px; font-size:0.95rem; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.2s; }
+.btn-red:hover { background:#c1121f; transform:translateY(-2px); }
+.btn-white { background:rgba(255,255,255,0.1); color:#fff; border:2px solid rgba(255,255,255,0.2); padding:13px 30px; border-radius:10px; font-size:0.95rem; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.2s; }
+.btn-white:hover { background:rgba(255,255,255,0.2); }
+
+/* TELEGRAM HERO BANNER */
+.tg-hero-banner {
+  display:inline-flex; align-items:center; gap:10px;
+  background:rgba(34,158,217,0.15); border:1px solid rgba(34,158,217,0.4);
+  padding:11px 24px; border-radius:50px; margin-top:26px;
+  color:#7dd3f0; font-size:0.88rem; font-weight:700;
+  text-decoration:none; transition:all 0.25s;
+}
+.tg-hero-banner:hover { background:rgba(34,158,217,0.3); color:#fff; box-shadow:0 4px 20px rgba(34,158,217,0.3); }
+.tg-hero-banner svg { width:20px; height:20px; fill:#7dd3f0; }
+.tg-hero-banner:hover svg { fill:#fff; }
+
+/* FLOATING TELEGRAM BUTTON */
+.tg-float {
+  position:fixed; bottom:24px; right:22px; z-index:999;
+  background:#229ED9; width:56px; height:56px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  text-decoration:none; box-shadow:0 4px 18px rgba(34,158,217,0.55);
+  transition:all 0.25s; animation:tgPulse 2.5s infinite;
+}
+.tg-float:hover { background:#1a8cbf; transform:scale(1.1); }
+.tg-float svg { width:28px; height:28px; fill:#fff; }
+.tg-float-tip {
+  position:absolute; right:66px; top:50%; transform:translateY(-50%);
+  background:#1a1a2e; color:#fff; padding:6px 12px; border-radius:8px;
+  font-size:0.74rem; font-weight:700; white-space:nowrap;
+  opacity:0; pointer-events:none; transition:opacity 0.2s;
+  font-family:'Poppins',sans-serif;
+}
+.tg-float:hover .tg-float-tip { opacity:1; }
+@keyframes tgPulse {
+  0%,100% { box-shadow:0 4px 18px rgba(34,158,217,0.55); }
+  50% { box-shadow:0 4px 28px rgba(34,158,217,0.85), 0 0 0 7px rgba(34,158,217,0.15); }
+}
+
+/* ---- STATS ---- */
+.stats { background:#fff; padding:30px 5%; display:flex; justify-content:center; gap:60px; flex-wrap:wrap; box-shadow:0 4px 20px rgba(0,0,0,0.06); }
+.stat { text-align:center; }
+.stat-num { font-size:1.8rem; font-weight:800; color:#e63946; }
+.stat-label { font-size:0.8rem; color:#666; font-weight:500; margin-top:2px; }
+
+/* ---- EXAMS ---- */
+.exams { padding:60px 5%; text-align:center; }
+.section-title { font-size:1.5rem; font-weight:700; margin-bottom:8px; }
+.section-title span { color:#e63946; }
+.section-sub { color:#666; font-size:0.9rem; margin-bottom:36px; }
+.exams-grid { display:flex; flex-wrap:wrap; justify-content:center; gap:14px; max-width:800px; margin:0 auto; }
+.exam-pill { background:#fff; border:2px solid #e8e8e8; border-radius:12px; padding:14px 22px; font-weight:700; font-size:0.9rem; cursor:pointer; transition:all 0.2s; }
+.exam-pill:hover { border-color:#e63946; color:#e63946; transform:translateY(-2px); box-shadow:0 6px 20px rgba(230,57,70,0.12); }
+
+/* ---- FEATURES ---- */
+.features { background:#fff; padding:60px 5%; text-align:center; }
+.features-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:20px; max-width:1000px; margin:0 auto; }
+.feat-card { background:#f5f6fa; border-radius:14px; padding:28px 20px; text-align:center; transition:all 0.2s; border:2px solid transparent; }
+.feat-card:hover { border-color:#e63946; background:#fff; transform:translateY(-3px); }
+.feat-icon { font-size:2rem; margin-bottom:12px; }
+.feat-title { font-size:0.95rem; font-weight:700; margin-bottom:6px; }
+.feat-desc { font-size:0.82rem; color:#666; line-height:1.5; }
+
+/* ---- FOOTER ---- */
+footer { background:#1a1a2e; color:rgba(255,255,255,0.6); text-align:center; padding:30px 5%; font-size:0.82rem; }
+footer strong { color:#e63946; }
+.footer-tg { display:inline-flex; align-items:center; gap:7px; color:#7dd3f0; text-decoration:none; font-weight:700; margin-top:10px; transition:color 0.2s; }
+.footer-tg:hover { color:#fff; }
+.footer-tg svg { width:16px; height:16px; fill:#7dd3f0; }
+.footer-tg:hover svg { fill:#fff; }
+
+/* ---- MODAL ---- */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:1000; align-items:center; justify-content:center; }
+.modal-overlay.show { display:flex; }
+.modal { background:#fff; border-radius:20px; padding:40px 36px; width:90%; max-width:420px; position:relative; animation:popIn 0.3s ease; }
+@keyframes popIn { from{transform:scale(0.9);opacity:0;} to{transform:scale(1);opacity:1;} }
+.modal-close { position:absolute; top:16px; right:20px; font-size:1.4rem; cursor:pointer; color:#999; background:none; border:none; }
+.modal-logo { text-align:center; margin-bottom:24px; }
+.modal-logo h2 { font-size:1.4rem; font-weight:800; color:#e63946; }
+.modal-logo p { font-size:0.82rem; color:#666; margin-top:4px; }
+.tabs { display:flex; background:#f5f6fa; border-radius:10px; padding:4px; margin-bottom:24px; }
+.tab { flex:1; padding:9px; text-align:center; border-radius:8px; font-size:0.88rem; font-weight:600; cursor:pointer; transition:all 0.2s; color:#666; }
+.tab.active { background:#e63946; color:#fff; }
+.form-group { margin-bottom:16px; }
+.form-group label { font-size:0.82rem; font-weight:600; color:#333; display:block; margin-bottom:6px; }
+.form-group input { width:100%; padding:11px 14px; border:2px solid #e8e8e8; border-radius:10px; font-size:0.9rem; font-family:inherit; transition:border 0.2s; outline:none; }
+.form-group input:focus { border-color:#e63946; }
+.btn-submit { width:100%; background:#e63946; color:#fff; border:none; padding:13px; border-radius:10px; font-size:0.95rem; font-weight:700; cursor:pointer; font-family:inherit; margin-top:4px; transition:all 0.2s; }
+.btn-submit:hover { background:#c1121f; }
+.btn-submit:disabled { opacity:0.6; cursor:not-allowed; }
+.divider { text-align:center; color:#999; font-size:0.8rem; margin:16px 0; position:relative; }
+.divider::before,.divider::after { content:''; position:absolute; top:50%; width:42%; height:1px; background:#e8e8e8; }
+.divider::before { left:0; } .divider::after { right:0; }
+.btn-google { width:100%; background:#fff; color:#333; border:2px solid #e8e8e8; padding:11px; border-radius:10px; font-size:0.88rem; font-weight:600; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.2s; }
+.btn-google:hover { border-color:#4285f4; box-shadow:0 2px 10px rgba(66,133,244,0.2); }
+.btn-google:disabled { opacity:0.6; cursor:not-allowed; }
+.error-msg { background:#fff0f0; border:1px solid #ffcccc; color:#cc0000; padding:10px 14px; border-radius:8px; font-size:0.82rem; margin-bottom:12px; display:none; }
+.error-msg.show { display:block; }
+.success-msg { background:#f0fff4; border:1px solid #b2dfdb; color:#00695c; padding:10px 14px; border-radius:8px; font-size:0.82rem; margin-bottom:12px; display:none; }
+.success-msg.show { display:block; }
+
+/* Exam pills — no year, more colorful */
+.exam-pill { background:#fff; border:2px solid #e8e8e8; border-radius:50px; padding:12px 22px; font-weight:700; font-size:0.88rem; cursor:pointer; transition:all 0.2s; }
+.exam-pill:hover { border-color:#e63946; color:#e63946; transform:translateY(-2px); box-shadow:0 6px 20px rgba(230,57,70,0.12); background:#fff8f8; }
+.exams-grid { display:flex; flex-wrap:wrap; justify-content:center; gap:12px; max-width:800px; margin:0 auto; }
+
+/* Forgot password */
+.btn-forgot { background:none; border:none; color:#e63946; font-size:0.82rem; font-weight:600; cursor:pointer; font-family:inherit; padding:0; }
+.btn-forgot:hover { text-decoration:underline; }
+
+@media(max-width:600px) { .stats{gap:30px;} .hero h1{font-size:1.8rem;} .modal{padding:30px 20px;} }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">SSC <span>HUSTLERS</span></div>
+  <div class="nav-right">
+    <a class="btn-tg-nav" href="https://t.me/crackthessc" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+      <span class="tg-nav-label">Telegram</span>
+    </a>
+
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-tag">🔥 India's #1 SSC Community</div>
+  <h1>Crack Your <span>SSC Exam</span><br>in 2026! 🎯</h1>
+  <div class="hero-sub">SSC CGL · CHSL · MTS · GD · NTPC · Railway · Banking</div>
+  <p>Daily Practice Tests, PYQs, Current Affairs aur Notes — sab kuch ek jagah. Hindi & English dono mein.</p>
+  <div class="hero-btns">
+    <button class="btn-red" onclick="openModal('signup')">🚀 Start Free — Sign Up</button>
+    <button class="btn-white" onclick="openModal('login')">Login →</button>
+  </div>
+  <div>
+    <a class="tg-hero-banner" href="https://t.me/crackthessc" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+      📢 Join Telegram Channel — t.me/crackthessc
+    </a>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><div class="stat-num">50K+</div><div class="stat-label">Active Students</div></div>
+  <div class="stat"><div class="stat-num">10K+</div><div class="stat-label">Practice Questions</div></div>
+  <div class="stat"><div class="stat-num">500+</div><div class="stat-label">Mock Tests</div></div>
+  <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Free to Join</div></div>
+</div>
+
+<!-- EXAMS -->
+<section class="exams">
+  <h2 class="section-title">Kaun Kaun Se <span>Exams</span> Cover Hote Hain?</h2>
+  <p class="section-sub">Sab popular government exams ek hi platform pe</p>
+  <div class="exams-grid">
+    <div class="exam-pill">📘 SSC CGL</div>
+    <div class="exam-pill">📗 SSC CHSL</div>
+    <div class="exam-pill">📙 SSC MTS</div>
+    <div class="exam-pill">📕 SSC GD</div>
+    <div class="exam-pill">🚂 RRB NTPC</div>
+    <div class="exam-pill">🚉 Railway RRB</div>
+    <div class="exam-pill">🏦 IBPS PO/Clerk</div>
+    <div class="exam-pill">🏦 SBI PO/Clerk</div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features">
+  <h2 class="section-title">Kya Milega <span>Platform Pe?</span></h2>
+  <p class="section-sub">Join karo aur sab kuch access karo</p>
+  <div class="features-grid">
+    <div class="feat-card"><div class="feat-icon">📝</div><div class="feat-title">Daily Quiz</div><div class="feat-desc">Roz naye questions — Current Affairs, Reasoning, Maths, GK</div></div>
+    <div class="feat-card"><div class="feat-icon">📊</div><div class="feat-title">Mock Tests</div><div class="feat-desc">Full-length mock tests with detailed solutions aur analysis</div></div>
+    <div class="feat-card"><div class="feat-icon">🗂️</div><div class="feat-title">PYQ Practice</div><div class="feat-desc">2010 se saare Previous Year Questions — subject wise sorted</div></div>
+    <div class="feat-card"><div class="feat-icon">📰</div><div class="feat-title">Current Affairs</div><div class="feat-desc">Daily Current Affairs Hindi & English mein — SSC focused</div></div>
+    <div class="feat-card"><div class="feat-icon">📚</div><div class="feat-title">Notes & PDF</div><div class="feat-desc">Chapter-wise notes aur PDF downloads</div></div>
+    <div class="feat-card"><div class="feat-icon">📈</div><div class="feat-title">Progress Track</div><div class="feat-desc">Apni performance dekho, weak areas identify karo</div></div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p><strong>SSC HUSTLERS</strong> — For SSC CGL · CHSL · MTS · GD · NTPC · Railway · Banking</p>
+  <div>
+    <a class="footer-tg" href="https://t.me/crackthessc" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+      Join Telegram: t.me/crackthessc
+    </a>
+  </div>
+  <p style="margin-top:8px">© 2026 SSC Hustlers. All rights reserved. 🇮🇳</p>
+</footer>
+
+<!-- FLOATING TELEGRAM -->
+<a class="tg-float" href="https://t.me/crackthessc" target="_blank" rel="noopener">
+  <span class="tg-float-tip">📢 Join Channel</span>
+  <svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+</a>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">x</button>
+    <div class="modal-logo">
+      <h2>SSC HUSTLERS</h2>
+      <p>India's #1 SSC Preparation Platform</p>
+    </div>
+    <div class="tabs">
+      <div class="tab active" id="loginTab" onclick="switchTab('login')">Login</div>
+      <div class="tab" id="signupTab" onclick="switchTab('signup')">Sign Up</div>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="loginForm">
+      <div class="error-msg"   id="loginError"></div>
+      <div class="success-msg" id="loginSuccess"></div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="Enter your email"
+               onkeydown="if(event.key==='Enter') handleLogin()">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter your password"
+               onkeydown="if(event.key==='Enter') handleLogin()">
+      </div>
+      <button class="btn-submit" id="loginBtn" onclick="handleLogin()">Login</button>
+      <div style="text-align:right;margin-top:10px;margin-bottom:4px;">
+        <button onclick="handleForgotPassword()" style="background:none;border:none;color:#e63946;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:inherit;padding:0;">Forgot Password?</button>
+      </div>
+      <div class="divider">or</div>
+      <button class="btn-google" id="googleLoginBtn" onclick="handleGoogleLogin()">
+        <svg width="18" height="18" viewBox="0 0 48 48">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Continue with Google
+      </button>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div id="signupForm" style="display:none">
+      <div class="error-msg"   id="signupError"></div>
+      <div class="success-msg" id="signupSuccess"></div>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="signupName" placeholder="Enter your full name">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="signupEmail" placeholder="Email address">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="signupPassword" placeholder="Create a password (min 6 chars)"
+               onkeydown="if(event.key==='Enter') handleSignup()">
+      </div>
+      <button class="btn-submit" id="signupBtn" onclick="handleSignup()">Create Free Account</button>
+      <div class="divider">or</div>
+      <button class="btn-google" id="googleSignupBtn" onclick="handleGoogleLogin()">
+        <svg width="18" height="18" viewBox="0 0 48 48">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Continue with Google
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL      = 'https://wwfhoyxqlversdkdqcgd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3ZmhveXhxbHZlcnNka2RxY2dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDAwMTMsImV4cCI6MjA4ODQ3NjAxM30.qaQp8LJXGxN6EfOoNPOgdhdNqY7M0nC2aR8fBSYejrw';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── GitHub Pages ke liye correct redirect URL ──
+// e.g. https://username.github.io/repo-name/dashboard.html
+function getRedirectUrl() {
+  const loc = window.location;
+  const segments = loc.pathname.split('/').filter(Boolean);
+  // GitHub Pages: hostname = username.github.io, segments[0] = repo-name
+  if (loc.hostname.endsWith('github.io') && segments.length >= 1) {
+    return `${loc.protocol}//${loc.hostname}/${segments[0]}/dashboard.html`;
+  }
+  // Custom domain or localhost — no subfolder
+  return `${loc.protocol}//${loc.hostname}/dashboard.html`;
+}
+
+// ── Already logged in ──
+sb.auth.getSession().then(({ data: { session } }) => {
+  if (session) window.location.href = 'dashboard.html';
+});
+
+// ── Handle Google OAuth redirect back ──
+sb.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    window.location.href = 'dashboard.html';
+  }
+});
+
+// ── Modal ──
+function openModal(type) {
+  document.getElementById('modalOverlay').classList.add('show');
+  switchTab(type);
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+function switchTab(type) {
+  document.getElementById('loginForm').style.display  = type === 'login'  ? 'block' : 'none';
+  document.getElementById('signupForm').style.display = type === 'signup' ? 'block' : 'none';
+  document.getElementById('loginTab').classList.toggle('active',  type === 'login');
+  document.getElementById('signupTab').classList.toggle('active', type === 'signup');
+}
+
+// ── Messages ──
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.classList.add('show');
+  const suc = document.getElementById(id.replace('Error','Success'));
+  if (suc) suc.classList.remove('show');
+}
+function showSuccess(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.classList.add('show');
+  const err = document.getElementById(id.replace('Success','Error'));
+  if (err) err.classList.remove('show');
+}
+function clearMsgs() {
+  ['loginError','loginSuccess','signupError','signupSuccess'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+  });
+}
+
+// ── Email Login ──
+async function handleLogin() {
+  clearMsgs();
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!email || !password) return showError('loginError', 'Email aur password daalo!');
+
+  const btn = document.getElementById('loginBtn');
+  btn.textContent = 'Logging in...'; btn.disabled = true;
+
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.textContent = 'Login';
+
+  if (error) {
+    const msg = error.message.toLowerCase();
+    if (msg.includes('invalid'))  showError('loginError', 'Email ya password galat hai!');
+    else if (msg.includes('confirm')) showError('loginError', 'Pehle email confirm karo!');
+    else showError('loginError', error.message);
+  } else {
+    window.location.href = 'dashboard.html';
+  }
+}
+
+// ── Email Signup ──
+async function handleSignup() {
+  clearMsgs();
+  const name     = document.getElementById('signupName').value.trim();
+  const email    = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+
+  if (!name || !email || !password) return showError('signupError', 'Sab fields bharo!');
+  if (password.length < 6) return showError('signupError', 'Password 6+ characters ka hona chahiye!');
+
+  const btn = document.getElementById('signupBtn');
+  btn.textContent = 'Creating...'; btn.disabled = true;
+
+  const { error } = await sb.auth.signUp({
+    email, password,
+    options: { data: { full_name: name } }
+  });
+  btn.disabled = false; btn.textContent = 'Create Free Account';
+
+  if (error) {
+    if (error.message.toLowerCase().includes('already'))
+      showError('signupError', 'Ye email already registered hai! Login karo.');
+    else
+      showError('signupError', error.message);
+  } else {
+    showSuccess('signupSuccess', 'Account ban gaya! Email confirm karo phir login karo.');
+  }
+}
+
+// ── Forgot Password ──
+async function handleForgotPassword() {
+  const email = document.getElementById('loginEmail').value.trim();
+  if (!email) {
+    showError('loginError', 'Pehle apna email daalo, phir Forgot Password click karo.');
+    return;
+  }
+  const btn = document.getElementById('loginBtn');
+  btn.textContent = 'Sending...'; btn.disabled = true;
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: getRedirectUrl().replace('dashboard.html', 'index.html')
+  });
+  btn.disabled = false; btn.textContent = 'Login';
+  if (error) {
+    showError('loginError', 'Error: ' + error.message);
+  } else {
+    showSuccess('loginSuccess', '✅ Password reset link bhej diya! Email check karo.');
+  }
+}
+
+// ── Google Login — FIXED for GitHub Pages ──
+async function handleGoogleLogin() {
+  const loginBtn  = document.getElementById('googleLoginBtn');
+  const signupBtn = document.getElementById('googleSignupBtn');
+
+  if (loginBtn)  { loginBtn.disabled  = true; loginBtn.textContent  = 'Opening Google...'; }
+  if (signupBtn) { signupBtn.disabled = true; signupBtn.textContent = 'Opening Google...'; }
+
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: getRedirectUrl(),   // GitHub Pages ka sahi URL
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'select_account',     // Account chooser hamesha dikhao
+      }
+    }
+  });
+
+  if (error) {
+    if (loginBtn)  { loginBtn.disabled  = false; loginBtn.textContent  = 'Continue with Google'; }
+    if (signupBtn) { signupBtn.disabled = false; signupBtn.textContent = 'Continue with Google'; }
+    showError('loginError',  'Google login fail hua: ' + error.message);
+    showError('signupError', 'Google login fail hua: ' + error.message);
+  }
+  // No error = browser Google pe redirect kar dega automatically
+}
+</script>
+</body>
+</html>
