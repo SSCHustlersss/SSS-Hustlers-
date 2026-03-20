@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Doubt Solver | SSC Hustlers</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Poppins',sans-serif; background:#f4f5f7; color:#1a1a2e; min-height:100vh; }
+
+/* NAV */
+nav {
+  background:#fff; padding:0 16px; height:56px;
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:50;
+  border-bottom:1px solid #e8e8e8;
+  box-shadow:0 2px 8px rgba(0,0,0,0.06);
+}
+.logo { font-size:1.1rem; font-weight:800; color:#e63946; text-decoration:none; letter-spacing:-0.3px; }
+.logo span { color:#1a1a2e; }
+.btn-back { background:#f0f4ff; color:#3d6ef5; border:none; padding:7px 14px; border-radius:8px; font-size:0.8rem; font-weight:700; text-decoration:none; cursor:pointer; font-family:inherit; }
+
+/* CONTAINER */
+.container { max-width:720px; margin:0 auto; padding:20px 14px 80px; }
+
+/* HERO */
+.hero {
+  background:linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius:16px; padding:24px 20px; margin-bottom:20px;
+  text-align:center; position:relative; overflow:hidden;
+}
+.hero::before {
+  content:'🤖'; font-size:80px; position:absolute;
+  right:-10px; top:-10px; opacity:0.08;
+}
+.hero-badge { background:rgba(230,57,70,0.15); color:#e63946; border:1px solid rgba(230,57,70,0.3); padding:4px 14px; border-radius:50px; font-size:0.72rem; font-weight:700; display:inline-block; margin-bottom:10px; }
+.hero h1 { font-size:1.4rem; font-weight:800; color:#fff; margin-bottom:6px; }
+.hero p { font-size:0.82rem; color:rgba(255,255,255,0.6); }
+
+/* MAIN CARD */
+.card {
+  background:#fff; border-radius:16px; padding:20px;
+  border:1.5px solid #eee; margin-bottom:16px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.04);
+}
+.card-title { font-size:0.9rem; font-weight:700; color:#1a1a2e; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+
+/* INPUT TABS */
+.input-tabs { display:flex; gap:0; background:#f4f5f7; border-radius:10px; padding:4px; margin-bottom:16px; }
+.input-tab { flex:1; padding:8px; border:none; background:transparent; border-radius:8px; font-size:0.8rem; font-weight:600; cursor:pointer; font-family:inherit; color:#888; transition:all 0.2s; }
+.input-tab.active { background:#fff; color:#3d6ef5; box-shadow:0 1px 4px rgba(0,0,0,0.1); }
+
+/* UPLOAD ZONE */
+.upload-zone {
+  border:2px dashed #e0e0e0; border-radius:12px;
+  padding:32px 20px; text-align:center; cursor:pointer;
+  transition:all 0.2s; background:#fafafa;
+}
+.upload-zone:hover, .upload-zone.drag { border-color:#3d6ef5; background:#f0f4ff; }
+.upload-zone.has-image { border-color:#00c853; background:#f0fff4; }
+.upload-icon { font-size:2.5rem; margin-bottom:10px; }
+.upload-title { font-size:0.88rem; font-weight:700; color:#1a1a2e; margin-bottom:4px; }
+.upload-sub { font-size:0.75rem; color:#aaa; }
+#imageInput { display:none; }
+
+/* IMAGE PREVIEW */
+.img-preview { display:none; text-align:center; margin-top:12px; }
+.img-preview img { max-width:100%; max-height:200px; border-radius:10px; border:2px solid #e0e0e0; }
+.btn-remove-img { margin-top:8px; background:#fff0f0; color:#e63946; border:1px solid #ffcdd2; padding:5px 14px; border-radius:6px; font-size:0.75rem; font-weight:700; cursor:pointer; font-family:inherit; }
+
+/* TEXT INPUT */
+.text-input-wrap { display:none; }
+.question-input {
+  width:100%; padding:14px; border:1.5px solid #e0e0e0;
+  border-radius:12px; font-size:0.88rem; font-family:inherit;
+  resize:vertical; min-height:120px; outline:none;
+  transition:border-color 0.2s; color:#1a1a2e;
+  line-height:1.6;
+}
+.question-input:focus { border-color:#3d6ef5; box-shadow:0 0 0 3px rgba(61,110,245,0.08); }
+
+/* SUBJECT SELECT */
+.subject-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+.subj-btn {
+  padding:6px 14px; border-radius:50px; border:1.5px solid #e0e0e0;
+  background:#fff; font-size:0.75rem; font-weight:700; cursor:pointer;
+  font-family:inherit; color:#666; transition:all 0.2s;
+}
+.subj-btn:hover { border-color:#3d6ef5; color:#3d6ef5; }
+.subj-btn.active { background:#3d6ef5; border-color:#3d6ef5; color:#fff; }
+
+/* LANGUAGE TOGGLE */
+.lang-row { display:flex; gap:8px; margin-bottom:16px; align-items:center; }
+.lang-label { font-size:0.78rem; font-weight:600; color:#888; }
+.lang-btn { padding:5px 14px; border-radius:50px; border:1.5px solid #e0e0e0; background:#fff; font-size:0.75rem; font-weight:700; cursor:pointer; font-family:inherit; color:#666; transition:all 0.2s; }
+.lang-btn.active { background:#1a1a2e; border-color:#1a1a2e; color:#fff; }
+
+/* SOLVE BTN */
+.btn-solve {
+  width:100%; padding:14px; background:linear-gradient(135deg, #e63946, #c1121f);
+  color:#fff; border:none; border-radius:12px; font-size:0.95rem;
+  font-weight:700; cursor:pointer; font-family:inherit;
+  transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px;
+  box-shadow:0 4px 16px rgba(230,57,70,0.3);
+}
+.btn-solve:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 6px 20px rgba(230,57,70,0.4); }
+.btn-solve:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+
+/* LOADING */
+.loading-wrap { display:none; text-align:center; padding:32px 20px; }
+.loading-dots { display:flex; gap:8px; justify-content:center; margin-bottom:16px; }
+.dot { width:10px; height:10px; border-radius:50%; background:#3d6ef5; animation:bounce 1.2s infinite; }
+.dot:nth-child(2) { animation-delay:0.2s; background:#e63946; }
+.dot:nth-child(3) { animation-delay:0.4s; background:#00c853; }
+@keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-14px)} }
+.loading-text { font-size:0.85rem; font-weight:600; color:#888; }
+
+/* ANSWER CARD */
+.answer-card { display:none; background:#fff; border-radius:16px; border:1.5px solid #e8f0fe; overflow:hidden; }
+.answer-header { background:linear-gradient(135deg, #3d6ef5, #1a56db); padding:14px 18px; display:flex; align-items:center; gap:10px; }
+.answer-header-icon { font-size:1.4rem; }
+.answer-header-text { color:#fff; }
+.answer-header-text h3 { font-size:0.88rem; font-weight:700; }
+.answer-header-text p { font-size:0.72rem; opacity:0.8; margin-top:2px; }
+.answer-body { padding:18px; }
+.answer-content {
+  font-size:0.88rem; line-height:1.8; color:#1a1a2e;
+  white-space:pre-wrap; word-break:break-word;
+}
+.answer-content strong { color:#e63946; }
+
+/* ACTION BTNS */
+.answer-actions { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.btn-action { padding:8px 16px; border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; font-family:inherit; border:1.5px solid; transition:all 0.2s; }
+.btn-copy { background:#f0f4ff; color:#3d6ef5; border-color:#d0dcff; }
+.btn-copy:hover { background:#3d6ef5; color:#fff; }
+.btn-new { background:#fff0f0; color:#e63946; border-color:#ffcdd2; }
+.btn-new:hover { background:#e63946; color:#fff; }
+
+/* TIPS */
+.tips-card { background:linear-gradient(135deg, #f0f4ff, #e8f0fe); border-radius:14px; padding:16px; border:1px solid #d0dcff; }
+.tips-title { font-size:0.82rem; font-weight:700; color:#3d6ef5; margin-bottom:10px; }
+.tip-item { display:flex; gap:8px; margin-bottom:8px; font-size:0.78rem; color:#555; align-items:flex-start; }
+.tip-item:last-child { margin-bottom:0; }
+.tip-icon { flex-shrink:0; }
+
+/* ERROR */
+.error-box { background:#fff0f0; border:1.5px solid #ffcdd2; border-radius:10px; padding:14px; color:#c62828; font-size:0.82rem; font-weight:600; display:none; margin-top:12px; }
+.error-box.show { display:block; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" href="quizzes.html">SSC <span>HUSTLERS</span></a>
+  <a class="btn-back" href="quizzes.html">← Back</a>
+</nav>
+
+<div class="container">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">✨ POWERED BY GEMINI AI</div>
+    <h1>🤖 AI Doubt Solver</h1>
+    <p>Koi bhi question — photo ya text — instant solution!</p>
+  </div>
+
+  <!-- INPUT CARD -->
+  <div class="card">
+    <div class="card-title">📝 Apna Doubt Daalo</div>
+
+    <!-- TABS -->
+    <div class="input-tabs">
+      <button class="input-tab active" onclick="switchInput('photo')">📸 Photo Upload</button>
+      <button class="input-tab" onclick="switchInput('text')">⌨️ Text Type</button>
+    </div>
+
+    <!-- PHOTO INPUT -->
+    <div id="photoInputWrap">
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('imageInput').click()"
+        ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+        <div class="upload-icon">📸</div>
+        <div class="upload-title">Question ki photo yahan daalo</div>
+        <div class="upload-sub">Tap karo ya photo khicho • JPG, PNG support</div>
+      </div>
+      <input type="file" id="imageInput" accept="image/*" onchange="handleImageSelect(event)">
+      <div class="img-preview" id="imgPreview">
+        <img id="previewImg" src="" alt="Question">
+        <br>
+        <button class="btn-remove-img" onclick="removeImage()">✕ Remove</button>
+      </div>
+    </div>
+
+    <!-- TEXT INPUT -->
+    <div class="text-input-wrap" id="textInputWrap">
+      <textarea class="question-input" id="questionText" placeholder="Yahan apna question type karo...&#10;&#10;Example: A train travels 120 km in 2 hours. What is its speed?"></textarea>
+    </div>
+
+    <!-- SUBJECT -->
+    <div style="margin-bottom:10px;">
+      <div style="font-size:0.75rem;font-weight:700;color:#888;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Subject (Optional)</div>
+      <div class="subject-row">
+        <button class="subj-btn active" onclick="selectSubject(this, 'Auto Detect')">🔍 Auto</button>
+        <button class="subj-btn" onclick="selectSubject(this, 'Maths')">🔢 Maths</button>
+        <button class="subj-btn" onclick="selectSubject(this, 'Reasoning')">🧠 Reasoning</button>
+        <button class="subj-btn" onclick="selectSubject(this, 'English')">📖 English</button>
+        <button class="subj-btn" onclick="selectSubject(this, 'General Awareness')">🌍 GA</button>
+      </div>
+    </div>
+
+    <!-- LANGUAGE -->
+    <div class="lang-row">
+      <span class="lang-label">Answer Language:</span>
+      <button class="lang-btn active" onclick="selectLang(this, 'Hinglish')">🇮🇳 Hinglish</button>
+      <button class="lang-btn" onclick="selectLang(this, 'English')">🇬🇧 English</button>
+      <button class="lang-btn" onclick="selectLang(this, 'Hindi')">हि Hindi</button>
+    </div>
+
+    <button class="btn-solve" id="solveBtn" onclick="solveDoubt()">
+      🤖 Solve Karo
+    </button>
+
+    <div class="error-box" id="errorBox"></div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading-wrap" id="loadingWrap">
+    <div class="loading-dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <div class="loading-text">AI soch raha hai... ⏳</div>
+  </div>
+
+  <!-- ANSWER -->
+  <div class="answer-card" id="answerCard">
+    <div class="answer-header">
+      <div class="answer-header-icon">🤖</div>
+      <div class="answer-header-text">
+        <h3>AI ka Jawab</h3>
+        <p>Gemini AI — SSC Hustlers</p>
+      </div>
+    </div>
+    <div class="answer-body">
+      <div class="answer-content" id="answerContent"></div>
+      <div class="answer-actions">
+        <button class="btn-action btn-copy" onclick="copyAnswer()">📋 Copy</button>
+        <button class="btn-action btn-new" onclick="newQuestion()">🔄 Naya Question</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIPS -->
+  <div class="tips-card" style="margin-top:16px;">
+    <div class="tips-title">💡 Best Results ke liye Tips</div>
+    <div class="tip-item"><span class="tip-icon">📸</span><span>Photo clear aur bright lo — question poora dikh raha ho</span></div>
+    <div class="tip-item"><span class="tip-icon">✍️</span><span>Text mein poora question likho — options bhi daalo</span></div>
+    <div class="tip-item"><span class="tip-icon">🎯</span><span>Subject select karo — better explanation milegi</span></div>
+    <div class="tip-item"><span class="tip-icon">🌐</span><span>Hinglish mein answer — asaan samajh aata hai</span></div>
+  </div>
+
+</div>
+
+<script>
+// ============ CONFIG ============
+const GEMINI_API_KEY = 'APNI_KEY_YAHAN_DAALO'; // Apni Gemini API key yahan daalo
+// ================================
+
+// ===== AUTO FILL FROM URL =====
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const q = params.get('q');
+  if (q) {
+    switchInput('text');
+    document.querySelectorAll('.input-tab')[1].classList.add('active');
+    document.querySelectorAll('.input-tab')[0].classList.remove('active');
+    document.getElementById('questionText').value = decodeURIComponent(q);
+    // Auto scroll to solve button
+    setTimeout(() => {
+      document.getElementById('solveBtn').scrollIntoView({ behavior:'smooth', block:'center' });
+    }, 300);
+  }
+});
+
+let currentInput = 'photo';
+let selectedSubject = 'Auto Detect';
+let selectedLang = 'Hinglish';
+let selectedImageBase64 = null;
+let selectedImageMime = null;
+
+// ===== INPUT SWITCH =====
+function switchInput(type) {
+  currentInput = type;
+  document.querySelectorAll('.input-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('photoInputWrap').style.display = type === 'photo' ? 'block' : 'none';
+  document.getElementById('textInputWrap').style.display = type === 'text' ? 'block' : 'none';
+}
+
+// ===== IMAGE HANDLING =====
+function handleImageSelect(event) {
+  const file = event.target.files[0];
+  if (file) processImage(file);
+}
+
+function handleDrop(event) {
+  event.preventDefault();
+  const file = event.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) processImage(file);
+  document.getElementById('uploadZone').classList.remove('drag');
+}
+
+function handleDragOver(event) {
+  event.preventDefault();
+  document.getElementById('uploadZone').classList.add('drag');
+}
+
+function handleDragLeave() {
+  document.getElementById('uploadZone').classList.remove('drag');
+}
+
+function processImage(file) {
+  if (file.size > 10 * 1024 * 1024) { showError('⚠️ Image 10MB se chhoti honi chahiye!'); return; }
+  selectedImageMime = file.type;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    selectedImageBase64 = e.target.result.split(',')[1];
+    document.getElementById('previewImg').src = e.target.result;
+    document.getElementById('imgPreview').style.display = 'block';
+    const zone = document.getElementById('uploadZone');
+    zone.classList.add('has-image');
+    zone.querySelector('.upload-icon').textContent = '✅';
+    zone.querySelector('.upload-title').textContent = file.name;
+    zone.querySelector('.upload-sub').textContent = 'Image ready hai — Solve Karo click karo!';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeImage() {
+  selectedImageBase64 = null;
+  selectedImageMime = null;
+  document.getElementById('imgPreview').style.display = 'none';
+  document.getElementById('imageInput').value = '';
+  const zone = document.getElementById('uploadZone');
+  zone.classList.remove('has-image');
+  zone.querySelector('.upload-icon').textContent = '📸';
+  zone.querySelector('.upload-title').textContent = 'Question ki photo yahan daalo';
+  zone.querySelector('.upload-sub').textContent = 'Tap karo ya photo khicho • JPG, PNG support';
+}
+
+// ===== SUBJECT & LANG =====
+function selectSubject(btn, subject) {
+  document.querySelectorAll('.subj-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedSubject = subject;
+}
+
+function selectLang(btn, lang) {
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedLang = lang;
+}
+
+// ===== SOLVE =====
+async function solveDoubt() {
+  hideError();
+
+  // Validate
+  if (currentInput === 'photo' && !selectedImageBase64) {
+    showError('⚠️ Pehle question ki photo upload karo!'); return;
+  }
+  if (currentInput === 'text' && !document.getElementById('questionText').value.trim()) {
+    showError('⚠️ Pehle question type karo!'); return;
+  }
+
+  // UI
+  document.getElementById('solveBtn').disabled = true;
+  document.getElementById('solveBtn').innerHTML = '⏳ Solving...';
+  document.getElementById('loadingWrap').style.display = 'block';
+  document.getElementById('answerCard').style.display = 'none';
+
+  // Prompt
+  const langInstruction = selectedLang === 'Hinglish'
+    ? 'Answer Hinglish mein do (Hindi + English mix, Roman script mein). Easy language use karo.'
+    : selectedLang === 'Hindi'
+    ? 'Answer pure Hindi mein do (Devanagari script mein).'
+    : 'Answer in clear English.';
+
+  const subjectHint = selectedSubject !== 'Auto Detect' ? `Subject: ${selectedSubject}. ` : '';
+
+  const prompt = `Tu ek expert SSC exam teacher hai. ${subjectHint}Neeche diya gaya question solve karo.
+
+${langInstruction}
+
+Format:
+✅ ANSWER: [Direct answer]
+
+📝 EXPLANATION:
+[Step by step solution — simple aur clear]
+
+💡 TRICK/SHORTCUT:
+[Agar koi shortcut hai toh batao]
+
+⚠️ IMPORTANT:
+[Is type ke questions mein kya dhyan rakhna chahiye]`;
+
+  try {
+    let requestBody;
+
+    if (currentInput === 'photo' && selectedImageBase64) {
+      requestBody = {
+        contents: [{
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: selectedImageMime, data: selectedImageBase64 } }
+          ]
+        }]
+      };
+    } else {
+      const questionText = document.getElementById('questionText').value.trim();
+      requestBody = {
+        contents: [{
+          parts: [{ text: prompt + '\n\nQuestion: ' + questionText }]
+        }]
+      };
+    }
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error?.message || 'API Error');
+    }
+
+    const answer = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!answer) throw new Error('Koi answer nahi mila!');
+
+    // Show answer
+    document.getElementById('answerContent').textContent = answer;
+    document.getElementById('answerCard').style.display = 'block';
+    document.getElementById('answerCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch (err) {
+    showError('❌ Error: ' + (err.message || 'Kuch galat ho gaya! Dobara try karo.'));
+  } finally {
+    document.getElementById('loadingWrap').style.display = 'none';
+    document.getElementById('solveBtn').disabled = false;
+    document.getElementById('solveBtn').innerHTML = '🤖 Solve Karo';
+  }
+}
+
+// ===== COPY =====
+function copyAnswer() {
+  const text = document.getElementById('answerContent').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy', 2000);
+  });
+}
+
+// ===== NEW QUESTION =====
+function newQuestion() {
+  document.getElementById('answerCard').style.display = 'none';
+  document.getElementById('questionText').value = '';
+  removeImage();
+  hideError();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ===== ERROR =====
+function showError(msg) {
+  const el = document.getElementById('errorBox');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function hideError() {
+  document.getElementById('errorBox').classList.remove('show');
+}
+</script>
+</body>
+</html>
