@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Room Admin | SSC Hustlers</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --red:#e63946; --red-dark:#b5202c; --red-glow:rgba(230,57,70,0.15);
+  --bg:#0d0f14; --bg2:#13161e; --bg3:#1a1e28;
+  --border:rgba(255,255,255,0.08); --text:#e8eaf0; --text-muted:#6b7280;
+  --green:#00c853; --yellow:#ffb300; --blue:#4285f4;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--red);border-radius:10px;}
+
+/* LOCK SCREEN */
+.lock-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at center,#1a0a0d 0%,var(--bg) 70%);}
+.lock-box{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:48px 44px;width:90%;max-width:400px;text-align:center;box-shadow:0 0 80px rgba(230,57,70,0.08);animation:fadeUp 0.5s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.lock-icon{font-size:2.8rem;margin-bottom:20px;display:block;}
+.lock-box h2{font-family:'Rajdhani',sans-serif;font-size:1.8rem;font-weight:700;color:#fff;}
+.lock-box p{font-size:0.82rem;color:var(--text-muted);margin-top:4px;margin-bottom:32px;}
+.inp-wrap{margin-bottom:16px;text-align:left;}
+.inp-wrap label{font-size:0.78rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:8px;text-transform:uppercase;}
+.inp-wrap input{width:100%;padding:13px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;font-size:0.9rem;font-family:inherit;color:var(--text);outline:none;transition:all 0.2s;}
+.inp-wrap input:focus{border-color:var(--red);box-shadow:0 0 0 3px var(--red-glow);}
+.btn-enter{width:100%;background:var(--red);color:#fff;border:none;padding:14px;border-radius:10px;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;margin-top:8px;}
+.btn-enter:hover{background:var(--red-dark);transform:translateY(-1px);}
+.btn-enter:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+.error-msg{background:rgba(230,57,70,0.1);border:1px solid rgba(230,57,70,0.3);color:#ff6b6b;padding:10px 14px;border-radius:8px;font-size:0.82rem;margin-bottom:16px;display:none;}
+.error-msg.show{display:block;}
+
+/* NAV */
+.admin-panel{display:none;}
+nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 5%;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-family:'Rajdhani',sans-serif;font-size:1.3rem;font-weight:700;color:var(--red);letter-spacing:1px;}
+.logo span{color:var(--text);}
+.btn-logout{background:transparent;color:var(--text-muted);border:1px solid var(--border);padding:7px 16px;border-radius:8px;font-size:0.8rem;cursor:pointer;font-family:inherit;transition:all 0.2s;}
+.btn-logout:hover{color:var(--red);border-color:rgba(230,57,70,0.4);}
+.admin-badge{background:var(--red-glow);color:var(--red);padding:4px 12px;border-radius:50px;font-size:0.7rem;font-weight:700;border:1px solid rgba(230,57,70,0.3);}
+
+/* TABS */
+.tabs-nav{display:flex;gap:4px;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 5%;overflow-x:auto;}
+.tab-btn{padding:14px 18px;font-size:0.82rem;font-weight:700;color:var(--text-muted);cursor:pointer;border:none;background:none;font-family:inherit;white-space:nowrap;border-bottom:2px solid transparent;transition:all 0.2s;}
+.tab-btn.active{color:var(--red);border-bottom-color:var(--red);}
+.tab-btn:hover:not(.active){color:var(--text);}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* LAYOUT */
+.container{max-width:800px;margin:0 auto;padding:28px 16px 80px;}
+.page-title{font-family:'Rajdhani',sans-serif;font-size:1.6rem;font-weight:700;margin-bottom:28px;}
+.page-title span{color:var(--red);}
+
+/* CARD */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:20px;}
+.card-title{font-size:0.95rem;font-weight:700;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+/* FORM */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+@media(max-width:500px){.form-row{grid-template-columns:1fr;}}
+.form-field{margin-bottom:14px;}
+.form-field label{font-size:0.75rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:8px;text-transform:uppercase;}
+.form-field input,.form-field select,.form-field textarea{width:100%;padding:11px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;font-size:0.88rem;font-family:inherit;color:var(--text);outline:none;transition:all 0.2s;}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px var(--red-glow);}
+.form-field select option{background:var(--bg3);}
+.form-field textarea{resize:vertical;min-height:80px;line-height:1.6;}
+.btn-primary{background:var(--red);color:#fff;border:none;padding:12px 28px;border-radius:10px;font-size:0.92rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;}
+.btn-primary:hover:not(:disabled){background:var(--red-dark);transform:translateY(-1px);}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-secondary{background:var(--bg3);color:var(--text-muted);border:1px solid var(--border);padding:10px 20px;border-radius:10px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;}
+.btn-secondary:hover{color:var(--text);border-color:rgba(255,255,255,0.15);}
+.success-msg{background:rgba(0,200,83,0.08);border:1px solid rgba(0,200,83,0.25);color:var(--green);padding:12px 16px;border-radius:8px;font-size:0.85rem;font-weight:600;margin-bottom:16px;display:none;}
+.success-msg.show{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+/* LIST ITEMS */
+.list-item{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;justify-content:space-between;transition:border-color 0.2s;}
+.list-item:hover{border-color:rgba(255,255,255,0.12);}
+.list-item-info{flex:1;min-width:0;}
+.list-item-title{font-size:0.88rem;font-weight:700;color:var(--text);margin-bottom:4px;}
+.list-item-sub{font-size:0.75rem;color:var(--text-muted);}
+.btn-del{background:rgba(230,57,70,0.1);color:var(--red);border:1px solid rgba(230,57,70,0.25);padding:6px 10px;border-radius:7px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;}
+
+/* ROOM CARD */
+.room-active-card{background:linear-gradient(135deg,rgba(230,57,70,0.08),rgba(230,57,70,0.03));border:1px solid rgba(230,57,70,0.25);border-radius:14px;padding:20px;margin-bottom:20px;}
+.room-active-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+.room-active-name{font-size:1.1rem;font-weight:800;color:var(--text);}
+.room-code-badge{background:rgba(230,57,70,0.15);color:var(--red);padding:5px 14px;border-radius:50px;font-size:0.8rem;font-weight:800;letter-spacing:2px;font-family:monospace;}
+.room-stats-wrap{display:flex;gap:12px;flex-wrap:wrap;}
+.room-stat{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:center;}
+.room-stat-val{font-size:1.4rem;font-weight:800;color:var(--red);}
+.room-stat-label{font-size:0.68rem;color:var(--text-muted);margin-top:2px;}
+
+/* MEMBERS TABLE */
+.members-table{width:100%;border-collapse:collapse;}
+.members-table th{font-size:0.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);}
+.members-table td{font-size:0.82rem;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);}
+.members-table tr:last-child td{border-bottom:none;}
+.online-badge{background:rgba(0,200,83,0.1);color:var(--green);padding:2px 8px;border-radius:50px;font-size:0.68rem;font-weight:700;}
+.offline-badge{background:rgba(107,114,128,0.1);color:var(--text-muted);padding:2px 8px;border-radius:50px;font-size:0.68rem;font-weight:700;}
+
+/* LOADING */
+.loading{text-align:center;padding:40px;color:var(--text-muted);}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin 0.6s linear infinite;margin-right:8px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.empty-state{text-align:center;padding:40px;color:var(--text-muted);}
+.empty-icon{font-size:2.2rem;margin-bottom:10px;}
+
+/* TAG */
+.tag{padding:2px 8px;border-radius:4px;font-size:0.7rem;font-weight:700;}
+.tag-active{background:rgba(0,200,83,0.1);color:var(--green);border:1px solid rgba(0,200,83,0.2);}
+.tag-inactive{background:rgba(107,114,128,0.1);color:var(--text-muted);border:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-box">
+    <span class="lock-icon">🎯</span>
+    <h2>ROOM ADMIN</h2>
+    <p>SSC Hustlers — Room Management</p>
+    <div class="error-msg" id="lockError"></div>
+    <div class="inp-wrap">
+      <label>Email</label>
+      <input type="email" id="adminEmail" placeholder="admin@email.com" onkeydown="if(event.key==='Enter')checkAdmin()">
+    </div>
+    <div class="inp-wrap">
+      <label>Password</label>
+      <input type="password" id="adminPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkAdmin()">
+    </div>
+    <button class="btn-enter" id="loginBtn" onclick="checkAdmin()">🔓 Enter</button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="admin-panel" id="adminPanel">
+  <nav>
+    <div class="logo">SSC <span>HUSTLERS</span></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="admin-badge">🎯 ROOM ADMIN</span>
+      <button class="btn-logout" onclick="adminLogout()">↩ Logout</button>
+    </div>
+  </nav>
+
+  <!-- TABS -->
+  <div class="tabs-nav">
+    <button class="tab-btn active" onclick="switchTab('rooms')">🏠 Rooms</button>
+    <button class="tab-btn" onclick="switchTab('challenge')">🎯 Daily Challenge</button>
+    <button class="tab-btn" onclick="switchTab('announcements')">📢 Announcements</button>
+    <button class="tab-btn" onclick="switchTab('members')">👥 Members</button>
+  </div>
+
+  <!-- ══ TAB: ROOMS ══ -->
+  <div class="tab-content active" id="tab-rooms">
+    <div class="container">
+      <div class="page-title">Room <span>Management</span> 🏠</div>
+
+      <!-- CREATE ROOM -->
+      <div class="card">
+        <div class="card-title">➕ Naya Room Banao</div>
+        <div class="success-msg" id="roomSuccessMsg">✅ Room successfully ban gaya!</div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>Exam ka Naam *</label>
+            <input type="text" id="roomExamName" placeholder="e.g. SSC CGL 2026">
+          </div>
+          <div class="form-field">
+            <label>Room Code * (Unique)</label>
+            <input type="text" id="roomCode" placeholder="e.g. CGL2026" maxlength="20" oninput="this.value=this.value.toUpperCase().replace(/\s/g,'')">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>Exam Date</label>
+            <input type="date" id="roomExamDate">
+          </div>
+          <div class="form-field">
+            <label>Exam Type</label>
+            <select id="roomExamType">
+              <option value="ssc_cgl">SSC CGL</option>
+              <option value="ssc_chsl">SSC CHSL</option>
+              <option value="ssc_mts">SSC MTS</option>
+              <option value="ssc_gd">SSC GD</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="createRoom()">🚀 Room Banao</button>
+      </div>
+
+      <!-- ACTIVE ROOMS -->
+      <div class="card">
+        <div class="card-title">
+          <span>📋 Saare Rooms</span>
+          <button onclick="loadRooms()" class="btn-secondary" style="padding:6px 14px;font-size:0.78rem;">🔄 Refresh</button>
+        </div>
+        <div id="roomsList"><div class="loading"><span class="spinner"></span> Loading...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: DAILY CHALLENGE ══ -->
+  <div class="tab-content" id="tab-challenge">
+    <div class="container">
+      <div class="page-title">Daily <span>Challenge</span> 🎯</div>
+
+      <div class="card">
+        <div class="card-title">➕ Aaj ka Challenge Set Karo</div>
+        <div class="success-msg" id="chalSuccessMsg">✅ Challenge set ho gaya!</div>
+
+        <div class="form-field">
+          <label>Room Select Karo *</label>
+          <select id="chalRoomId"><option value="">-- Room Select Karo --</option></select>
+        </div>
+
+        <div class="form-field">
+          <label>Question *</label>
+          <textarea id="chalQuestion" rows="3" placeholder="Question likhao..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>Option A *</label>
+            <input type="text" id="chalOptA" placeholder="Option A">
+          </div>
+          <div class="form-field">
+            <label>Option B *</label>
+            <input type="text" id="chalOptB" placeholder="Option B">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>Option C *</label>
+            <input type="text" id="chalOptC" placeholder="Option C">
+          </div>
+          <div class="form-field">
+            <label>Option D *</label>
+            <input type="text" id="chalOptD" placeholder="Option D">
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>Correct Answer *</label>
+          <select id="chalCorrect">
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+          </select>
+        </div>
+
+        <button class="btn-primary" onclick="saveChallenge()">✅ Challenge Save Karo</button>
+      </div>
+
+      <!-- Today's Challenge -->
+      <div class="card">
+        <div class="card-title">
+          <span>📋 Aaj ke Challenges</span>
+          <button onclick="loadTodaysChallenges()" class="btn-secondary" style="padding:6px 14px;font-size:0.78rem;">🔄 Refresh</button>
+        </div>
+        <div id="todaysChallenges"><div class="loading"><span class="spinner"></span> Loading...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: ANNOUNCEMENTS ══ -->
+  <div class="tab-content" id="tab-announcements">
+    <div class="container">
+      <div class="page-title">Admin <span>Announcements</span> 📢</div>
+
+      <div class="card">
+        <div class="card-title">➕ Naya Announcement Post Karo</div>
+        <div class="success-msg" id="annSuccessMsg">✅ Announcement post ho gaya!</div>
+
+        <div class="form-field">
+          <label>Room Select Karo *</label>
+          <select id="annRoomId"><option value="">-- Room Select Karo --</option></select>
+        </div>
+
+        <div class="form-field">
+          <label>Message *</label>
+          <textarea id="annMessage" rows="3" placeholder="Announcement likhao... e.g. Kal test hoga, sab ready raho!"></textarea>
+        </div>
+
+        <button class="btn-primary" onclick="postAnnouncement()">📢 Post Karo</button>
+      </div>
+
+      <!-- Recent Announcements -->
+      <div class="card">
+        <div class="card-title">
+          <span>📋 Recent Announcements</span>
+          <button onclick="loadAnnouncements()" class="btn-secondary" style="padding:6px 14px;font-size:0.78rem;">🔄 Refresh</button>
+        </div>
+        <div id="annList"><div class="loading"><span class="spinner"></span> Loading...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: MEMBERS ══ -->
+  <div class="tab-content" id="tab-members">
+    <div class="container">
+      <div class="page-title">Room <span>Members</span> 👥</div>
+
+      <div class="card">
+        <div class="card-title">Room Select Karo</div>
+        <div class="form-field">
+          <select id="membersRoomId" onchange="loadMembers()">
+            <option value="">-- Room Select Karo --</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Room Stats -->
+      <div id="roomStatsWrap" style="display:none;">
+        <div class="room-active-card">
+          <div class="room-active-top">
+            <div class="room-active-name" id="selRoomName">--</div>
+            <span class="room-code-badge" id="selRoomCode">---</span>
+          </div>
+          <div class="room-stats-wrap">
+            <div class="room-stat">
+              <div class="room-stat-val" id="statMembers">0</div>
+              <div class="room-stat-label">Members</div>
+            </div>
+            <div class="room-stat">
+              <div class="room-stat-val" id="statOnline">0</div>
+              <div class="room-stat-label">Online</div>
+            </div>
+            <div class="room-stat">
+              <div class="room-stat-val" id="statDaysLeft">--</div>
+              <div class="room-stat-label">Days Left</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>👥 Members List</span>
+          <button onclick="loadMembers()" class="btn-secondary" style="padding:6px 14px;font-size:0.78rem;">🔄 Refresh</button>
+        </div>
+        <div id="membersList"><div class="empty-state"><div class="empty-icon">👥</div><p>Pehle room select karo</p></div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SUPABASE_URL = 'https://wwfhoyxqlversdkdqcgd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3ZmhveXhxbHZlcnNka2RxY2dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDAwMTMsImV4cCI6MjA4ODQ3NjAxM30.qaQp8LJXGxN6EfOoNPOgdhdNqY7M0nC2aR8fBSYejrw';
+const ADMIN_EMAIL = 'anshul200160@gmail.com';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let adminUser = null;
+let allRooms = [];
+
+// ══ LOGIN ══
+async function checkAdmin() {
+  const email = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPassword').value;
+  const errEl = document.getElementById('lockError');
+  const btn = document.getElementById('loginBtn');
+  if (!email || !password) { errEl.textContent = '⚠️ Email aur password daalo!'; errEl.classList.add('show'); return; }
+  btn.disabled = true; btn.textContent = 'Logging in...'; errEl.classList.remove('show');
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error || !data?.user || data.user.email !== ADMIN_EMAIL) {
+    await sb.auth.signOut();
+    errEl.textContent = '🚫 Access Denied!';
+    errEl.classList.add('show');
+    btn.disabled = false; btn.textContent = '🔓 Enter';
+    return;
+  }
+  adminUser = data.user;
+  document.getElementById('lockScreen').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'block';
+  loadRooms();
+  loadTodaysChallenges();
+  loadAnnouncements();
+}
+
+async function adminLogout() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+// ══ TABS ══
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ══ ROOMS ══
+async function loadRooms() {
+  const el = document.getElementById('roomsList');
+  el.innerHTML = '<div class="loading"><span class="spinner"></span> Loading...</div>';
+  const { data, error } = await sb.from('exam_rooms').select('*').order('created_at', { ascending: false });
+  if (error) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><p>' + error.message + '</p></div>'; return; }
+
+  allRooms = data || [];
+  populateRoomSelects();
+
+  if (!allRooms.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏠</div><p>Koi room nahi. Upar se banao!</p></div>';
+    return;
+  }
+
+  el.innerHTML = allRooms.map(r => {
+    const examDate = r.exam_date ? new Date(r.exam_date) : null;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const daysLeft = examDate ? Math.ceil((examDate - today) / (1000*60*60*24)) : null;
+    return `<div class="list-item">
+      <div class="list-item-info">
+        <div class="list-item-title">${r.exam_name || 'Exam Room'} &nbsp;<span class="tag ${r.is_active ? 'tag-active' : 'tag-inactive'}">${r.is_active ? 'Active' : 'Inactive'}</span></div>
+        <div class="list-item-sub" style="margin-top:6px;display:flex;gap:12px;flex-wrap:wrap;">
+          <span>🔑 Code: <strong style="color:var(--red);letter-spacing:1px;">${r.room_code}</strong></span>
+          ${examDate ? `<span>📅 ${examDate.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</span>` : ''}
+          ${daysLeft !== null ? `<span>⏳ ${daysLeft > 0 ? daysLeft + ' din bache' : daysLeft === 0 ? 'Aaj exam!' : 'Exam ho gaya'}</span>` : ''}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button class="btn-del" onclick="toggleRoom('${r.id}',${r.is_active})">${r.is_active ? '⏸ Deactivate' : '▶ Activate'}</button>
+        <button class="btn-del" onclick="deleteRoom('${r.id}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function populateRoomSelects() {
+  const opts = allRooms.filter(r => r.is_active).map(r => `<option value="${r.id}">${r.exam_name} (${r.room_code})</option>`).join('');
+  ['chalRoomId', 'annRoomId', 'membersRoomId'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<option value="">-- Room Select Karo --</option>' + opts;
+  });
+}
+
+async function createRoom() {
+  const examName = document.getElementById('roomExamName').value.trim();
+  const roomCode = document.getElementById('roomCode').value.trim().toUpperCase();
+  const examDate = document.getElementById('roomExamDate').value;
+  const examType = document.getElementById('roomExamType').value;
+
+  if (!examName || !roomCode) { alert('⚠️ Exam naam aur room code zaroori hai!'); return; }
+  if (roomCode.length < 3) { alert('⚠️ Room code kam se kam 3 characters ka hona chahiye!'); return; }
+
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '⏳ Creating...';
+
+  const { error } = await sb.from('exam_rooms').insert({
+    exam_name: examName,
+    room_code: roomCode,
+    exam_date: examDate || null,
+    exam_type: examType,
+    is_active: true,
+    created_by: adminUser.id
+  });
+
+  btn.disabled = false; btn.textContent = '🚀 Room Banao';
+
+  if (error) {
+    if (error.code === '23505') alert('❌ Ye room code already exist karta hai! Doosra code try karo.');
+    else alert('Error: ' + error.message);
+    return;
+  }
+
+  const sm = document.getElementById('roomSuccessMsg');
+  sm.classList.add('show'); setTimeout(() => sm.classList.remove('show'), 3000);
+  document.getElementById('roomExamName').value = '';
+  document.getElementById('roomCode').value = '';
+  document.getElementById('roomExamDate').value = '';
+  loadRooms();
+}
+
+async function toggleRoom(id, isActive) {
+  await sb.from('exam_rooms').update({ is_active: !isActive }).eq('id', id);
+  loadRooms();
+}
+
+async function deleteRoom(id) {
+  if (!confirm('Ye room aur iske saare members delete ho jaayenge! Sure ho?')) return;
+  await sb.from('exam_rooms').delete().eq('id', id);
+  loadRooms();
+}
+
+// ══ DAILY CHALLENGE ══
+async function saveChallenge() {
+  const roomId = document.getElementById('chalRoomId').value;
+  const question = document.getElementById('chalQuestion').value.trim();
+  const optA = document.getElementById('chalOptA').value.trim();
+  const optB = document.getElementById('chalOptB').value.trim();
+  const optC = document.getElementById('chalOptC').value.trim();
+  const optD = document.getElementById('chalOptD').value.trim();
+  const correct = document.getElementById('chalCorrect').value;
+
+  if (!roomId) { alert('⚠️ Room select karo!'); return; }
+  if (!question || !optA || !optB || !optC || !optD) { alert('⚠️ Saare fields bharni hai!'); return; }
+
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '⏳ Saving...';
+
+  const today = new Date().toLocaleDateString('en-CA');
+  const { error } = await sb.from('room_daily_challenge').upsert({
+    room_id: roomId,
+    challenge_date: today,
+    question_text: question,
+    option_a: optA,
+    option_b: optB,
+    option_c: optC,
+    option_d: optD,
+    correct_answer: correct,
+    created_by: adminUser.id
+  }, { onConflict: 'room_id,challenge_date' });
+
+  btn.disabled = false; btn.textContent = '✅ Challenge Save Karo';
+
+  if (error) { alert('Error: ' + error.message); return; }
+
+  const sm = document.getElementById('chalSuccessMsg');
+  sm.classList.add('show'); setTimeout(() => sm.classList.remove('show'), 3000);
+  document.getElementById('chalQuestion').value = '';
+  document.getElementById('chalOptA').value = '';
+  document.getElementById('chalOptB').value = '';
+  document.getElementById('chalOptC').value = '';
+  document.getElementById('chalOptD').value = '';
+  loadTodaysChallenges();
+}
+
+async function loadTodaysChallenges() {
+  const el = document.getElementById('todaysChallenges');
+  el.innerHTML = '<div class="loading"><span class="spinner"></span> Loading...</div>';
+  const today = new Date().toLocaleDateString('en-CA');
+  const { data, error } = await sb.from('room_daily_challenge').select('*,exam_rooms(exam_name,room_code)').eq('challenge_date', today);
+  if (error || !data?.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🎯</div><p>Aaj ka koi challenge set nahi hai.</p></div>';
+    return;
+  }
+
+  el.innerHTML = data.map(c => {
+    const room = c.exam_rooms;
+    return `<div class="list-item">
+      <div class="list-item-info">
+        <div class="list-item-title">${c.question_text.substring(0,80)}${c.question_text.length>80?'...':''}</div>
+        <div class="list-item-sub" style="margin-top:5px;">
+          <span>🏠 ${room?.exam_name || 'Room'} (${room?.room_code || ''})</span> &nbsp;
+          <span>✅ Answer: <strong style="color:var(--green);">${c.correct_answer}</strong></span>
+        </div>
+      </div>
+      <button class="btn-del" onclick="deleteChallenge('${c.id}')">🗑️</button>
+    </div>`;
+  }).join('');
+}
+
+async function deleteChallenge(id) {
+  if (!confirm('Challenge delete karna hai?')) return;
+  await sb.from('room_daily_challenge').delete().eq('id', id);
+  loadTodaysChallenges();
+}
+
+// ══ ANNOUNCEMENTS ══
+async function postAnnouncement() {
+  const roomId = document.getElementById('annRoomId').value;
+  const message = document.getElementById('annMessage').value.trim();
+
+  if (!roomId) { alert('⚠️ Room select karo!'); return; }
+  if (!message) { alert('⚠️ Message likhao!'); return; }
+
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '⏳ Posting...';
+
+  const { error } = await sb.from('room_announcements').insert({
+    room_id: roomId,
+    message: message,
+    created_by: adminUser.id
+  });
+
+  btn.disabled = false; btn.textContent = '📢 Post Karo';
+
+  if (error) { alert('Error: ' + error.message); return; }
+
+  const sm = document.getElementById('annSuccessMsg');
+  sm.classList.add('show'); setTimeout(() => sm.classList.remove('show'), 3000);
+  document.getElementById('annMessage').value = '';
+  loadAnnouncements();
+}
+
+async function loadAnnouncements() {
+  const el = document.getElementById('annList');
+  el.innerHTML = '<div class="loading"><span class="spinner"></span> Loading...</div>';
+  const { data, error } = await sb.from('room_announcements')
+    .select('*,exam_rooms(exam_name,room_code)')
+    .order('created_at', { ascending: false }).limit(20);
+
+  if (error || !data?.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📢</div><p>Koi announcement nahi.</p></div>';
+    return;
+  }
+
+  el.innerHTML = data.map(a => {
+    const room = a.exam_rooms;
+    return `<div class="list-item">
+      <div class="list-item-info">
+        <div class="list-item-title">${a.message}</div>
+        <div class="list-item-sub" style="margin-top:5px;">
+          <span>🏠 ${room?.exam_name || 'Room'} (${room?.room_code || ''})</span> &nbsp;
+          <span>🕐 ${new Date(a.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
+        </div>
+      </div>
+      <button class="btn-del" onclick="deleteAnnouncement('${a.id}')">🗑️</button>
+    </div>`;
+  }).join('');
+}
+
+async function deleteAnnouncement(id) {
+  if (!confirm('Announcement delete karna hai?')) return;
+  await sb.from('room_announcements').delete().eq('id', id);
+  loadAnnouncements();
+}
+
+// ══ MEMBERS ══
+async function loadMembers() {
+  const roomId = document.getElementById('membersRoomId').value;
+  const el = document.getElementById('membersList');
+  if (!roomId) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><p>Pehle room select karo</p></div>'; return; }
+
+  el.innerHTML = '<div class="loading"><span class="spinner"></span> Loading...</div>';
+
+  const room = allRooms.find(r => r.id === roomId);
+  if (room) {
+    document.getElementById('roomStatsWrap').style.display = 'block';
+    document.getElementById('selRoomName').textContent = room.exam_name;
+    document.getElementById('selRoomCode').textContent = room.room_code;
+    if (room.exam_date) {
+      const d = Math.ceil((new Date(room.exam_date) - new Date()) / (1000*60*60*24));
+      document.getElementById('statDaysLeft').textContent = d > 0 ? d : '✅';
+    }
+  }
+
+  const { data: members } = await sb.from('room_members').select('user_id,last_seen').eq('room_id', roomId);
+  if (!members?.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><p>Is room mein koi member nahi!</p></div>';
+    document.getElementById('statMembers').textContent = '0';
+    document.getElementById('statOnline').textContent = '0';
+    return;
+  }
+
+  const uids = members.map(m => m.user_id);
+  let nameMap = {};
+  try {
+    const { data: profs } = await sb.from('profiles').select('id,full_name,email').in('id', uids);
+    (profs || []).forEach(p => { nameMap[p.id] = { name: p.full_name || 'Student', email: p.email || '' }; });
+  } catch(e) {}
+
+  const now = new Date();
+  const isOnline = (ls) => ls && (now - new Date(ls)) < 2 * 60 * 1000;
+  const onlineCount = members.filter(m => isOnline(m.last_seen)).length;
+
+  document.getElementById('statMembers').textContent = members.length;
+  document.getElementById('statOnline').textContent = onlineCount;
+
+  el.innerHTML = `<table class="members-table">
+    <thead><tr>
+      <th>#</th>
+      <th>Naam</th>
+      <th>Email</th>
+      <th>Status</th>
+      <th>Last Seen</th>
+      <th></th>
+    </tr></thead>
+    <tbody>
+      ${members.map((m, i) => {
+        const info = nameMap[m.user_id] || { name: 'Student', email: '--' };
+        const online = isOnline(m.last_seen);
+        const lastSeen = m.last_seen ? new Date(m.last_seen).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Never';
+        return `<tr>
+          <td style="color:var(--text-muted);">${i+1}</td>
+          <td style="font-weight:700;">${info.name}</td>
+          <td style="color:var(--text-muted);font-size:0.78rem;">${info.email}</td>
+          <td><span class="${online ? 'online-badge' : 'offline-badge'}">${online ? '🟢 Online' : '⚫ Offline'}</span></td>
+          <td style="color:var(--text-muted);font-size:0.78rem;">${lastSeen}</td>
+          <td><button class="btn-del" onclick="removeMember('${roomId}','${m.user_id}')">Remove</button></td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+}
+
+async function removeMember(roomId, userId) {
+  if (!confirm('Is member ko room se remove karna hai?')) return;
+  await sb.from('room_members').delete().eq('room_id', roomId).eq('user_id', userId);
+  loadMembers();
+}
+</script>
+</body>
+</html>

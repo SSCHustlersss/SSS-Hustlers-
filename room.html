@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Room | SSC Hustlers</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg:#f5f6fa; --bg2:#fff; --bg3:#f9f9f9;
+  --text:#1a1a2e; --text2:#888; --border:#e8e8e8;
+  --card:#fff; --red:#e63946; --green:#00c853;
+  --gold:#FFD700; --silver:#C0C0C0; --bronze:#CD7F32;
+}
+[data-theme="dark"] {
+  --bg:#0f1117; --bg2:#1a1d27; --bg3:#22263a;
+  --text:#e8eaf6; --text2:#6b7280; --border:#2e3250;
+  --card:#1a1d27;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* NAV */
+.nav{background:#1a1a2e;padding:0 20px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.nav-logo{font-size:1.1rem;font-weight:800;color:var(--red);}
+.nav-logo span{color:#fff;}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.nav-room-name{font-size:0.85rem;font-weight:700;color:rgba(255,255,255,0.7);}
+.nav-code{background:rgba(230,57,70,0.2);color:#ff6b6b;padding:3px 10px;border-radius:50px;font-size:0.72rem;font-weight:800;letter-spacing:1px;}
+.btn-nav{background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.12);padding:6px 14px;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:5px;}
+.btn-nav:hover{background:rgba(255,255,255,0.15);}
+.btn-dark{background:none;border:none;font-size:1.1rem;cursor:pointer;color:#fff;padding:4px 8px;}
+
+/* MAIN */
+.main{max-width:1100px;margin:0 auto;padding:24px 20px;}
+
+/* ANNOUNCEMENT BANNER */
+.announcement-banner{background:linear-gradient(135deg,#1a1a2e,#2d3561);border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;border:1px solid rgba(255,215,0,0.2);cursor:pointer;}
+.announcement-banner .ann-icon{font-size:1.4rem;flex-shrink:0;}
+.announcement-banner .ann-text{flex:1;font-size:0.85rem;color:rgba(255,255,255,0.85);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.announcement-banner .ann-new{background:var(--red);color:#fff;padding:2px 8px;border-radius:50px;font-size:0.68rem;font-weight:800;flex-shrink:0;}
+
+/* EXAM COUNTDOWN */
+.countdown-card{background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:16px;padding:20px 22px;margin-bottom:20px;color:#fff;display:flex;align-items:center;justify-content:space-between;border:1px solid rgba(255,255,255,0.06);}
+.countdown-left .exam-label{font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.8px;font-weight:700;margin-bottom:4px;}
+.countdown-left .exam-name{font-size:1.1rem;font-weight:800;}
+.countdown-left .exam-date{font-size:0.78rem;color:rgba(255,255,255,0.5);margin-top:3px;}
+.countdown-right{text-align:center;background:rgba(0,0,0,0.25);border-radius:12px;padding:14px 20px;min-width:100px;}
+.countdown-num{font-size:2.8rem;font-weight:800;line-height:1;color:var(--gold);}
+.countdown-num.urgent{color:#ff4444;animation:urgentBlink 0.8s infinite;}
+@keyframes urgentBlink{0%,100%{opacity:1;}50%{opacity:0.5;}}
+.countdown-txt{font-size:0.7rem;color:rgba(255,255,255,0.5);margin-top:4px;}
+
+/* GRID LAYOUT */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:18px;}
+
+/* CARD BASE */
+.card{background:var(--card);border-radius:16px;padding:20px;border:1px solid var(--border);}
+.card-title{font-size:0.88rem;font-weight:800;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.card-title .ct-icon{font-size:1.1rem;}
+
+/* MEMBERS LIST */
+.members-list{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;}
+.member-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);}
+.member-avatar{width:34px;height:34px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:0.88rem;flex-shrink:0;position:relative;}
+.online-dot{position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;border:2px solid var(--card);}
+.online-dot.online{background:var(--green);}
+.online-dot.offline{background:#888;}
+.member-name{flex:1;font-size:0.85rem;font-weight:600;}
+.member-active{font-size:0.72rem;color:var(--text2);}
+.member-admin-badge{background:rgba(230,57,70,0.1);color:var(--red);padding:2px 7px;border-radius:50px;font-size:0.65rem;font-weight:700;}
+
+/* ACTIVITY TRACKER */
+.activity-bar-wrap{margin-bottom:12px;}
+.activity-member{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.act-name{font-size:0.78rem;font-weight:600;min-width:90px;flex-shrink:0;}
+.act-bar-bg{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+.act-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--red),#ff6b6b);transition:width 0.6s;}
+.act-time{font-size:0.72rem;color:var(--text2);min-width:38px;text-align:right;}
+.heatmap-wrap{margin-top:14px;}
+.heatmap-title{font-size:0.72rem;color:var(--text2);font-weight:600;margin-bottom:8px;}
+.heatmap-grid{display:flex;gap:3px;flex-wrap:wrap;}
+.heatmap-day{width:14px;height:14px;border-radius:3px;background:var(--bg3);cursor:default;transition:transform 0.1s;}
+.heatmap-day:hover{transform:scale(1.3);}
+.heatmap-day.l1{background:#ffcdd2;}
+.heatmap-day.l2{background:#ef9a9a;}
+.heatmap-day.l3{background:#e57373;}
+.heatmap-day.l4{background:var(--red);}
+
+/* LEADERBOARD */
+.lb-podium{display:flex;justify-content:center;align-items:flex-end;gap:10px;margin-bottom:20px;}
+.lb-pod-item{text-align:center;}
+.lb-pod-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9rem;color:#fff;margin:0 auto 6px;}
+.lb-pod-name{font-size:0.75rem;font-weight:700;color:var(--text);}
+.lb-pod-pts{font-size:0.68rem;color:var(--text2);}
+.lb-pod-rank{font-size:1rem;margin-bottom:3px;}
+.lb-pod-box{border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:center;font-weight:800;}
+.lbp1 .lb-pod-box{background:var(--gold);height:60px;width:58px;font-size:1rem;}
+.lbp2 .lb-pod-box{background:var(--silver);height:45px;width:58px;font-size:0.9rem;}
+.lbp3 .lb-pod-box{background:var(--bronze);height:36px;width:58px;font-size:0.85rem;}
+.lbp1 .lb-pod-avatar{background:var(--gold);width:52px;height:52px;}
+.lbp2 .lb-pod-avatar{background:var(--silver);}
+.lbp3 .lb-pod-avatar{background:var(--bronze);}
+.lb-filter{display:flex;gap:6px;margin-bottom:14px;}
+.lb-filter-btn{padding:5px 14px;border-radius:50px;font-size:0.75rem;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:inherit;transition:all 0.2s;}
+.lb-filter-btn.active{background:var(--red);color:#fff;border-color:var(--red);}
+.lb-rows{display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;}
+.lb-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:10px;border:1px solid transparent;}
+.lb-row.me{border-color:var(--red);background:rgba(230,57,70,0.04);}
+.lb-row-rank{font-size:0.88rem;font-weight:800;color:var(--text2);width:22px;}
+.lb-row-av{width:30px;height:30px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.78rem;flex-shrink:0;}
+.lb-row-name{flex:1;font-size:0.82rem;font-weight:600;}
+.lb-row-pts{font-size:0.82rem;font-weight:800;color:var(--red);}
+
+/* PROGRESS COMPARISON */
+.prog-my-vs{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding:12px 16px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);}
+.prog-stat{text-align:center;}
+.prog-stat-val{font-size:1.4rem;font-weight:800;color:var(--text);}
+.prog-stat-val.mine{color:var(--red);}
+.prog-stat-label{font-size:0.7rem;color:var(--text2);margin-top:2px;}
+.prog-vs{font-size:0.88rem;font-weight:800;color:var(--text2);}
+.prog-subj-row{margin-bottom:10px;}
+.prog-subj-label{font-size:0.75rem;font-weight:600;margin-bottom:5px;display:flex;justify-content:space-between;}
+.prog-bars{display:flex;gap:4px;align-items:center;}
+.prog-bar-bg{flex:1;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;}
+.prog-bar-me{height:100%;background:var(--red);border-radius:4px;transition:width 0.6s;}
+.prog-bar-room{height:100%;background:#3d6ef5;border-radius:4px;transition:width 0.6s;}
+.prog-legend{display:flex;gap:14px;margin-top:8px;font-size:0.72rem;color:var(--text2);}
+.prog-legend span{display:flex;align-items:center;gap:4px;}
+.prog-dot{width:10px;height:10px;border-radius:2px;}
+
+/* DAILY TARGET */
+.target-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.target-item{background:var(--bg3);border-radius:12px;padding:14px;border:1px solid var(--border);transition:all 0.2s;}
+.target-item.completed{border-color:var(--green);background:rgba(0,200,83,0.04);}
+.target-item-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.target-item-icon{font-size:1.2rem;}
+.target-item-badge{font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:50px;background:var(--bg);color:var(--text2);border:1px solid var(--border);}
+.target-item-badge.done{background:rgba(0,200,83,0.15);color:var(--green);border-color:rgba(0,200,83,0.3);}
+.target-item-label{font-size:0.78rem;font-weight:600;margin-bottom:6px;}
+.target-progress-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:4px;}
+.target-progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width 0.4s;}
+.target-progress-fill.partial{background:var(--red);}
+.target-nums{font-size:0.7rem;color:var(--text2);}
+.btn-set-target{width:100%;background:rgba(230,57,70,0.08);color:var(--red);border:1px solid rgba(230,57,70,0.2);padding:10px;border-radius:10px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;}
+.btn-set-target:hover{background:var(--red);color:#fff;}
+
+/* DAILY CHALLENGE */
+.challenge-q{background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border);font-size:0.88rem;font-weight:600;line-height:1.6;margin-bottom:12px;}
+.challenge-opts{display:flex;flex-direction:column;gap:7px;margin-bottom:12px;}
+.challenge-opt{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg3);font-size:0.83rem;cursor:pointer;transition:all 0.2s;font-family:inherit;color:var(--text);text-align:left;}
+.challenge-opt:hover:not(:disabled){border-color:var(--red);background:rgba(230,57,70,0.04);}
+.challenge-opt.selected{border-color:var(--red);background:rgba(230,57,70,0.08);}
+.challenge-opt.correct{border-color:var(--green);background:rgba(0,200,83,0.08);color:#00a040;}
+.challenge-opt.wrong{border-color:var(--red);background:rgba(230,57,70,0.06);color:var(--red);}
+.challenge-opt-label{width:26px;height:26px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:800;flex-shrink:0;}
+.challenge-stats{display:flex;gap:12px;font-size:0.75rem;color:var(--text2);font-weight:600;}
+.challenge-stat span{font-weight:800;color:var(--text);}
+
+/* WEAK AREAS */
+.weak-item{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.weak-name{font-size:0.78rem;font-weight:600;min-width:100px;flex-shrink:0;}
+.weak-bar-bg{flex:1;height:7px;background:var(--bg3);border-radius:4px;overflow:hidden;}
+.weak-bar-fill{height:100%;background:var(--red);border-radius:4px;transition:width 0.6s;}
+.weak-pct{font-size:0.75rem;font-weight:800;color:var(--red);min-width:32px;text-align:right;}
+.btn-practice{font-size:0.72rem;background:rgba(230,57,70,0.08);color:var(--red);border:1px solid rgba(230,57,70,0.2);padding:3px 10px;border-radius:50px;cursor:pointer;font-family:inherit;font-weight:700;flex-shrink:0;}
+
+/* DRIVE LINKS */
+.drive-section-title{font-size:0.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin:12px 0 8px;}
+.drive-main-card{background:linear-gradient(135deg,#1a73e8,#1557b0);border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;text-decoration:none;transition:all 0.2s;margin-bottom:10px;}
+.drive-main-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(26,115,232,0.3);}
+.drive-main-icon{font-size:2rem;flex-shrink:0;}
+.drive-main-name{font-size:0.95rem;font-weight:800;color:#fff;}
+.drive-main-sub{font-size:0.75rem;color:rgba(255,255,255,0.7);margin-top:2px;}
+.drive-main-arrow{font-size:1.2rem;color:rgba(255,255,255,0.7);margin-left:auto;flex-shrink:0;}
+.members-drives{display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;}
+.drive-member-card{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--bg3);border-radius:12px;border:1px solid var(--border);cursor:pointer;text-decoration:none;transition:all 0.2s;}
+.drive-member-card:hover{border-color:#1a73e8;transform:translateX(3px);}
+.drive-member-icon{font-size:1.4rem;flex-shrink:0;}
+.drive-member-name{flex:1;}
+.drive-member-title{font-size:0.83rem;font-weight:700;color:var(--text);}
+.drive-member-by{font-size:0.72rem;color:var(--text2);margin-top:1px;}
+.drive-member-arrow{font-size:0.9rem;color:var(--text2);}
+.btn-add-drive{width:100%;background:rgba(26,115,232,0.08);color:#1a73e8;border:1px dashed rgba(26,115,232,0.3);padding:10px;border-radius:10px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px;transition:all 0.2s;}
+.btn-add-drive:hover{background:rgba(26,115,232,0.15);}
+
+/* MODALS */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:16px;}
+.overlay.show{display:flex;}
+.modal{background:var(--card);border-radius:18px;width:100%;max-width:480px;padding:26px 24px;animation:popIn 0.25s ease;border:1px solid var(--border);max-height:90vh;overflow-y:auto;}
+@keyframes popIn{from{opacity:0;transform:scale(0.94)}to{opacity:1;transform:scale(1)}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.modal-title{font-size:1rem;font-weight:800;}
+.modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text2);padding:2px 6px;border-radius:6px;}
+.modal-close:hover{background:var(--border);}
+.form-group{margin-bottom:14px;}
+.form-label{font-size:0.78rem;font-weight:700;color:var(--text2);margin-bottom:5px;display:block;}
+.form-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:0.88rem;font-family:inherit;color:var(--text);background:var(--bg3);outline:none;transition:all 0.2s;}
+.form-input:focus{border-color:var(--red);}
+.btn-primary{width:100%;background:var(--red);color:#fff;border:none;padding:13px;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px;transition:all 0.2s;}
+.btn-primary:hover{background:#c1121f;}
+.btn-secondary{width:100%;background:var(--bg3);color:var(--text2);border:1px solid var(--border);padding:11px;border-radius:10px;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;}
+
+/* CONFETTI */
+.confetti-piece{position:fixed;width:10px;height:10px;top:-10px;animation:confettiFall linear forwards;pointer-events:none;z-index:9999;border-radius:2px;}
+@keyframes confettiFall{to{transform:translateY(110vh) rotate(720deg);opacity:0;}}
+
+/* WEAK AREAS MODAL */
+.weak-modal-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(230,57,70,0.1);color:var(--red);padding:6px 14px;border-radius:50px;font-size:0.82rem;font-weight:700;margin-bottom:16px;}
+.btn-practice-big{width:100%;background:var(--red);color:#fff;border:none;padding:13px;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px;transition:all 0.2s;}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:30px 20px;color:var(--text2);}
+.empty-state .ei{font-size:2.2rem;margin-bottom:8px;}
+.empty-state p{font-size:0.82rem;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .grid-2,.grid-3{grid-template-columns:1fr;}
+  .target-grid{grid-template-columns:1fr 1fr;}
+  .main{padding:14px;}
+  .lb-podium{gap:6px;}
+}
+@media(max-width:480px){
+  .target-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">SSC <span>HUSTLERS</span> <span style="color:rgba(255,255,255,0.3);font-weight:400;font-size:0.9rem;">/ Room</span></div>
+  <div class="nav-right">
+    <span class="nav-room-name" id="navRoomName">Loading...</span>
+    <span class="nav-code" id="navRoomCode">---</span>
+    <button class="btn-dark" onclick="toggleDark()" id="darkBtn">🌙</button>
+    <a class="btn-nav" href="dashboard.html">← Dashboard</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ANNOUNCEMENT BANNER -->
+  <div class="announcement-banner" id="announcementBanner" onclick="openAnnouncementsModal()" style="display:none;">
+    <div class="ann-icon">📢</div>
+    <div class="ann-text" id="annBannerText">Loading...</div>
+    <span class="ann-new" id="annNewBadge" style="display:none;">NEW</span>
+  </div>
+
+  <!-- EXAM COUNTDOWN -->
+  <div class="countdown-card" id="countdownCard">
+    <div class="countdown-left">
+      <div class="exam-label">🎯 Target Exam</div>
+      <div class="exam-name" id="examName">Loading...</div>
+      <div class="exam-date" id="examDate">--</div>
+    </div>
+    <div class="countdown-right">
+      <div class="countdown-num" id="countdownNum">--</div>
+      <div class="countdown-txt" id="countdownTxt">din bache</div>
+    </div>
+  </div>
+
+  <!-- ROW 1: Members + Leaderboard -->
+  <div class="grid-2">
+
+    <!-- MEMBERS LIST -->
+    <div class="card">
+      <div class="card-title"><span class="ct-icon">👥</span> Room Members <span style="font-size:0.72rem;font-weight:600;color:var(--text2);margin-left:auto;" id="onlineCount">0 online</span></div>
+      <div class="members-list" id="membersList">
+        <div class="empty-state"><div class="ei">⏳</div><p>Loading...</p></div>
+      </div>
+    </div>
+
+    <!-- LIVE LEADERBOARD -->
+    <div class="card">
+      <div class="card-title"><span class="ct-icon">🏆</span> Room Leaderboard</div>
+      <div class="lb-filter">
+        <button class="lb-filter-btn active" onclick="switchLbFilter('weekly',this)">Weekly</button>
+        <button class="lb-filter-btn" onclick="switchLbFilter('alltime',this)">All-Time</button>
+      </div>
+      <div class="lb-podium" id="lbPodium"></div>
+      <div class="lb-rows" id="lbRows">
+        <div class="empty-state"><div class="ei">⏳</div><p>Loading...</p></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ROW 2: Activity + Progress -->
+  <div class="grid-2">
+
+    <!-- ACTIVITY TRACKER -->
+    <div class="card">
+      <div class="card-title"><span class="ct-icon">⏱️</span> Today's Activity</div>
+      <div id="activityList">
+        <div class="empty-state"><div class="ei">⏳</div><p>Loading...</p></div>
+      </div>
+      <div class="heatmap-wrap" id="heatmapWrap" style="display:none;">
+        <div class="heatmap-title">📅 My Weekly Activity</div>
+        <div class="heatmap-grid" id="heatmapGrid"></div>
+      </div>
+    </div>
+
+    <!-- PROGRESS COMPARISON -->
+    <div class="card">
+      <div class="card-title"><span class="ct-icon">📊</span> My vs Room Progress</div>
+      <div class="prog-my-vs" id="progMyVs">
+        <div class="prog-stat">
+          <div class="prog-stat-val mine" id="myAvgVal">0%</div>
+          <div class="prog-stat-label">My Avg</div>
+        </div>
+        <div class="prog-vs">VS</div>
+        <div class="prog-stat">
+          <div class="prog-stat-val" id="roomAvgVal">0%</div>
+          <div class="prog-stat-label">Room Avg</div>
+        </div>
+        <div class="prog-stat">
+          <div class="prog-stat-val mine" id="myRankVal">#-</div>
+          <div class="prog-stat-label">My Rank</div>
+        </div>
+      </div>
+      <div id="subjComparison">
+        <div class="empty-state"><div class="ei">⏳</div><p>Loading...</p></div>
+      </div>
+      <div class="prog-legend">
+        <span><div class="prog-dot" style="background:var(--red);"></div> Mine</span>
+        <span><div class="prog-dot" style="background:#3d6ef5;"></div> Room Avg</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ROW 3: Daily Target + Daily Challenge -->
+  <div class="grid-2">
+
+    <!-- DAILY TARGET -->
+    <div class="card">
+      <div class="card-title"><span class="ct-icon">🎯</span> Daily Target <span style="font-size:0.72rem;color:var(--text2);margin-left:auto;" id="targetDate">Today</span></div>
+      <div class="target-grid" id="targetGrid">
+        <div class="empty-state" style="grid-column:span 2;"><div class="ei">🎯</div><p>Pehle target set karo!</p></div>
+      </div>
+      <button class="btn-set-target" onclick="openTargetModal()">✏️ Target Set Karo / Edit Karo</button>
+    </div>
+
+    <!-- DAILY CHALLENGE -->
+    <div class="card">
+      <div class="card-title"><span class="ct-icon">🎯</span> Daily Challenge <span style="font-size:0.72rem;color:var(--green);margin-left:auto;" id="challengeLive"></span></div>
+      <div id="challengeContent">
+        <div class="empty-state"><div class="ei">⏳</div><p>Loading...</p></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ROW 4: Weak Areas + Drive Links -->
+  <div class="grid-2">
+
+    <!-- WEAK AREAS -->
+    <div class="card">
+      <div class="card-title"><span class="ct-icon">🔴</span> Weak Areas</div>
+      <div id="weakAreasList">
+        <div class="empty-state"><div class="ei">⏳</div><p>Loading...</p></div>
+      </div>
+    </div>
+
+    <!-- DRIVE LINKS -->
+    <div class="card">
+      <div class="card-title"><span class="ct-icon">📁</span> Study Drive Links</div>
+
+      <!-- SSC Hustlers Main Drive -->
+      <div class="drive-section-title">📌 Official Drive</div>
+      <a class="drive-main-card" id="sscHustlersDrive" href="https://drive.google.com/drive/folders/1EEyeaHo7_9W72S1A-MQc8QHvzUeiyaq6" target="_blank" rel="noopener">
+        <div class="drive-main-icon">🗂️</div>
+        <div>
+          <div class="drive-main-name">SSC Hustlers Drive</div>
+          <div class="drive-main-sub">Notes, PDFs, Mock Tests & More</div>
+        </div>
+        <div class="drive-main-arrow">↗</div>
+      </a>
+
+      <!-- Members Drives -->
+      <div class="drive-section-title">👥 Members' Drives</div>
+      <div class="members-drives" id="membersDrivesList">
+        <div class="empty-state"><div class="ei">📁</div><p>Abhi kisi ne drive nahi add ki.</p></div>
+      </div>
+      <button class="btn-add-drive" onclick="openAddDriveModal()">+ Apni Drive Add Karo</button>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ══════════ MODALS ══════════ -->
+
+<!-- TARGET MODAL -->
+<div class="overlay" id="targetOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🎯 Aaj ka Target Set Karo</div>
+      <button class="modal-close" onclick="closeModal('targetOverlay')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">📝 Tests Complete Karne Hain</label>
+      <input class="form-input" type="number" id="tgt_tests" min="0" max="50" placeholder="e.g. 3">
+    </div>
+    <div class="form-group">
+      <label class="form-label">❓ Questions Solve Karne Hain</label>
+      <input class="form-input" type="number" id="tgt_questions" min="0" max="1000" placeholder="e.g. 50">
+    </div>
+    <div class="form-group">
+      <label class="form-label">⏱️ Study Time (minutes)</label>
+      <input class="form-input" type="number" id="tgt_time" min="0" max="1440" placeholder="e.g. 120">
+    </div>
+    <div class="form-group">
+      <label class="form-label">📚 Subject Practice</label>
+      <select class="form-input" id="tgt_subject">
+        <option value="">Select subject (optional)</option>
+        <option value="Maths">Quantitative Aptitude</option>
+        <option value="Reasoning">Reasoning</option>
+        <option value="English">English</option>
+        <option value="GK">General Awareness</option>
+      </select>
+    </div>
+    <button class="btn-primary" onclick="saveTarget()">✅ Target Save Karo</button>
+    <button class="btn-secondary" onclick="closeModal('targetOverlay')">Cancel</button>
+  </div>
+</div>
+
+<!-- ADD DRIVE MODAL -->
+<div class="overlay" id="addDriveOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📁 Apni Drive Add Karo</div>
+      <button class="modal-close" onclick="closeModal('addDriveOverlay')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Drive ka Naam</label>
+      <input class="form-input" type="text" id="driveNameInp" placeholder="e.g. Rahul ki Notes Drive" maxlength="50">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Google Drive Link</label>
+      <input class="form-input" type="url" id="driveLinkInp" placeholder="https://drive.google.com/...">
+    </div>
+    <button class="btn-primary" onclick="saveDriveLink()">✅ Drive Add Karo</button>
+    <button class="btn-secondary" onclick="closeModal('addDriveOverlay')">Cancel</button>
+  </div>
+</div>
+
+<!-- ANNOUNCEMENTS MODAL -->
+<div class="overlay" id="announcementsOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📢 Admin Announcements</div>
+      <button class="modal-close" onclick="closeModal('announcementsOverlay')">✕</button>
+    </div>
+    <div id="announcementsList">
+      <div class="empty-state"><div class="ei">⏳</div><p>Loading...</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- WEAK AREAS POPUP (Auto) -->
+<div class="overlay" id="weakPopupOverlay">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">⚠️ Weak Area Alert!</div>
+      <button class="modal-close" onclick="closeModal('weakPopupOverlay')">✕</button>
+    </div>
+    <div id="weakPopupContent"></div>
+    <a class="btn-practice-big" href="quizzes.html" id="weakPracticeBtn">🎯 Practice Karo</a>
+    <button class="btn-secondary" onclick="closeModal('weakPopupOverlay')">Baad mein</button>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://wwfhoyxqlversdkdqcgd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3ZmhveXhxbHZlcnNka2RxY2dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDAwMTMsImV4cCI6MjA4ODQ3NjAxM30.qaQp8LJXGxN6EfOoNPOgdhdNqY7M0nC2aR8fBSYejrw';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let myRoom = null;
+let lbMode = 'weekly';
+let activityTimer = null;
+let roomMembers = [];
+
+// ══ DARK MODE ══
+function toggleDark() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('darkBtn').textContent = isDark ? '🌙' : '☀️';
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+}
+function loadTheme() {
+  const t = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('darkBtn').textContent = t === 'dark' ? '☀️' : '🌙';
+}
+
+// ══ INIT ══
+async function init() {
+  loadTheme();
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+  currentUser = session.user;
+
+  const roomId = localStorage.getItem('room_id_' + currentUser.id);
+  if (!roomId) { window.location.href = 'dashboard.html'; return; }
+
+  const { data: room } = await sb.from('exam_rooms').select('*').eq('id', roomId).eq('is_active', true).single();
+  if (!room) { window.location.href = 'dashboard.html'; return; }
+  myRoom = room;
+
+  document.getElementById('navRoomName').textContent = room.exam_name || 'Exam Room';
+  document.getElementById('navRoomCode').textContent = room.room_code || '';
+
+  renderCountdown();
+  await loadMembers();
+  loadLeaderboard();
+  loadActivity();
+  loadProgress();
+  loadTarget();
+  loadChallenge();
+  loadWeakAreas();
+  loadAnnouncements();
+  loadDriveLinks();
+  startActivityTracker();
+  updateLastSeen();
+  subscribeRealtime();
+  checkWeakPopup();
+}
+
+// ══ COUNTDOWN ══
+function renderCountdown() {
+  const examDate = myRoom.exam_date ? new Date(myRoom.exam_date) : null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  document.getElementById('examName').textContent = myRoom.exam_name || 'Exam';
+  if (examDate) {
+    document.getElementById('examDate').textContent = examDate.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+    const days = Math.ceil((examDate - today) / (1000*60*60*24));
+    const numEl = document.getElementById('countdownNum');
+    numEl.textContent = days > 0 ? days : days === 0 ? '🔴' : '✅';
+    if (days <= 7 && days > 0) numEl.classList.add('urgent');
+    document.getElementById('countdownTxt').textContent = days > 0 ? 'din bache hain' : days === 0 ? 'Aaj exam hai!' : 'Exam ho gaya';
+  } else {
+    document.getElementById('countdownNum').textContent = '--';
+    document.getElementById('countdownTxt').textContent = 'Date set nahi';
+    document.getElementById('examDate').textContent = 'Admin se poocho';
+  }
+}
+
+// ══ MEMBERS ══
+async function loadMembers() {
+  const { data: members } = await sb.from('room_members').select('user_id, last_seen').eq('room_id', myRoom.id);
+  if (!members) return;
+
+  const uids = members.map(m => m.user_id);
+  let nameMap = {};
+  try {
+    const { data: profs } = await sb.from('profiles').select('id,full_name').in('id', uids);
+    (profs || []).forEach(p => { nameMap[p.id] = p.full_name || 'Student'; });
+  } catch(e) {}
+
+  const now = new Date();
+  const isOnline = (last_seen) => {
+    if (!last_seen) return false;
+    return (now - new Date(last_seen)) < 2 * 60 * 1000;
+  };
+
+  roomMembers = members.map(m => ({
+    uid: m.user_id,
+    name: nameMap[m.uid || m.user_id] || 'Student',
+    last_seen: m.last_seen,
+    online: isOnline(m.last_seen),
+    isMe: m.user_id === currentUser.id,
+    isAdmin: myRoom.created_by === m.user_id
+  }));
+
+  roomMembers.sort((a, b) => b.online - a.online);
+  const onlineCount = roomMembers.filter(m => m.online).length;
+  document.getElementById('onlineCount').textContent = onlineCount + ' online';
+
+  document.getElementById('membersList').innerHTML = roomMembers.map(m => {
+    const initials = m.name.charAt(0).toUpperCase();
+    const timeAgo = m.last_seen ? getTimeAgo(m.last_seen) : 'Never';
+    return `<div class="member-item">
+      <div class="member-avatar" style="background:${stringToColor(m.name)}">
+        ${initials}
+        <div class="online-dot ${m.online ? 'online' : 'offline'}"></div>
+      </div>
+      <div class="member-name">${m.name}${m.isMe ? ' (You)' : ''}</div>
+      ${m.isAdmin ? '<span class="member-admin-badge">Admin</span>' : ''}
+      <div class="member-active">${m.online ? '🟢 Online' : timeAgo}</div>
+    </div>`;
+  }).join('') || '<div class="empty-state"><div class="ei">👥</div><p>Koi member nahi!</p></div>';
+}
+
+function stringToColor(str) {
+  const colors = ['#e63946','#3d6ef5','#00b894','#e17055','#6c5ce7','#0984e3','#fd79a8','#00cec9'];
+  let hash = 0;
+  for (let c of str) hash = c.charCodeAt(0) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function getTimeAgo(ts) {
+  const diff = Date.now() - new Date(ts);
+  const mins = Math.floor(diff / 60000);
+  if (mins < 2) return '🟢 Online';
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  return Math.floor(hrs/24) + 'd ago';
+}
+
+async function updateLastSeen() {
+  try {
+    await sb.from('room_members').update({ last_seen: new Date().toISOString() })
+      .eq('room_id', myRoom.id).eq('user_id', currentUser.id);
+  } catch(e) {}
+  setTimeout(updateLastSeen, 30000);
+}
+
+// ══ LEADERBOARD ══
+async function loadLeaderboard() {
+  const uids = roomMembers.map(m => m.uid);
+  if (!uids.length) return;
+
+  const now = new Date();
+  const weekStart = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  let query = sb.from('test_attempts').select('user_id,score,total_marks,full_name,created_at').in('user_id', uids);
+  if (lbMode === 'weekly') query = query.gte('created_at', weekStart);
+  const { data: atts } = await query;
+
+  const sm = {};
+  uids.forEach(uid => { sm[uid] = { name: roomMembers.find(m => m.uid === uid)?.name || 'Student', pts: 0, tests: 0 }; });
+  (atts || []).forEach(a => {
+    if (!sm[a.user_id]) return;
+    const correct = Math.round(a.score || 0);
+    const wrong = Math.round((a.total_marks || 0) - (a.score || 0));
+    sm[a.user_id].pts += correct * 2 - wrong;
+    sm[a.user_id].tests += 1;
+  });
+
+  const sorted = Object.entries(sm).map(([uid, v]) => ({ uid, ...v })).sort((a, b) => b.pts - a.pts);
+  renderLbPodium(sorted);
+  renderLbRows(sorted);
+}
+
+function renderLbPodium(sorted) {
+  const medals = ['🥇','🥈','🥉'];
+  const podiumOrder = [
+    { cls:'lbp2', idx:1 },
+    { cls:'lbp1', idx:0 },
+    { cls:'lbp3', idx:2 }
+  ];
+  const colors = { lbp1: 'var(--gold)', lbp2: 'var(--silver)', lbp3: 'var(--bronze)' };
+  const heights = { lbp1: '60px', lbp2: '45px', lbp3: '36px' };
+
+  document.getElementById('lbPodium').innerHTML = podiumOrder.map(({ cls, idx }) => {
+    const u = sorted[idx];
+    if (!u) return '';
+    const init = u.name.charAt(0).toUpperCase();
+    const rankNum = idx + 1;
+    return `<div class="lb-pod-item ${cls}">
+      <div class="lb-pod-rank">${medals[idx] || ''}</div>
+      <div class="lb-pod-avatar" style="background:${colors[cls]};width:${cls==='lbp1'?'52':'44'}px;height:${cls==='lbp1'?'52':'44'}px;">${init}</div>
+      <div class="lb-pod-name">${u.name.split(' ')[0]}</div>
+      <div class="lb-pod-pts">${u.pts} pts</div>
+      <div class="lb-pod-box" style="background:${colors[cls]};height:${heights[cls]};width:58px;">${rankNum}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderLbRows(sorted) {
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('lbRows').innerHTML = sorted.map((u, i) => {
+    const isMe = u.uid === currentUser.id;
+    return `<div class="lb-row ${isMe ? 'me' : ''}">
+      <div class="lb-row-rank">${i < 3 ? medals[i] : '#'+(i+1)}</div>
+      <div class="lb-row-av" style="background:${stringToColor(u.name)}">${u.name.charAt(0).toUpperCase()}</div>
+      <div>
+        <div class="lb-row-name">${u.name}${isMe ? ' 👈' : ''}</div>
+        <div style="font-size:0.7rem;color:var(--text2);">${u.tests} tests</div>
+      </div>
+      <div class="lb-row-pts">${u.pts} pts</div>
+    </div>`;
+  }).join('') || '<div class="empty-state"><div class="ei">🏆</div><p>Koi data nahi!</p></div>';
+}
+
+function switchLbFilter(mode, btn) {
+  lbMode = mode;
+  document.querySelectorAll('.lb-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadLeaderboard();
+}
+
+// ══ ACTIVITY TRACKER ══
+async function loadActivity() {
+  const today = new Date().toLocaleDateString('en-CA');
+  const uids = roomMembers.map(m => m.uid);
+
+  // Try to fetch from room_activity table; fallback to test_attempts if table missing
+  let actData = {};
+  try {
+    const { data } = await sb.from('room_activity').select('user_id,seconds_spent')
+      .eq('room_id', myRoom.id).eq('date', today).in('user_id', uids);
+    (data || []).forEach(r => { actData[r.user_id] = r.seconds_spent || 0; });
+  } catch(e) {}
+
+  const members = roomMembers.map(m => ({ uid: m.uid, name: m.name, seconds: actData[m.uid] || 0 }))
+    .sort((a, b) => b.seconds - a.seconds);
+
+  const maxSec = Math.max(...members.map(m => m.seconds), 1);
+
+  document.getElementById('activityList').innerHTML = members.map(m => {
+    const mins = Math.floor(m.seconds / 60);
+    const pct = Math.round((m.seconds / maxSec) * 100);
+    const timeStr = mins >= 60 ? Math.floor(mins/60) + 'h ' + (mins%60) + 'm' : mins + ' min';
+    return `<div class="activity-member">
+      <div class="act-name">${m.name.split(' ')[0]}${m.uid === currentUser.id ? ' (You)' : ''}</div>
+      <div class="act-bar-bg"><div class="act-bar-fill" style="width:${pct}%"></div></div>
+      <div class="act-time">${timeStr}</div>
+    </div>`;
+  }).join('');
+
+  renderHeatmap();
+}
+
+async function renderHeatmap() {
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000).toLocaleDateString('en-CA');
+    days.push(d);
+  }
+
+  let heatData = {};
+  try {
+    const { data } = await sb.from('room_activity').select('date,seconds_spent')
+      .eq('room_id', myRoom.id).eq('user_id', currentUser.id).in('date', days);
+    (data || []).forEach(r => { heatData[r.date] = r.seconds_spent || 0; });
+  } catch(e) {
+    // Fallback: use test_attempts
+    const { data } = await sb.from('test_attempts').select('created_at')
+      .eq('user_id', currentUser.id).gte('created_at', new Date(Date.now() - 7*86400000).toISOString());
+    (data || []).forEach(r => {
+      const d = new Date(r.created_at).toLocaleDateString('en-CA');
+      if (!heatData[d]) heatData[d] = 0;
+      heatData[d] += 1800; // 30min per test as estimate
+    });
+  }
+
+  const dayNames = ['S','M','T','W','T','F','S'];
+  document.getElementById('heatmapGrid').innerHTML = days.map((d, i) => {
+    const secs = heatData[d] || 0;
+    const level = secs > 7200 ? 'l4' : secs > 3600 ? 'l3' : secs > 1800 ? 'l2' : secs > 0 ? 'l1' : '';
+    const mins = Math.floor(secs / 60);
+    return `<div class="heatmap-day ${level}" title="${d}: ${mins} min active" style="position:relative;">
+      <span style="position:absolute;bottom:-16px;font-size:0.6rem;color:var(--text2);width:100%;text-align:center;">${dayNames[new Date(d).getDay()]}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('heatmapWrap').style.display = 'block';
+  document.getElementById('heatmapWrap').style.paddingBottom = '20px';
+}
+
+// Activity Timer — every 60s update
+function startActivityTracker() {
+  let secondsThisSession = 0;
+  let lastUpdate = Date.now();
+
+  // Track time spent
+  setInterval(async () => {
+    if (document.hidden) return;
+    secondsThisSession += 60;
+    const today = new Date().toLocaleDateString('en-CA');
+    try {
+      await sb.from('room_activity').upsert({
+        user_id: currentUser.id,
+        room_id: myRoom.id,
+        date: today,
+        seconds_spent: secondsThisSession
+      }, { onConflict: 'user_id,room_id,date', ignoreDuplicates: false });
+    } catch(e) {}
+  }, 60000);
+}
+
+// ══ PROGRESS COMPARISON ══
+async function loadProgress() {
+  const uids = roomMembers.map(m => m.uid);
+  const { data: myAtts } = await sb.from('test_attempts').select('score,total_marks,subject')
+    .eq('user_id', currentUser.id).order('created_at', { ascending: false });
+  const { data: allAtts } = await sb.from('test_attempts').select('user_id,score,total_marks,subject')
+    .in('user_id', uids);
+
+  const calcAvg = (atts) => {
+    if (!atts || !atts.length) return 0;
+    return Math.round(atts.reduce((s, a) => s + (a.total_marks ? (a.score/a.total_marks)*100 : 0), 0) / atts.length);
+  };
+
+  const myAvg = calcAvg(myAtts);
+  const roomAvg = calcAvg(allAtts);
+
+  // My rank in room
+  const rankMap = {};
+  (allAtts || []).forEach(a => {
+    if (!rankMap[a.user_id]) rankMap[a.user_id] = { total: 0, count: 0 };
+    if (a.total_marks) { rankMap[a.user_id].total += (a.score/a.total_marks)*100; rankMap[a.user_id].count++; }
+  });
+  const sorted = Object.entries(rankMap)
+    .map(([uid, v]) => ({ uid, avg: v.count ? Math.round(v.total/v.count) : 0 }))
+    .sort((a, b) => b.avg - a.avg);
+  const myRank = sorted.findIndex(r => r.uid === currentUser.id) + 1;
+
+  document.getElementById('myAvgVal').textContent = myAvg + '%';
+  document.getElementById('roomAvgVal').textContent = roomAvg + '%';
+  document.getElementById('myRankVal').textContent = myRank > 0 ? '#' + myRank : '#-';
+
+  // Subject breakdown
+  const subjects = [
+    { key: 'maths', label: 'Quantitative Aptitude' },
+    { key: 'reasoning', label: 'Reasoning' },
+    { key: 'english', label: 'English' },
+    { key: 'ga', label: 'General Awareness' }
+  ];
+
+  const getSubjAvg = (atts, uid, subj) => {
+    const f = atts ? (uid ? atts.filter(a => a.user_id === uid && a.subject === subj) : atts.filter(a => a.subject === subj)) : [];
+    return calcAvg(f);
+  };
+
+  document.getElementById('subjComparison').innerHTML = subjects.map(s => {
+    const myPct = getSubjAvg(myAtts, null, s.key);
+    const roomPct = getSubjAvg(allAtts, null, s.key);
+    return `<div class="prog-subj-row">
+      <div class="prog-subj-label">
+        <span>${s.label}</span>
+        <span style="color:var(--text2);">${myPct}% / ${roomPct}%</span>
+      </div>
+      <div class="prog-bars">
+        <div class="prog-bar-bg" style="margin-right:2px;">
+          <div class="prog-bar-me" style="width:${myPct}%"></div>
+        </div>
+        <div class="prog-bar-bg">
+          <div class="prog-bar-room" style="width:${roomPct}%"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══ DAILY TARGET ══
+async function loadTarget() {
+  const today = new Date().toLocaleDateString('en-CA');
+  document.getElementById('targetDate').textContent = new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+
+  let target = null;
+  try {
+    const { data } = await sb.from('room_daily_targets').select('*')
+      .eq('user_id', currentUser.id).eq('room_id', myRoom.id).eq('target_date', today).single();
+    target = data;
+  } catch(e) {}
+
+  if (!target) {
+    document.getElementById('targetGrid').innerHTML = `<div class="empty-state" style="grid-column:span 2;"><div class="ei">🎯</div><p>Aaj ka target set nahi kiya!<br>Neeche button se set karo.</p></div>`;
+    return;
+  }
+
+  // Fetch actual progress from test_attempts for today
+  const todayStart = new Date().toLocaleDateString('en-CA') + 'T00:00:00';
+  const { data: todayAtts } = await sb.from('test_attempts').select('*')
+    .eq('user_id', currentUser.id).gte('created_at', todayStart);
+
+  const testsDone = todayAtts ? todayAtts.length : 0;
+  const questionsDone = todayAtts ? todayAtts.reduce((s, a) => s + (a.total_marks || 0), 0) : 0;
+
+  const items = [];
+  if (target.tests_target > 0) items.push({ icon:'📝', label:'Tests', done: testsDone, target: target.tests_target });
+  if (target.questions_target > 0) items.push({ icon:'❓', label:'Questions', done: questionsDone, target: target.questions_target });
+  if (target.study_time_target > 0) items.push({ icon:'⏱️', label:'Study Time', done: Math.floor((target.study_time_done||0)/60), target: target.study_time_target, unit:'min' });
+  if (target.subject_practice) items.push({ icon:'📚', label: target.subject_practice, done: target.subject_done ? 1 : 0, target: 1, isBool: true });
+
+  if (!items.length) {
+    document.getElementById('targetGrid').innerHTML = `<div class="empty-state" style="grid-column:span 2;"><div class="ei">🎯</div><p>Target set karo!</p></div>`;
+    return;
+  }
+
+  const allDone = items.every(it => it.isBool ? it.done : it.done >= it.target);
+  if (allDone) triggerConfetti();
+
+  document.getElementById('targetGrid').innerHTML = items.map(it => {
+    const pct = it.isBool ? (it.done * 100) : Math.min(100, Math.round((it.done / it.target) * 100));
+    const completed = it.isBool ? it.done : it.done >= it.target;
+    return `<div class="target-item ${completed ? 'completed' : ''}">
+      <div class="target-item-top">
+        <span class="target-item-icon">${it.icon}</span>
+        <span class="target-item-badge ${completed ? 'done' : ''}">${completed ? '✅ Done' : pct + '%'}</span>
+      </div>
+      <div class="target-item-label">${it.label}</div>
+      <div class="target-progress-bar"><div class="target-progress-fill ${pct < 100 ? 'partial' : ''}" style="width:${pct}%;background:${completed?'var(--green)':'var(--red)'}"></div></div>
+      <div class="target-nums">${it.isBool ? (it.done ? 'Completed ✅' : 'Pending') : it.done + ' / ' + it.target + (it.unit ? ' ' + it.unit : '')}</div>
+    </div>`;
+  }).join('');
+}
+
+function openTargetModal() {
+  document.getElementById('targetOverlay').classList.add('show');
+}
+
+async function saveTarget() {
+  const tests = parseInt(document.getElementById('tgt_tests').value) || 0;
+  const questions = parseInt(document.getElementById('tgt_questions').value) || 0;
+  const time = parseInt(document.getElementById('tgt_time').value) || 0;
+  const subject = document.getElementById('tgt_subject').value;
+
+  const today = new Date().toLocaleDateString('en-CA');
+  try {
+    await sb.from('room_daily_targets').upsert({
+      user_id: currentUser.id,
+      room_id: myRoom.id,
+      target_date: today,
+      tests_target: tests,
+      questions_target: questions,
+      study_time_target: time,
+      subject_practice: subject,
+      study_time_done: 0,
+      subject_done: false,
+      completed: false
+    }, { onConflict: 'user_id,room_id,target_date' });
+    closeModal('targetOverlay');
+    loadTarget();
+  } catch(e) { alert('Error saving target! Table missing ho sakti hai.'); }
+}
+
+// ══ DAILY CHALLENGE ══
+async function loadChallenge() {
+  const today = new Date().toLocaleDateString('en-CA');
+  let challenge = null;
+  try {
+    const { data } = await sb.from('room_daily_challenge').select('*')
+      .eq('room_id', myRoom.id).eq('challenge_date', today).single();
+    challenge = data;
+  } catch(e) {}
+
+  if (!challenge) {
+    document.getElementById('challengeContent').innerHTML = `<div class="empty-state"><div class="ei">🎯</div><p>Admin ne aaj ka challenge set nahi kiya.</p></div>`;
+    return;
+  }
+
+  // Check if already answered
+  const answered = localStorage.getItem(`challenge_${challenge.id}_${currentUser.id}`);
+  const opts = ['A','B','C','D'];
+
+  document.getElementById('challengeLive').textContent = '🟢 Live';
+
+  document.getElementById('challengeContent').innerHTML = `
+    <div class="challenge-q">${challenge.question_text}</div>
+    <div class="challenge-opts" id="challengeOpts">
+      ${opts.map(k => `
+        <button class="challenge-opt ${answered && answered === k ? (k === challenge.correct_answer ? 'correct' : 'wrong') : ''} ${answered && k === challenge.correct_answer ? 'correct' : ''}"
+          onclick="answerChallenge('${challenge.id}','${k}','${challenge.correct_answer}')"
+          ${answered ? 'disabled' : ''}>
+          <span class="challenge-opt-label">${k}</span>
+          ${challenge['option_' + k.toLowerCase()] || ''}
+        </button>`).join('')}
+    </div>
+    <div class="challenge-stats">
+      <span>👥 Attempted: <span id="chalAttempted">--</span></span>
+      <span>✅ Correct: <span id="chalCorrect">--</span></span>
+    </div>`;
+
+  loadChallengeStats(challenge.id);
+}
+
+async function answerChallenge(chalId, chosen, correct) {
+  localStorage.setItem(`challenge_${chalId}_${currentUser.id}`, chosen);
+  try {
+    await sb.from('room_challenge_responses').upsert({
+      challenge_id: chalId,
+      user_id: currentUser.id,
+      room_id: myRoom.id,
+      chosen_answer: chosen,
+      is_correct: chosen === correct
+    }, { onConflict: 'challenge_id,user_id' });
+  } catch(e) {}
+  loadChallenge();
+}
+
+async function loadChallengeStats(chalId) {
+  try {
+    const { data } = await sb.from('room_challenge_responses').select('is_correct').eq('challenge_id', chalId);
+    document.getElementById('chalAttempted').textContent = data?.length || 0;
+    document.getElementById('chalCorrect').textContent = data?.filter(r => r.is_correct).length || 0;
+  } catch(e) {}
+}
+
+// ══ WEAK AREAS ══
+async function loadWeakAreas() {
+  const { data: atts } = await sb.from('test_attempts').select('subject,topic,correct_answers,wrong_answers')
+    .eq('user_id', currentUser.id);
+
+  if (!atts || !atts.length) {
+    document.getElementById('weakAreasList').innerHTML = `<div class="empty-state"><div class="ei">📊</div><p>Tests do toh weak areas dikh jaayenge!</p></div>`;
+    return;
+  }
+
+  const wm = {};
+  atts.forEach(a => {
+    const k = (a.topic || a.subject || 'General').replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+    if (!wm[k]) wm[k] = { c:0, w:0 };
+    wm[k].c += (a.correct_answers||0);
+    wm[k].w += (a.wrong_answers||0);
+  });
+
+  const list = Object.entries(wm)
+    .map(([k,v]) => ({ name:k, total:v.c+v.w, wrong:v.w, pct: v.c+v.w > 0 ? Math.round((v.w/(v.c+v.w))*100) : 0 }))
+    .filter(w => w.total >= 3).sort((a,b) => b.pct-a.pct).slice(0,5);
+
+  if (!list.length) {
+    document.getElementById('weakAreasList').innerHTML = `<div class="empty-state"><div class="ei">✅</div><p>Koi weak area nahi!</p></div>`;
+    return;
+  }
+
+  document.getElementById('weakAreasList').innerHTML = list.map(w =>
+    `<div class="weak-item">
+      <div class="weak-name">${w.name.length > 14 ? w.name.slice(0,13)+'…' : w.name}</div>
+      <div class="weak-bar-bg"><div class="weak-bar-fill" style="width:${w.pct}%"></div></div>
+      <div class="weak-pct">${w.pct}%</div>
+      <button class="btn-practice" onclick="window.location.href='quizzes.html'">Practice</button>
+    </div>`).join('');
+}
+
+// ══ WEAK POPUP (Auto) ══
+async function checkWeakPopup() {
+  const lastShown = localStorage.getItem(`weakpopup_${currentUser.id}`);
+  const now = Date.now();
+  if (lastShown && (now - parseInt(lastShown)) < 3 * 24 * 60 * 60 * 1000) return; // 3 din mein ek baar
+
+  const { data: atts } = await sb.from('test_attempts').select('subject,topic,wrong_answers,created_at')
+    .eq('user_id', currentUser.id).gte('created_at', new Date(now - 7*86400000).toISOString());
+
+  if (!atts || !atts.length) return;
+
+  const wm = {};
+  atts.forEach(a => {
+    const k = (a.topic || a.subject || 'General').replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+    if (!wm[k]) wm[k] = { w:0, days: new Set() };
+    wm[k].w += (a.wrong_answers||0);
+    wm[k].days.add(new Date(a.created_at).toLocaleDateString('en-CA'));
+  });
+
+  const topWeak = Object.entries(wm).filter(([k,v]) => v.days.size >= 3)
+    .map(([k,v]) => ({ name:k, pct: Math.round(v.w * 10) })).sort((a,b) => b.pct-a.pct)[0];
+
+  if (!topWeak) return;
+
+  localStorage.setItem(`weakpopup_${currentUser.id}`, now.toString());
+  document.getElementById('weakPopupContent').innerHTML = `
+    <div class="weak-modal-badge">⚠️ 3+ din se galat ho raha hai</div>
+    <p style="font-size:0.9rem;font-weight:700;margin-bottom:8px;">Yaar, <strong>${topWeak.name}</strong> mein kaafi galat ho raha hai!</p>
+    <p style="font-size:0.82rem;color:var(--text2);margin-bottom:16px;">Abhi practice karo aur apni weakness ko strength mein badlo. 💪</p>`;
+  document.getElementById('weakPracticeBtn').href = 'quizzes.html';
+  setTimeout(() => document.getElementById('weakPopupOverlay').classList.add('show'), 1500);
+}
+
+// ══ ANNOUNCEMENTS ══
+async function loadAnnouncements() {
+  let anns = [];
+  try {
+    const { data } = await sb.from('room_announcements').select('*')
+      .eq('room_id', myRoom.id).order('created_at', { ascending: false }).limit(5);
+    anns = data || [];
+  } catch(e) {}
+
+  if (!anns.length) return;
+
+  // Show banner
+  const latest = anns[0];
+  document.getElementById('annBannerText').textContent = '📢 ' + latest.message;
+  document.getElementById('announcementBanner').style.display = 'flex';
+
+  const lastSeen = localStorage.getItem(`ann_seen_${currentUser.id}`);
+  if (!lastSeen || new Date(latest.created_at) > new Date(lastSeen)) {
+    document.getElementById('annNewBadge').style.display = 'inline';
+  }
+
+  // Modal content
+  document.getElementById('announcementsList').innerHTML = anns.map(a =>
+    `<div style="padding:14px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);margin-bottom:10px;">
+      <div style="font-size:0.82rem;font-weight:700;margin-bottom:4px;">${a.message}</div>
+      <div style="font-size:0.72rem;color:var(--text2);">${new Date(a.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+    </div>`).join('');
+}
+
+function openAnnouncementsModal() {
+  document.getElementById('announcementsOverlay').classList.add('show');
+  document.getElementById('annNewBadge').style.display = 'none';
+  localStorage.setItem(`ann_seen_${currentUser.id}`, new Date().toISOString());
+}
+
+// ══ DRIVE LINKS ══
+async function loadDriveLinks() {
+  let drives = [];
+  try {
+    const { data } = await sb.from('room_drive_links').select('*')
+      .eq('room_id', myRoom.id).order('created_at', { ascending: true });
+    drives = data || [];
+  } catch(e) {}
+
+  const el = document.getElementById('membersDrivesList');
+  if (!drives.length) {
+    el.innerHTML = `<div class="empty-state"><div class="ei">📁</div><p>Abhi kisi ne drive nahi add ki.</p></div>`;
+    return;
+  }
+
+  el.innerHTML = drives.map(d =>
+    `<a class="drive-member-card" href="${d.drive_url}" target="_blank" rel="noopener">
+      <div class="drive-member-icon">📂</div>
+      <div class="drive-member-name">
+        <div class="drive-member-title">${d.drive_name}</div>
+        <div class="drive-member-by">by ${d.added_by_name || 'Member'}</div>
+      </div>
+      <div class="drive-member-arrow">↗</div>
+    </a>`).join('');
+}
+
+function openAddDriveModal() {
+  document.getElementById('addDriveOverlay').classList.add('show');
+}
+
+async function saveDriveLink() {
+  const name = document.getElementById('driveNameInp').value.trim();
+  const url = document.getElementById('driveLinkInp').value.trim();
+  if (!name || !url) { alert('Naam aur link dono daalo!'); return; }
+  if (!url.startsWith('http')) { alert('Valid Google Drive URL daalo!'); return; }
+
+  const myName = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
+  try {
+    await sb.from('room_drive_links').insert({
+      room_id: myRoom.id,
+      user_id: currentUser.id,
+      drive_name: name,
+      drive_url: url,
+      added_by_name: myName
+    });
+    closeModal('addDriveOverlay');
+    document.getElementById('driveNameInp').value = '';
+    document.getElementById('driveLinkInp').value = '';
+    loadDriveLinks();
+  } catch(e) { alert('Error! Table missing ho sakti hai ya link already add hai.'); }
+}
+
+// ══ CONFETTI ══
+function triggerConfetti() {
+  const colors = ['#e63946','#FFD700','#00c853','#3d6ef5','#ff6b6b','#ffd200'];
+  for (let i = 0; i < 60; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.cssText = `
+      left:${Math.random()*100}vw;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      width:${6+Math.random()*8}px;
+      height:${6+Math.random()*8}px;
+      animation-duration:${2+Math.random()*2}s;
+      animation-delay:${Math.random()*0.5}s;
+      transform:rotate(${Math.random()*360}deg);
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+}
+
+// ══ REALTIME ══
+function subscribeRealtime() {
+  // Members last_seen
+  sb.channel('room-members-' + myRoom.id)
+    .on('postgres_changes', { event:'UPDATE', schema:'public', table:'room_members', filter:`room_id=eq.${myRoom.id}` }, () => loadMembers())
+    .subscribe();
+
+  // Test attempts → refresh LB & progress
+  sb.channel('room-atts-' + myRoom.id)
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'test_attempts' }, () => { loadLeaderboard(); loadProgress(); loadTarget(); loadWeakAreas(); })
+    .subscribe();
+
+  // Announcements
+  sb.channel('room-ann-' + myRoom.id)
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'room_announcements', filter:`room_id=eq.${myRoom.id}` }, () => loadAnnouncements())
+    .subscribe();
+
+  // Challenge responses
+  sb.channel('room-chal-' + myRoom.id)
+    .on('postgres_changes', { event:'*', schema:'public', table:'room_challenge_responses' }, () => {
+      const today = new Date().toLocaleDateString('en-CA');
+      sb.from('room_daily_challenge').select('id').eq('room_id', myRoom.id).eq('challenge_date', today).single()
+        .then(({ data }) => { if (data) loadChallengeStats(data.id); });
+    }).subscribe();
+}
+
+// ══ MODAL HELPERS ══
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+document.querySelectorAll('.overlay').forEach(o => {
+  o.addEventListener('click', function(e) { if(e.target === this) this.classList.remove('show'); });
+});
+
+init();
+</script>
+</body>
+</html>
