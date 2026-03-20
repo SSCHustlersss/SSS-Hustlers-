@@ -128,7 +128,6 @@ nav {
   font-size:0.88rem; line-height:1.8; color:#1a1a2e;
   white-space:pre-wrap; word-break:break-word;
 }
-.answer-content strong { color:#e63946; }
 
 /* ACTION BTNS */
 .answer-actions { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
@@ -173,8 +172,8 @@ nav {
 
     <!-- TABS -->
     <div class="input-tabs">
-      <button class="input-tab active" onclick="switchInput('photo')">📸 Photo Upload</button>
-      <button class="input-tab" onclick="switchInput('text')">⌨️ Text Type</button>
+      <button class="input-tab active" onclick="switchInput('photo', event)">📸 Photo Upload</button>
+      <button class="input-tab" onclick="switchInput('text', event)">⌨️ Text Type</button>
     </div>
 
     <!-- PHOTO INPUT -->
@@ -265,20 +264,18 @@ nav {
 </div>
 
 <script>
-// ============ CONFIG ============
-const GEMINI_API_KEY = 'AIzaSyCeehqxDUMdy8gT3HIJt7MLK9WjcOW0S9Y'; // Apni Gemini API key yahan daalo
-// ================================
+const GEMINI_API_KEY = 'AIzaSyDyi816_bfFo4S1eX2gyDHhX_UGT_Ztmf4';
+// Model fixed: gemini-1.5-flash (stable, free, image support)
+const GEMINI_MODEL = 'gemini-1.5-flash';
 
-// ===== AUTO FILL FROM URL =====
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const q = params.get('q');
   if (q) {
-    switchInput('text');
+    switchInput('text', null);
     document.querySelectorAll('.input-tab')[1].classList.add('active');
     document.querySelectorAll('.input-tab')[0].classList.remove('active');
     document.getElementById('questionText').value = decodeURIComponent(q);
-    // Auto scroll to solve button
     setTimeout(() => {
       document.getElementById('solveBtn').scrollIntoView({ behavior:'smooth', block:'center' });
     }, 300);
@@ -291,16 +288,14 @@ let selectedLang = 'Hinglish';
 let selectedImageBase64 = null;
 let selectedImageMime = null;
 
-// ===== INPUT SWITCH =====
-function switchInput(type) {
+function switchInput(type, e) {
   currentInput = type;
   document.querySelectorAll('.input-tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
+  if (e && e.target) e.target.classList.add('active');
   document.getElementById('photoInputWrap').style.display = type === 'photo' ? 'block' : 'none';
   document.getElementById('textInputWrap').style.display = type === 'text' ? 'block' : 'none';
 }
 
-// ===== IMAGE HANDLING =====
 function handleImageSelect(event) {
   const file = event.target.files[0];
   if (file) processImage(file);
@@ -351,7 +346,6 @@ function removeImage() {
   zone.querySelector('.upload-sub').textContent = 'Tap karo ya photo khicho • JPG, PNG support';
 }
 
-// ===== SUBJECT & LANG =====
 function selectSubject(btn, subject) {
   document.querySelectorAll('.subj-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -364,11 +358,9 @@ function selectLang(btn, lang) {
   selectedLang = lang;
 }
 
-// ===== SOLVE =====
 async function solveDoubt() {
   hideError();
 
-  // Validate
   if (currentInput === 'photo' && !selectedImageBase64) {
     showError('⚠️ Pehle question ki photo upload karo!'); return;
   }
@@ -376,13 +368,11 @@ async function solveDoubt() {
     showError('⚠️ Pehle question type karo!'); return;
   }
 
-  // UI
   document.getElementById('solveBtn').disabled = true;
   document.getElementById('solveBtn').innerHTML = '⏳ Solving...';
   document.getElementById('loadingWrap').style.display = 'block';
   document.getElementById('answerCard').style.display = 'none';
 
-  // Prompt
   const langInstruction = selectedLang === 'Hinglish'
     ? 'Answer Hinglish mein do (Hindi + English mix, Roman script mein). Easy language use karo.'
     : selectedLang === 'Hindi'
@@ -429,7 +419,7 @@ Format:
     }
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -440,13 +430,13 @@ Format:
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error?.message || 'API Error');
+      const errMsg = data.error?.message || 'API Error';
+      throw new Error(errMsg);
     }
 
     const answer = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!answer) throw new Error('Koi answer nahi mila!');
+    if (!answer) throw new Error('Koi answer nahi mila! Dobara try karo.');
 
-    // Show answer
     document.getElementById('answerContent').textContent = answer;
     document.getElementById('answerCard').style.display = 'block';
     document.getElementById('answerCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -460,7 +450,6 @@ Format:
   }
 }
 
-// ===== COPY =====
 function copyAnswer() {
   const text = document.getElementById('answerContent').textContent;
   navigator.clipboard.writeText(text).then(() => {
@@ -470,7 +459,6 @@ function copyAnswer() {
   });
 }
 
-// ===== NEW QUESTION =====
 function newQuestion() {
   document.getElementById('answerCard').style.display = 'none';
   document.getElementById('questionText').value = '';
@@ -479,12 +467,12 @@ function newQuestion() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ===== ERROR =====
 function showError(msg) {
   const el = document.getElementById('errorBox');
   el.textContent = msg;
   el.classList.add('show');
 }
+
 function hideError() {
   document.getElementById('errorBox').classList.remove('show');
 }
