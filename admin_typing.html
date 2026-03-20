@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Typing Passages Admin | SSC Hustlers</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --red: #e63946; --red-dark: #b5202c; --red-glow: rgba(230,57,70,0.15);
+  --bg: #0d0f14; --bg2: #13161e; --bg3: #1a1e28;
+  --border: rgba(255,255,255,0.08); --text: #e8eaf0; --text-muted: #6b7280;
+  --green: #00c853; --yellow: #ffb300; --blue: #4285f4;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-track { background:var(--bg); } ::-webkit-scrollbar-thumb { background:var(--red); border-radius:10px; }
+
+/* LOCK SCREEN */
+.lock-screen { display:flex; align-items:center; justify-content:center; min-height:100vh; background:radial-gradient(ellipse at center, #1a0a0d 0%, var(--bg) 70%); }
+.lock-box { background:var(--bg2); border:1px solid var(--border); border-radius:20px; padding:48px 44px; width:90%; max-width:400px; text-align:center; box-shadow:0 0 80px rgba(230,57,70,0.08); animation:fadeUp 0.5s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+.lock-icon { font-size:2.8rem; margin-bottom:20px; display:block; }
+.lock-box h2 { font-family:'Rajdhani',sans-serif; font-size:1.8rem; font-weight:700; color:#fff; }
+.lock-box p { font-size:0.82rem; color:var(--text-muted); margin-top:4px; margin-bottom:32px; }
+.inp-wrap { margin-bottom:16px; text-align:left; }
+.inp-wrap label { font-size:0.78rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:8px; text-transform:uppercase; }
+.inp-wrap input { width:100%; padding:13px 16px; background:var(--bg3); border:1px solid var(--border); border-radius:10px; font-size:0.9rem; font-family:inherit; color:var(--text); outline:none; transition:all 0.2s; }
+.inp-wrap input:focus { border-color:var(--red); box-shadow:0 0 0 3px var(--red-glow); }
+.btn-enter { width:100%; background:var(--red); color:#fff; border:none; padding:14px; border-radius:10px; font-size:0.95rem; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.2s; margin-top:8px; }
+.btn-enter:hover { background:var(--red-dark); transform:translateY(-1px); }
+.btn-enter:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+.error-msg { background:rgba(230,57,70,0.1); border:1px solid rgba(230,57,70,0.3); color:#ff6b6b; padding:10px 14px; border-radius:8px; font-size:0.82rem; margin-bottom:16px; display:none; }
+.error-msg.show { display:block; }
+
+/* NAV */
+.admin-panel { display:none; }
+nav { background:var(--bg2); border-bottom:1px solid var(--border); padding:0 5%; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+.logo { font-family:'Rajdhani',sans-serif; font-size:1.3rem; font-weight:700; color:var(--red); letter-spacing:1px; }
+.logo span { color:var(--text); }
+.btn-logout { background:transparent; color:var(--text-muted); border:1px solid var(--border); padding:7px 16px; border-radius:8px; font-size:0.8rem; cursor:pointer; font-family:inherit; transition:all 0.2s; }
+.btn-logout:hover { color:var(--red); border-color:rgba(230,57,70,0.4); }
+.admin-badge { background:var(--red-glow); color:var(--red); padding:4px 12px; border-radius:50px; font-size:0.7rem; font-weight:700; border:1px solid rgba(230,57,70,0.3); }
+
+/* LAYOUT */
+.container { max-width:800px; margin:0 auto; padding:28px 16px 80px; }
+.page-title { font-family:'Rajdhani',sans-serif; font-size:1.6rem; font-weight:700; margin-bottom:28px; }
+.page-title span { color:var(--red); }
+
+/* CARD */
+.card { background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:24px; margin-bottom:20px; }
+.card-title { font-size:0.95rem; font-weight:700; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:8px; }
+
+/* FORM */
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+@media(max-width:500px) { .form-row { grid-template-columns:1fr; } }
+.form-field label { font-size:0.75rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:8px; text-transform:uppercase; }
+.form-field input, .form-field select, .form-field textarea {
+  width:100%; padding:11px 14px; background:var(--bg3); border:1px solid var(--border);
+  border-radius:10px; font-size:0.88rem; font-family:inherit; color:var(--text); outline:none; transition:all 0.2s;
+}
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color:var(--red); box-shadow:0 0 0 3px var(--red-glow); }
+.form-field select option { background:var(--bg3); }
+.form-field textarea { resize:vertical; min-height:160px; font-family:'Courier New',monospace; line-height:1.8; }
+.btn-primary { background:var(--red); color:#fff; border:none; padding:12px 28px; border-radius:10px; font-size:0.92rem; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.2s; }
+.btn-primary:hover:not(:disabled) { background:var(--red-dark); transform:translateY(-1px); }
+.btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
+.success-msg { background:rgba(0,200,83,0.08); border:1px solid rgba(0,200,83,0.25); color:var(--green); padding:12px 16px; border-radius:8px; font-size:0.85rem; font-weight:600; margin-bottom:16px; display:none; }
+.success-msg.show { display:block; animation:fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+.stats-row { display:flex; gap:16px; margin-top:8px; }
+.stat-chip { font-size:0.75rem; color:var(--text-muted); }
+.stat-chip strong { color:var(--green); }
+
+/* PASSAGE LIST */
+.passage-item { background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:8px; display:flex; align-items:flex-start; gap:10px; justify-content:space-between; transition:border-color 0.2s; }
+.passage-item:hover { border-color:rgba(255,255,255,0.12); }
+.passage-tags { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+.tag { padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; }
+.tag-exam { background:rgba(230,57,70,0.1); color:var(--red); border:1px solid rgba(230,57,70,0.2); }
+.tag-lang { background:rgba(66,133,244,0.1); color:#4285f4; border:1px solid rgba(66,133,244,0.2); }
+.tag-words { font-size:0.7rem; color:var(--text-muted); }
+.passage-title { font-size:0.85rem; font-weight:700; color:var(--text); margin-bottom:4px; }
+.passage-preview { font-size:0.78rem; color:var(--text-muted); font-family:'Courier New',monospace; max-height:40px; overflow:hidden; }
+.btn-del { background:rgba(230,57,70,0.1); color:var(--red); border:1px solid rgba(230,57,70,0.25); padding:6px 10px; border-radius:7px; font-size:0.75rem; font-weight:700; cursor:pointer; font-family:inherit; flex-shrink:0; }
+
+/* FILTER BAR */
+.filter-bar { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+.filter-select { padding:8px 12px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; font-size:0.82rem; font-family:inherit; color:var(--text); outline:none; cursor:pointer; }
+.filter-select:focus { border-color:var(--red); }
+
+/* LOADING / EMPTY */
+.loading { text-align:center; padding:40px; color:var(--text-muted); }
+.spinner { display:inline-block; width:20px; height:20px; border:2px solid var(--border); border-top-color:var(--red); border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.empty-state { text-align:center; padding:48px; color:var(--text-muted); }
+.empty-icon { font-size:2.5rem; margin-bottom:12px; }
+</style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-box">
+    <span class="lock-icon">⌨️</span>
+    <h2>TYPING PASSAGES</h2>
+    <p>SSC Hustlers Admin</p>
+    <div class="error-msg" id="lockError"></div>
+    <div class="inp-wrap">
+      <label>Email</label>
+      <input type="email" id="adminEmail" placeholder="admin@email.com" onkeydown="if(event.key==='Enter')checkAdmin()">
+    </div>
+    <div class="inp-wrap">
+      <label>Password</label>
+      <input type="password" id="adminPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkAdmin()">
+    </div>
+    <button class="btn-enter" id="loginBtn" onclick="checkAdmin()">🔓 Enter</button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="admin-panel" id="adminPanel">
+  <nav>
+    <div class="logo">SSC <span>HUSTLERS</span></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="admin-badge">⌨️ TYPING</span>
+      <button class="btn-logout" onclick="adminLogout()">↩ Logout</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-title">Typing <span>Passages</span> ⌨️</div>
+
+    <!-- ADD PASSAGE -->
+    <div class="card">
+      <div class="card-title">➕ Naya Passage Add Karo</div>
+      <div class="success-msg" id="typingSuccessMsg">✅ Passage successfully add ho gaya!</div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Exam Type *</label>
+          <select id="tpExam">
+            <option value="ssc_cgl">SSC CGL</option>
+            <option value="ssc_chsl">SSC CHSL</option>
+            <option value="all">All Exams</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Language *</label>
+          <select id="tpLang">
+            <option value="english">English</option>
+            <option value="hindi">Hindi</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-field" style="margin-bottom:14px;">
+        <label>Passage Title (Optional)</label>
+        <input type="text" id="tpTitle" placeholder="e.g. India's Economic Growth">
+      </div>
+
+      <div class="form-field" style="margin-bottom:8px;">
+        <label>Passage Text *</label>
+        <textarea id="tpText" rows="10" placeholder="Yahan passage paste karo (minimum 100 characters)..." oninput="updateStats()"></textarea>
+      </div>
+      <div class="stats-row">
+        <span class="stat-chip">Words: <strong id="tpWords">0</strong></span>
+        <span class="stat-chip">Characters: <strong id="tpChars">0</strong></span>
+      </div>
+
+      <div style="margin-top:16px;">
+        <button class="btn-primary" onclick="addPassage()">✅ Passage Add Karo</button>
+      </div>
+    </div>
+
+    <!-- PASSAGES LIST -->
+    <div class="card">
+      <div class="card-title">
+        <span>📋 Saved Passages</span>
+        <button onclick="loadPassages()" style="background:var(--bg3);color:var(--text-muted);border:1px solid var(--border);padding:6px 14px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">🔄 Refresh</button>
+      </div>
+      <div class="filter-bar">
+        <select class="filter-select" id="filterExam" onchange="loadPassages()">
+          <option value="">All Exams</option>
+          <option value="ssc_cgl">SSC CGL</option>
+          <option value="ssc_chsl">SSC CHSL</option>
+          <option value="all">All</option>
+        </select>
+        <select class="filter-select" id="filterLang" onchange="loadPassages()">
+          <option value="">All Languages</option>
+          <option value="english">English</option>
+          <option value="hindi">Hindi</option>
+        </select>
+      </div>
+      <div id="passagesList">
+        <div class="loading"><span class="spinner"></span> Loading...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://wwfhoyxqlversdkdqcgd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3ZmhveXhxbHZlcnNka2RxY2dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDAwMTMsImV4cCI6MjA4ODQ3NjAxM30.qaQp8LJXGxN6EfOoNPOgdhdNqY7M0nC2aR8fBSYejrw';
+const ADMIN_EMAIL = 'anshul200160@gmail.com';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function checkAdmin() {
+  const email = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPassword').value;
+  const errEl = document.getElementById('lockError');
+  const btn = document.getElementById('loginBtn');
+  if (!email || !password) { errEl.textContent = '⚠️ Email aur password daalo!'; errEl.classList.add('show'); return; }
+  btn.disabled = true; btn.textContent = 'Logging in...'; errEl.classList.remove('show');
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error || !data?.user || data.user.email !== ADMIN_EMAIL) {
+    await sb.auth.signOut();
+    errEl.textContent = '🚫 Access Denied!';
+    errEl.classList.add('show');
+    btn.disabled = false; btn.textContent = '🔓 Enter';
+    return;
+  }
+  document.getElementById('lockScreen').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'block';
+  loadPassages();
+}
+
+async function adminLogout() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+function escHtml(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function updateStats() {
+  const text = (document.getElementById('tpText').value || '').trim();
+  const words = text ? text.split(/\s+/).filter(w => w.length > 0).length : 0;
+  document.getElementById('tpWords').textContent = words;
+  document.getElementById('tpChars').textContent = text.length;
+}
+
+// ===== ADD PASSAGE =====
+async function addPassage() {
+  const exam = document.getElementById('tpExam').value;
+  const lang = document.getElementById('tpLang').value;
+  const title = document.getElementById('tpTitle').value.trim();
+  const passage = document.getElementById('tpText').value.trim();
+
+  if (!passage) { alert('⚠️ Passage daalna zaroori hai!'); return; }
+  if (passage.length < 100) { alert('⚠️ Passage bahut chhota hai! Minimum 100 characters chahiye.'); return; }
+
+  const words = passage.split(/\s+/).filter(w => w.length > 0).length;
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '⏳ Adding...';
+
+  const { error } = await sb.from('typing_passages').insert({
+    exam_type: exam, language: lang,
+    title: title || null, passage: passage,
+    word_count: words, char_count: passage.length
+  });
+
+  btn.disabled = false; btn.textContent = '✅ Passage Add Karo';
+
+  if (error) { alert('Error: ' + error.message); return; }
+
+  const sm = document.getElementById('typingSuccessMsg');
+  sm.classList.add('show'); setTimeout(() => sm.classList.remove('show'), 3000);
+  document.getElementById('tpTitle').value = '';
+  document.getElementById('tpText').value = '';
+  updateStats();
+  loadPassages();
+}
+
+// ===== LOAD PASSAGES =====
+async function loadPassages() {
+  const el = document.getElementById('passagesList');
+  el.innerHTML = '<div class="loading"><span class="spinner"></span> Loading...</div>';
+
+  const examF = document.getElementById('filterExam').value;
+  const langF = document.getElementById('filterLang').value;
+
+  let q = sb.from('typing_passages').select('*').order('created_at', { ascending: false });
+  if (examF) q = q.eq('exam_type', examF);
+  if (langF) q = q.eq('language', langF);
+
+  const { data, error } = await q;
+
+  if (error) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><p>Error: ' + error.message + '</p></div>';
+    return;
+  }
+  if (!data || data.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">⌨️</div><p>Koi passage nahi. Upar se add karo!</p></div>';
+    return;
+  }
+
+  el.innerHTML = data.map(p => `
+    <div class="passage-item">
+      <div style="flex:1;min-width:0;">
+        <div class="passage-tags">
+          <span class="tag tag-exam">${p.exam_type.toUpperCase()}</span>
+          <span class="tag tag-lang">${p.language.toUpperCase()}</span>
+          <span class="tag-words">${p.word_count || 0} words</span>
+        </div>
+        ${p.title ? `<div class="passage-title">${escHtml(p.title)}</div>` : ''}
+        <div class="passage-preview">${escHtml(p.passage.substring(0, 120))}...</div>
+      </div>
+      <button class="btn-del" onclick="deletePassage('${p.id}')">🗑️ Del</button>
+    </div>
+  `).join('');
+}
+
+async function deletePassage(id) {
+  if (!confirm('Yeh passage delete karna hai?')) return;
+  const { error } = await sb.from('typing_passages').delete().eq('id', id);
+  if (error) { alert('Error: ' + error.message); return; }
+  loadPassages();
+}
+</script>
+</body>
+</html>
