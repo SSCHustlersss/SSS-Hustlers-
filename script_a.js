@@ -817,8 +817,8 @@ async function launchQuiz(selectedLang) {
       timeLeft = savedState.timeLeft;
       currentQ = savedState.currentQ || 0;
       qStatus = savedState.qStatus || {};
-      if (savedState.posMarking !== undefined) posMarking = savedState.posMarking;
-      if (savedState.negMarking !== undefined) negMarking = savedState.negMarking;
+      // FIX: posMarking/negMarking hamesha questions se lo, savedState se nahi
+      // posMarking aur negMarking pehle se set ho chuke hain questions[0] se
     } else {
       clearQuizState(activeTestName);
     }
@@ -1009,7 +1009,7 @@ async function submitQuiz() {
     else { wrong++; score -= negMarking; }
   });
   const totalMarks = questions[0].total_marks || (questions.length * posMarking);
-  score = Math.max(0, score);
+  // FIX: Negative score bhi dikhao, floor mat karo
   const attempted = questions.length - skip;
   const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
 
