@@ -1069,6 +1069,9 @@ async function submitQuiz() {
       clearQuizState(activeTestName);
     } else {
       console.error('Submit insert error:', insertError);
+      // FIX: User ko error dikhao taaki pata chale kya fail hua
+      alert('⚠️ Result save nahi hua!
+Error: ' + (insertError.message || insertError.code || JSON.stringify(insertError)));
     }
 
     const finalScore = parseFloat(score.toFixed(1));
