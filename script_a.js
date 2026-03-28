@@ -729,6 +729,8 @@ async function startQuiz(testName) {
 async function reattemptQuiz(testName) {
   if (!confirm(`🔁 Reattempt "${testName}"?\n\nYeh aapka final (2nd) attempt hoga — iske baad test lock ho jaayega.`)) return;
   activeTestName = testName;
+  // FIX: Purani saved state clear karo taaki resume prompt na aaye
+  clearQuizState(testName);
 
   let quizQuery = sb.from('quizzes').select('*')
     .eq('exam_type', currentExam).eq('subject', currentSubject.key)
@@ -813,8 +815,9 @@ async function launchQuiz(selectedLang) {
       timeLeft = savedState.timeLeft;
       currentQ = savedState.currentQ || 0;
       qStatus = savedState.qStatus || {};
-      if (savedState.posMarking !== undefined) posMarking = savedState.posMarking;
-      if (savedState.negMarking !== undefined) negMarking = savedState.negMarking;
+      // FIX: posMarking/negMarking hamesha questions se lo, savedState se nahi
+      // if (savedState.posMarking !== undefined) posMarking = savedState.posMarking;
+      // if (savedState.negMarking !== undefined) negMarking = savedState.negMarking;
     } else {
       clearQuizState(activeTestName);
     }
