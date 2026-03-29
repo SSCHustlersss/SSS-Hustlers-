@@ -155,6 +155,7 @@ const TOPICS_MAP = {
     { key:'spelling',         label:'Spelling Correction',  icon:'✅', cls:'english' },
     { key:'sentence_imp',     label:'Sentence Improvement', icon:'📋', cls:'english' },
     { key:'cloze_test',       label:'Cloze Test',           icon:'📄', cls:'english' },
+    { key:'english_full_test',label:'Full Test',            icon:'📋', cls:'fulltest' },
   ],
 };
 
@@ -464,7 +465,8 @@ async function openCategory(cat) {
   if (cat === 'chapter_wise' && TOPICS_MAP[currentSubject.key]) {
     showView('topics');
     document.getElementById('topicsTitle').textContent = `📚 ${currentSubject.label} — Chapter Wise`;
-    const topics = TOPICS_MAP[currentSubject.key].filter(t => t.key !== 'full_test');
+    // FIX: Filter out both 'full_test' and subject-specific full test keys like 'english_full_test'
+    const topics = TOPICS_MAP[currentSubject.key].filter(t => !t.key.includes('full_test'));
     const grid = document.getElementById('topicGrid');
     grid.innerHTML = topics.map(t => `
       <button class="subj-tab" onclick="openTopic('${t.key}','${t.label}','${t.icon}',this)">
@@ -485,7 +487,11 @@ async function openCategory(cat) {
       if (el) el.textContent = total > 0 ? `${total} Qs` : '0 Qs';
     }
   } else {
-    await loadTestsForSubject(currentSubject.key, currentSubject.label, currentSubject.icon, 'full_test');
+    // FIX: Use subject-specific full_test key if defined in TOPICS_MAP, else default 'full_test'
+    const subjectTopics = TOPICS_MAP[currentSubject.key] || [];
+    const fullTestEntry = subjectTopics.find(t => t.key.includes('full_test'));
+    const fullTestKey = fullTestEntry ? fullTestEntry.key : 'full_test';
+    await loadTestsForSubject(currentSubject.key, currentSubject.label, currentSubject.icon, fullTestKey);
   }
 }
 
