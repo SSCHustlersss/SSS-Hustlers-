@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <style>
 :root {
   --red: #e63946;
@@ -849,6 +850,7 @@ nav {
         <div class="template-btns">
           <button class="btn-template btn-csv" onclick="downloadCSVTemplate()">⬇️ CSV Template</button>
           <button class="btn-template btn-excel" onclick="downloadExcelTemplate()">⬇️ Excel Template</button>
+          <button class="btn-template" style="background:rgba(255,179,0,0.1);color:#ffb300;border:1px solid rgba(255,179,0,0.3);" onclick="downloadPPTGuide()">⬇️ PPT Guide</button>
         </div>
 
         <!-- COLUMN INFO -->
@@ -1082,11 +1084,12 @@ nav {
         <!-- FILE UPLOAD -->
         <div class="section-divider" style="margin-top:8px;"><span>📂 Step 3 — File Upload Karo</span></div>
         <div class="upload-zone" id="uploadZone">
-          <input type="file" id="bulkFile" accept=".csv,.xlsx,.xls,.html,.htm" onchange="handleFileUpload(event)">
+          <input type="file" id="bulkFile" accept=".csv,.xlsx,.xls,.html,.htm,.pptx" onchange="handleFileUpload(event)">
           <div class="upload-icon">📂</div>
-          <h3>CSV, Excel ya HTML file yahan drop karo</h3>
-          <p>ya click karke select karo — .csv, .xlsx, .xls, .html supported</p>
+          <h3>CSV, Excel, HTML ya PPT file yahan drop karo</h3>
+          <p>ya click karke select karo — .csv, .xlsx, .xls, .html, .pptx supported</p>
         </div>
+        <div id="uploadProgress" style="display:none;margin-top:10px;padding:10px 14px;background:var(--bg3);border-radius:8px;font-size:0.82rem;color:var(--yellow);border:1px solid rgba(255,179,0,0.2);"></div>
 
         <!-- PREVIEW -->
         <div id="bulkPreview" style="display:none;">
@@ -2098,8 +2101,11 @@ function processFile(file) {
   } else if (ext === 'html' || ext === 'htm') {
     reader.onload = e => parseHTML(e.target.result);
     reader.readAsText(file);
+  } else if (ext === 'pptx') {
+    reader.onload = e => parsePPTX(e.target.result);
+    reader.readAsArrayBuffer(file);
   } else {
-    alert('❌ Sirf .csv, .xlsx, .xls, .html files supported hain!');
+    alert('❌ Sirf .csv, .xlsx, .xls, .html, .pptx files supported hain!');
   }
 }
 
@@ -2538,6 +2544,289 @@ function downloadExcelTemplate() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Questions');
   XLSX.writeFile(wb, 'ssc_hustlers_template.xlsx');
+}
+
+// ============ PPT GUIDE DOWNLOAD ============
+function downloadPPTGuide() {
+  const guide = `SSC HUSTLERS — PPT FORMAT GUIDE
+==================================
+
+PPT se questions upload karne ka tarika:
+
+SLIDE FORMAT (har slide = 1 question):
+---------------------------------------
+1. TITLE BOX     → Question text (required)
+2. CONTENT BOX   → Options — ek option per line:
+                   A) Option text ya image
+                   B) Option text ya image
+                   C) Option text ya image
+                   D) Option text ya image
+3. FIGURE        → Question image (optional) — koi bhi image shape mein
+4. NOTES         → correct_answer|explanation|difficulty|pos_marking|neg_marking|duration
+                   Example: C|Explanation here|medium|2|0.5|30
+
+FIGURE WALE QUESTIONS:
+-----------------------
+- Question figure: Slide mein image add karo (title ke neeche)
+- Option figures: Har option box mein text ki jagah image paste karo
+- Dono bhi ho sakte hain ek slide mein
+
+NOTES FORMAT (slide notes mein likhna):
+-----------------------------------------
+C|Yeh correct answer ki explanation hai|medium|2|0.5|30
+ ^  ^                                    ^      ^ ^   ^
+ |  |                                    |      | |   test_duration (mins)
+ |  |                                    |      | negative_marking
+ |  |                                    |      positive_marking
+ |  explanation                          difficulty (easy/medium/hard)
+ correct answer (A/B/C/D)
+
+IMPORTANT:
+- Slide number = question number
+- Blank slides skip ho jayengi
+- Subject, Exam Type, Test Name upload ke waqt select karo
+- PPT save karo .pptx format mein (not .ppt)
+`;
+  downloadFile('PPT_Guide_SSC_Hustlers.txt', guide, 'text/plain');
+}
+
+// ============ PPTX PARSER ============
+async function parsePPTX(buffer) {
+  const progressEl = document.getElementById('uploadProgress');
+  if (progressEl) { progressEl.style.display = 'block'; progressEl.textContent = '📊 PPT parse ho raha hai...'; }
+
+  try {
+    const zip = await JSZip.loadAsync(buffer);
+    const slideFiles = Object.keys(zip.files)
+      .filter(f => f.match(/^ppt\/slides\/slide[0-9]+\.xml$/))
+      .sort((a, b) => {
+        const na = parseInt(a.match(/slide(\d+)/)[1]);
+        const nb = parseInt(b.match(/slide(\d+)/)[1]);
+        return na - nb;
+      });
+
+    if (slideFiles.length === 0) {
+      alert('❌ PPT mein koi slide nahi mila!');
+      return;
+    }
+
+    const questions = [];
+    let imgCount = 0;
+
+    for (let si = 0; si < slideFiles.length; si++) {
+      const slideFile = slideFiles[si];
+      const slideNum = si + 1;
+      if (progressEl) progressEl.textContent = `📊 Slide ${slideNum}/${slideFiles.length} parse ho rahi hai...`;
+
+      const xmlContent = await zip.files[slideFile].async('string');
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(xmlContent, 'text/xml');
+
+      // Extract all text boxes
+      const spTree = doc.querySelectorAll('sp');
+      let titleText = '';
+      let optionA = '', optionB = '', optionC = '', optionD = '';
+      let notesText = '';
+      const allTexts = [];
+
+      spTree.forEach(sp => {
+        const nvSpPr = sp.querySelector('nvSpPr');
+        const ph = sp.querySelector('ph');
+        const txBody = sp.querySelector('txBody');
+        if (!txBody) return;
+
+        const fullText = Array.from(txBody.querySelectorAll('t'))
+          .map(t => t.textContent).join('').trim();
+        if (!fullText) return;
+
+        const phType = ph ? (ph.getAttribute('type') || 'body') : 'body';
+        const phIdx = ph ? parseInt(ph.getAttribute('idx') || '0') : 999;
+
+        if (phType === 'title' || phType === 'ctrTitle') {
+          titleText = fullText;
+        } else {
+          allTexts.push({ text: fullText, idx: phIdx });
+        }
+      });
+
+      // If no title found, use first text box as title
+      if (!titleText && allTexts.length > 0) {
+        titleText = allTexts[0].text;
+        allTexts.shift();
+      }
+
+      if (!titleText) continue; // Empty slide skip
+
+      // Parse options from remaining text boxes
+      const optTexts = allTexts.map(t => t.text).join('
+');
+      const lines = optTexts.split('
+').map(l => l.trim()).filter(l => l);
+
+      lines.forEach(line => {
+        const m = line.match(/^[A-Da-d][).\.\s]+(.+)/);
+        if (m) {
+          const letter = line[0].toUpperCase();
+          const val = m[1].trim();
+          if (letter === 'A') optionA = val;
+          else if (letter === 'B') optionB = val;
+          else if (letter === 'C') optionC = val;
+          else if (letter === 'D') optionD = val;
+        }
+      });
+
+      // Read slide notes
+      const slideNumStr = slideFile.match(/slide(\d+)/)[1];
+      const notesFile = `ppt/notesSlides/notesSlide${slideNumStr}.xml`;
+      if (zip.files[notesFile]) {
+        const notesXml = await zip.files[notesFile].async('string');
+        const notesDoc = parser.parseFromString(notesXml, 'text/xml');
+        notesText = Array.from(notesDoc.querySelectorAll('t'))
+          .map(t => t.textContent).join('').trim();
+        // Remove slide number that PowerPoint auto-adds
+        notesText = notesText.replace(/^\d+\s*/, '').trim();
+      }
+
+      // Parse notes: correct_answer|explanation|difficulty|pos|neg|duration
+      let correctAnswer = '', explanation = '', difficulty = 'medium';
+      let posMarking = 2, negMarking = 0.5, testDuration = 30;
+
+      if (notesText) {
+        const parts = notesText.split('|');
+        if (parts[0]) correctAnswer = parts[0].trim().toUpperCase();
+        if (parts[1]) explanation = parts[1].trim();
+        if (parts[2]) difficulty = parts[2].trim().toLowerCase();
+        if (parts[3]) posMarking = parseFloat(parts[3]) || 2;
+        if (parts[4]) negMarking = parseFloat(parts[4]) || 0.5;
+        if (parts[5]) testDuration = parseInt(parts[5]) || 30;
+      }
+
+      // Extract images from slide
+      let questionImage = null;
+      let optAImg = null, optBImg = null, optCImg = null, optDImg = null;
+
+      // Find image relationships
+      const relsFile = `ppt/slides/_rels/slide${slideNumStr}.xml.rels`;
+      const imageRels = {};
+      if (zip.files[relsFile]) {
+        const relsXml = await zip.files[relsFile].async('string');
+        const relsDoc = parser.parseFromString(relsXml, 'text/xml');
+        relsDoc.querySelectorAll('Relationship').forEach(rel => {
+          const type = rel.getAttribute('Type') || '';
+          if (type.includes('image')) {
+            const rId = rel.getAttribute('Id');
+            let target = rel.getAttribute('Target');
+            if (!target.startsWith('ppt/')) target = `ppt/slides/${target}`;
+            target = target.replace('//', '/');
+            imageRels[rId] = target;
+          }
+        });
+      }
+
+      // Find pic elements and their positions
+      const pics = doc.querySelectorAll('pic');
+      const imgElements = [];
+      pics.forEach(pic => {
+        const blipFill = pic.querySelector('blipFill');
+        const rId = blipFill ? blipFill.querySelector('blip')?.getAttribute('r:embed') || blipFill.querySelector('blip')?.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'embed') : null;
+        if (!rId || !imageRels[rId]) return;
+
+        // Get position
+        const off = pic.querySelector('off');
+        const ext = pic.querySelector('ext');
+        const x = off ? parseInt(off.getAttribute('x') || '0') : 0;
+        const y = off ? parseInt(off.getAttribute('y') || '0') : 0;
+        const cx = ext ? parseInt(ext.getAttribute('cx') || '0') : 0;
+        const cy = ext ? parseInt(ext.getAttribute('cy') || '0') : 0;
+
+        imgElements.push({ rId, path: imageRels[rId], x, y, cx, cy });
+      });
+
+      // Upload images to Supabase Storage
+      for (let ii = 0; ii < imgElements.length; ii++) {
+        const imgEl = imgElements[ii];
+        const imgPath = imgEl.path;
+        const imgFile = zip.files[imgPath];
+        if (!imgFile) continue;
+
+        const imgData = await imgFile.async('arraybuffer');
+        const ext2 = imgPath.split('.').pop().toLowerCase();
+        const mimeMap = { png:'image/png', jpg:'image/jpeg', jpeg:'image/jpeg', gif:'image/gif', svg:'image/svg+xml', webp:'image/webp' };
+        const mime = mimeMap[ext2] || 'image/png';
+
+        imgCount++;
+        const fileName = `ppt_${Date.now()}_${imgCount}.${ext2}`;
+
+        if (progressEl) progressEl.textContent = `📤 Image ${imgCount} upload ho rahi hai...`;
+
+        const { data: uploadData, error: uploadError } = await sb.storage
+          .from('quiz-images')
+          .upload(fileName, new Blob([imgData], { type: mime }), { contentType: mime, upsert: true });
+
+        if (!uploadError) {
+          const { data: urlData } = sb.storage.from('quiz-images').getPublicUrl(fileName);
+          const publicUrl = urlData.publicUrl;
+
+          // First image = question image, rest = option images (by position top-to-bottom)
+          if (!questionImage) {
+            questionImage = publicUrl;
+          } else if (!optAImg) {
+            optAImg = publicUrl;
+          } else if (!optBImg) {
+            optBImg = publicUrl;
+          } else if (!optCImg) {
+            optCImg = publicUrl;
+          } else if (!optDImg) {
+            optDImg = publicUrl;
+          }
+        }
+      }
+
+      // If options are images, clear text options
+      if (optAImg) optionA = '';
+      if (optBImg) optionB = '';
+      if (optCImg) optionC = '';
+      if (optDImg) optionD = '';
+
+      questions.push({
+        question_text: titleText,
+        option_a: optionA,
+        option_b: optionB,
+        option_c: optionC,
+        option_d: optionD,
+        correct_answer: correctAnswer,
+        explanation: explanation,
+        difficulty: difficulty,
+        positive_marking: posMarking,
+        negative_marking: negMarking,
+        test_duration: testDuration,
+        question_image: questionImage || '',
+        option_a_image: optAImg || '',
+        option_b_image: optBImg || '',
+        option_c_image: optCImg || '',
+        option_d_image: optDImg || '',
+        language: 'en',
+        subject: '',
+        exam_type: '',
+      });
+    }
+
+    if (progressEl) progressEl.style.display = 'none';
+
+    if (questions.length === 0) {
+      alert('❌ PPT mein koi valid question nahi mila!
+Check karo ki slides mein text hai.');
+      return;
+    }
+
+    buildPreviewFromQuestions(questions);
+    alert(`✅ ${questions.length} questions PPT se parse ho gaye!`);
+
+  } catch(e) {
+    console.error('PPT parse error:', e);
+    if (progressEl) progressEl.style.display = 'none';
+    alert('❌ PPT parse error: ' + e.message);
+  }
 }
 
 function downloadFile(name, content, type) {
