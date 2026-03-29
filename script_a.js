@@ -520,13 +520,19 @@ async function loadTestsForSubject(subjectKey, label, icon, topicKey, inTopics) 
 
   let query = sb.from('quizzes')
     .select('test_name, positive_marking, negative_marking, test_duration, total_marks, difficulty, unlock_at, created_at')
-    .eq('exam_type', currentExam).eq('subject', subjectKey)
+    .eq('exam_type', currentExam)
     .not('test_name', 'is', null)
     .order('created_at', { ascending: true });
-  if (topicKey) query = query.eq('topic', topicKey);
+  // FIX: subject='full_test' ka matlab exam-level full test — topic se filter karo
+  if (subjectKey === 'full_test') {
+    query = query.eq('topic', 'full_test');
+  } else {
+    query = query.eq('subject', subjectKey);
+    if (topicKey) query = query.eq('topic', topicKey);
+  }
   let { data, error } = await query;
 
-  // Fallback: old uploads — only if topicKey is a simple subject key (not compound like english_full_test)
+  // Fallback: old uploads
   if ((!data || data.length === 0) && topicKey && !topicKey.includes('_full_test')) {
     const fallbackQuery = sb.from('quizzes')
       .select('test_name, positive_marking, negative_marking, test_duration, total_marks, difficulty, unlock_at, created_at')
