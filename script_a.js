@@ -107,6 +107,7 @@ const TOPICS_MAP = {
     { key:'geometry',            label:'Geometry',               icon:'🔷', cls:'maths' },
     { key:'data_interpretation', label:'Data Interpretation',    icon:'📉', cls:'maths' },
     { key:'statistics',          label:'Statistics',             icon:'📋', cls:'maths' },
+    { key:'maths_full_test',     label:'Full Test',              icon:'📋', cls:'fulltest' },
   ],
   reasoning: [
     { key:'analogy',              label:'Analogy',                icon:'🔗', cls:'reasoning' },
@@ -126,6 +127,7 @@ const TOPICS_MAP = {
     { key:'dice',                 label:'Dice',                   icon:'🎲', cls:'reasoning' },
     { key:'alphabet_test',        label:'Alphabet Test',          icon:'🔤', cls:'reasoning' },
     { key:'mathematical_ops',     label:'Mathematical Operations',icon:'➕', cls:'reasoning' },
+    { key:'reasoning_full_test',  label:'Full Test',              icon:'📋', cls:'fulltest' },
   ],
   ga: [
     { key:'ancient_history',  label:'Ancient History',     icon:'🏛️', cls:'ga' },
@@ -143,6 +145,7 @@ const TOPICS_MAP = {
     { key:'books_authors',    label:'Books & Authors',     icon:'📚', cls:'ga' },
     { key:'important_days',   label:'Important Days',      icon:'📅', cls:'ga' },
     { key:'govt_schemes',     label:'Government Schemes',  icon:'🏛️', cls:'ga' },
+    { key:'full_test',           label:'Full Test',           icon:'📋', cls:'fulltest' },
   ],
   english: [
     { key:'reading_comp',     label:'Reading Comprehension',icon:'📖', cls:'english' },
