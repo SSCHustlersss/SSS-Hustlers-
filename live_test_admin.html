@@ -391,7 +391,7 @@ function handleFile(file) {
         option_b:       String(r['option_b'] || r['B'] || r['Option B'] || '').trim(),
         option_c:       String(r['option_c'] || r['C'] || r['Option C'] || '').trim(),
         option_d:       String(r['option_d'] || r['D'] || r['Option D'] || '').trim(),
-        correct_answer: String(r['correct_answer'] || r['Answer'] || r['Correct'] || '').trim().toUpperCase(),
+        correct_answer: String(r['correct_answer'] || r['ans'] || r['Answer'] || r['Correct'] || r['answer'] || '').trim().toUpperCase(),
         explanation:    String(r['explanation'] || r['Explanation'] || '').trim(),
         image_url:      '',
         q_order:        i + 1   // strict serial from Excel position
