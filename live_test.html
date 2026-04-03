@@ -587,16 +587,34 @@ async function joinTest() {
   }
   questions = qs;
 
+  // ── Check if already submitted ──
+  const { data: prevAttempt } = await sb.from('live_test_attempts')
+    .select('id, score, correct, wrong, skipped, answers, submitted_at')
+    .eq('live_test_id', liveTest.id)
+    .eq('participant_name', participantName)
+    .eq('device_fingerprint', deviceFingerprint)
+    .not('submitted_at', 'is', null)
+    .maybeSingle();
+
+  if (prevAttempt) {
+    // Already submitted — directly show result
+    const savedAnswers = JSON.parse(prevAttempt.answers || '{}');
+    answers = savedAnswers;
+    const attempted = prevAttempt.correct + prevAttempt.wrong;
+    const accuracy  = attempted > 0 ? Math.round((prevAttempt.correct / attempted) * 100) : 0;
+    document.getElementById('quizOverlay').classList.remove('show');
+    showResultScreen(prevAttempt.score, prevAttempt.correct, prevAttempt.wrong, prevAttempt.skipped, attempted, accuracy);
+    return;
+  }
+
   const now = new Date();
   const start = new Date(liveTest.start_time);
   const end   = new Date(liveTest.end_time);
 
   if (now < start) {
-    // Waiting
     showScreen('screenWait');
     startCountdown(start);
   } else if (now >= start && now <= end) {
-    // Start directly
     startQuiz();
   } else {
     showScreen('screenEnded');
@@ -864,12 +882,13 @@ async function submitQuiz(autoSubmit = false) {
   // Save to Supabase
   try {
     const { data: attempt } = await sb.from('live_test_attempts').insert({
-      live_test_id:     liveTest.id,
-      participant_name: participantName,
+      live_test_id:       liveTest.id,
+      participant_name:   participantName,
       score, correct, wrong, skipped,
-      answers:          JSON.stringify(answers),
-      submitted_at:     new Date().toISOString(),
-      is_registered:    false
+      answers:            JSON.stringify(answers),
+      submitted_at:       new Date().toISOString(),
+      is_registered:      false,
+      device_fingerprint: deviceFingerprint
     }).select('id').single();
     if (attempt) attemptId = attempt.id;
   } catch(e) { console.error('Save error:', e); }
