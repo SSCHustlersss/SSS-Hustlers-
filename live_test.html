@@ -3,935 +3,783 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live Test | SSC Hustlers</title>
+<title>Live Test Admin | SSC Hustlers</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-height:100vh;}
 
-/* HEADER */
-.header{background:#fff;border-bottom:2px solid #0ea5e9;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 6px rgba(14,165,233,0.08);}
-.logo{color:#0ea5e9;font-size:1rem;font-weight:800;text-decoration:none;}
-.logo span{color:#111827;}
-.live-badge{background:#dc2626;color:#fff;font-size:0.65rem;font-weight:800;padding:3px 10px;border-radius:50px;animation:livePulse 1.5s infinite;}
-@keyframes livePulse{0%,100%{opacity:1;}50%{opacity:0.7;}}
+.admin-header{background:#fff;border-bottom:2px solid #0ea5e9;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 6px rgba(14,165,233,0.1);}
+.admin-logo{color:#0ea5e9;font-size:1rem;font-weight:800;text-decoration:none;}
+.admin-logo span{color:#111827;}
+.admin-badge{background:#0ea5e9;color:#fff;font-size:0.65rem;font-weight:800;padding:3px 10px;border-radius:50px;}
 
-/* SCREENS */
-.screen{display:none;min-height:80vh;}
-.screen.show{display:block;}
+.admin-main{max-width:900px;margin:0 auto;padding:24px 16px;}
+.section-title{font-size:1rem;font-weight:800;color:#111827;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
 
-/* ── NAME ENTRY SCREEN ── */
-.name-screen{max-width:440px;margin:40px auto;padding:0 16px;}
-.name-card{background:#fff;border-radius:20px;padding:36px 28px;border:2px solid #e0f2fe;box-shadow:0 4px 24px rgba(14,165,233,0.08);text-align:center;}
-.name-crown{font-size:3rem;margin-bottom:12px;}
-.name-title{font-size:1.2rem;font-weight:800;color:#111827;margin-bottom:6px;}
-.name-sub{font-size:0.82rem;color:#64748b;margin-bottom:24px;line-height:1.6;}
-.name-input-wrap{position:relative;margin-bottom:14px;}
-.name-input{width:100%;padding:14px 18px;border-radius:12px;border:2px solid #bae6fd;font-size:1rem;font-family:inherit;outline:none;text-align:center;font-weight:700;color:#111827;transition:border 0.2s;}
-.name-input:focus{border-color:#0ea5e9;}
-.name-error{font-size:0.75rem;color:#dc2626;font-weight:600;margin-top:6px;display:none;}
-.name-error.show{display:block;}
-.btn-join{width:100%;padding:15px;border-radius:12px;border:none;background:#0ea5e9;color:#fff;font-size:1rem;font-weight:800;cursor:pointer;font-family:inherit;transition:background 0.2s;margin-top:8px;}
-.btn-join:hover{background:#0284c7;}
-.btn-join:disabled{background:#bae6fd;cursor:not-allowed;}
-.test-info-pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:20px;}
-.pill{background:#e0f2fe;color:#0284c7;font-size:0.72rem;font-weight:700;padding:4px 12px;border-radius:50px;}
+.card{background:#fff;border-radius:16px;border:1.5px solid #e0f2fe;padding:24px;margin-bottom:24px;box-shadow:0 2px 8px rgba(14,165,233,0.06);}
 
-/* ── WAITING SCREEN ── */
-.wait-screen{max-width:440px;margin:40px auto;padding:0 16px;text-align:center;}
-.wait-card{background:#fff;border-radius:20px;padding:40px 28px;border:2px solid #e0f2fe;box-shadow:0 4px 24px rgba(14,165,233,0.08);}
-.wait-icon{font-size:3rem;margin-bottom:16px;}
-.wait-title{font-size:1.1rem;font-weight:800;color:#111827;margin-bottom:8px;}
-.countdown-box{background:#f0f9ff;border:2px solid #0ea5e9;border-radius:14px;padding:16px;margin:20px 0;}
-.countdown-label{font-size:0.72rem;color:#64748b;font-weight:600;margin-bottom:4px;}
-.countdown-time{font-size:2rem;font-weight:800;color:#0ea5e9;font-variant-numeric:tabular-nums;}
-.wait-sub{font-size:0.78rem;color:#64748b;line-height:1.6;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr;}}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:0.78rem;font-weight:700;color:#475569;}
+input[type=text],input[type=datetime-local],input[type=number],select,textarea{
+  width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid #bae6fd;
+  font-size:0.85rem;font-family:inherit;outline:none;background:#fff;color:#111827;transition:border 0.2s;
+}
+input:focus,select:focus,textarea:focus{border-color:#0ea5e9;}
+textarea{resize:vertical;min-height:70px;}
 
-/* ── QUIZ SCREEN ── */
-.quiz-overlay{position:fixed;inset:0;z-index:200;background:#f0f9ff;overflow:hidden;flex-direction:column;display:none;}
-.quiz-overlay.show{display:flex;}
+.file-drop{border:2px dashed #bae6fd;border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all 0.2s;background:#f0f9ff;}
+.file-drop:hover,.file-drop.drag{border-color:#0ea5e9;background:#e0f2fe;}
+.file-drop-icon{font-size:2rem;margin-bottom:8px;}
+.file-drop-text{font-size:0.85rem;font-weight:600;color:#0284c7;}
+.file-drop-sub{font-size:0.72rem;color:#64748b;margin-top:4px;}
+#fileInput{display:none;}
+.file-selected{background:#dcfce7;border-color:#16a34a;}
 
-.quiz-header{background:#0ea5e9;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0;}
-.qh-left{display:flex;align-items:center;gap:10px;}
-.qh-name{color:rgba(255,255,255,0.85);font-size:0.75rem;font-weight:600;}
-.qh-test{color:#fff;font-size:0.82rem;font-weight:700;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.quiz-timer{background:#dc2626;color:#fff;padding:5px 12px;border-radius:8px;font-size:0.85rem;font-weight:800;font-variant-numeric:tabular-nums;}
-.quiz-timer.warn{background:#ea580c;animation:pulse 1s infinite;}
-@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.7;}}
-.btn-exit{background:rgba(255,255,255,0.2);color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;}
+.preview-wrap{overflow-x:auto;margin-top:16px;}
+.preview-table{width:100%;border-collapse:collapse;font-size:0.75rem;}
+.preview-table th{background:#0ea5e9;color:#fff;padding:8px 10px;text-align:left;font-weight:700;white-space:nowrap;}
+.preview-table td{padding:7px 10px;border-bottom:1px solid #e0f2fe;color:#111827;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.preview-table tr:hover td{background:#f0f9ff;}
+.preview-count{font-size:0.78rem;color:#0284c7;font-weight:700;margin-bottom:8px;}
 
-.quiz-progress{background:#bae6fd;height:3px;flex-shrink:0;}
-.quiz-progress-fill{height:100%;background:#fff;transition:width 0.3s;}
-.progress-text{font-size:0.65rem;color:#64748b;text-align:right;padding:3px 12px;flex-shrink:0;}
+.btn-primary{background:#0ea5e9;color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:0.88rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background 0.2s;width:100%;}
+.btn-primary:hover{background:#0284c7;}
+.btn-primary:disabled{background:#bae6fd;cursor:not-allowed;}
+.btn-sm{padding:6px 12px;border-radius:7px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;border:none;white-space:nowrap;}
+.btn-green{background:#dcfce7;color:#15803d;}
+.btn-blue{background:#e0f2fe;color:#0284c7;}
+.btn-orange{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;}
+.btn-red{background:#fee2e2;color:#dc2626;}
+.btn-purple{background:#ede9fe;color:#6d28d9;}
 
-/* NTA Body */
-.nta-body{display:flex;flex:1;overflow:hidden;}
-.nta-left{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
-.marks-bar{background:#e0f2fe;padding:8px 16px;font-size:0.75rem;color:#111827;border-bottom:1px solid #bae6fd;flex-shrink:0;}
+.live-test-item{background:#fff;border:1.5px solid #e0f2fe;border-radius:12px;padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;transition:all 0.2s;}
+.live-test-item:hover{border-color:#0ea5e9;box-shadow:0 2px 12px rgba(14,165,233,0.1);}
+.lt-status{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.lt-status.live{background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,0.2);animation:livePulse 1.5s infinite;}
+@keyframes livePulse{0%,100%{box-shadow:0 0 0 3px rgba(22,163,74,0.2);}50%{box-shadow:0 0 0 6px rgba(22,163,74,0.1);}}
+.lt-status.upcoming{background:#f59e0b;}
+.lt-status.ended{background:#94a3b8;}
+.lt-info{flex:1;min-width:0;}
+.lt-name{font-size:0.9rem;font-weight:700;color:#111827;margin-bottom:3px;}
+.lt-meta{font-size:0.72rem;color:#64748b;}
+.lt-actions{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;}
+.lt-badge{font-size:0.65rem;font-weight:700;padding:3px 8px;border-radius:50px;}
+.lt-badge.live{background:#dcfce7;color:#15803d;}
+.lt-badge.upcoming{background:#fef3c7;color:#b45309;}
+.lt-badge.ended{background:#f1f5f9;color:#64748b;}
 
-.quiz-body{padding:16px;flex:1;background:#fff;}
-.q-number{font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;}
-.q-text{font-size:0.92rem;font-weight:600;line-height:1.7;color:#111827;margin-bottom:16px;white-space:pre-line;}
-.options-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
-.option-btn{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:11px;border:1.5px solid #e0f2fe;background:#fff;cursor:pointer;font-size:0.87rem;font-weight:500;color:#111827;font-family:inherit;text-align:left;transition:all 0.15s;line-height:1.5;width:100%;}
-.option-btn:hover{border-color:#0ea5e9;background:#f0f9ff;}
-.option-btn.selected{border-color:#0ea5e9;background:#e0f2fe;}
-.option-btn.correct{border-color:#16a34a;background:#dcfce7;}
-.option-btn.wrong{border-color:#dc2626;background:#fee2e2;}
-.option-label{width:28px;height:28px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;flex-shrink:0;color:#475569;}
-.option-btn.selected .option-label{background:#0ea5e9;color:#fff;}
-.option-btn.correct .option-label{background:#16a34a;color:#fff;}
-.option-btn.wrong .option-label{background:#dc2626;color:#fff;}
-.explanation-box{display:none;background:#f0f9ff;border:1.5px solid #0ea5e9;border-radius:10px;padding:12px 14px;font-size:0.82rem;line-height:1.6;color:#111827;margin-top:8px;}
-.explanation-box.show{display:block;}
+.monitor-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.m-stat{background:#f0f9ff;border-radius:10px;padding:14px;text-align:center;border:1px solid #e0f2fe;}
+.m-stat-val{font-size:1.4rem;font-weight:800;color:#0ea5e9;}
+.m-stat-lbl{font-size:0.68rem;color:#64748b;font-weight:600;margin-top:2px;}
 
-.quiz-footer{padding:12px 14px;border-top:1px solid #e0f2fe;background:#fff;display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
-.marking-info{font-size:0.72rem;color:#64748b;text-align:center;}
-.quiz-nav{display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:center;}
-.btn-mark-rev{padding:9px 12px;border-radius:8px;border:1.5px solid #7c3aed;background:#ede9fe;color:#6d28d9;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;}
-.btn-clear{padding:9px 12px;border-radius:8px;border:1.5px solid #cbd5e1;background:#fff;color:#475569;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;}
-.btn-prev,.btn-next{padding:9px 16px;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid #cbd5e1;background:#fff;color:#111827;transition:all 0.15s;}
-.btn-next{background:#0ea5e9;border-color:#0ea5e9;color:#fff;}
-.btn-submit{padding:9px 16px;border-radius:8px;border:none;background:#16a34a;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;display:none;}
+/* ── EDIT TAB ── */
+.edit-test-select{display:flex;gap:10px;margin-bottom:20px;align-items:center;}
+.edit-test-select select{flex:1;}
 
-/* NTA Sidebar */
-.nta-sidebar{width:180px;background:#fff;border-left:1px solid #e0f2fe;overflow-y:auto;display:flex;flex-direction:column;flex-shrink:0;transition:all 0.3s;}
-.nta-sidebar.collapsed{width:0;overflow:hidden;}
-@media(max-width:600px){.nta-sidebar{position:fixed;right:-200px;top:0;height:100%;z-index:150;transition:right 0.3s;width:180px !important;box-shadow:none;}.nta-sidebar.mob-open{right:0;box-shadow:-4px 0 20px rgba(0,0,0,0.12);}}
-.nta-legend{padding:12px;border-bottom:1px solid #e0f2fe;}
-.legend-row{display:flex;align-items:center;gap:8px;font-size:0.7rem;color:#475569;margin-bottom:5px;}
-.ld-dot{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;color:#fff;flex-shrink:0;}
-.ld-green{background:#16a34a;}.ld-red{background:#dc2626;}.ld-grey{background:#94a3b8;}.ld-purple{background:#7c3aed;}
-.nta-sec-hdr{font-size:0.72rem;font-weight:700;color:#64748b;padding:8px 12px 4px;text-transform:uppercase;}
-.q-nav-dots{padding:8px;display:flex;flex-wrap:wrap;gap:5px;}
-.q-dot{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;cursor:pointer;transition:all 0.15s;background:#e2e8f0;color:#475569;}
-.q-dot.answered{background:#16a34a;color:#fff;}
-.q-dot.not-answered{background:#dc2626;color:#fff;}
-.q-dot.marked{background:#7c3aed;color:#fff;}
-.q-dot.current{outline:3px solid #0ea5e9;outline-offset:1px;}
-.nta-submit-wrap{margin-top:auto;padding:12px;}
-.nta-submit-btn{width:100%;padding:11px;border-radius:10px;border:none;background:#dc2626;color:#fff;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;}
-.btn-toggle-panel{background:rgba(255,255,255,0.2);color:#fff;border:none;padding:6px 10px;border-radius:8px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;}
+/* Question list in edit */
+.q-edit-item{background:#fff;border:1.5px solid #e0f2fe;border-radius:12px;padding:14px 16px;margin-bottom:10px;transition:all 0.2s;}
+.q-edit-item:hover{border-color:#0ea5e9;}
+.q-edit-header{display:flex;align-items:center;gap:10px;margin-bottom:0;}
+.q-edit-num{background:#0ea5e9;color:#fff;font-size:0.72rem;font-weight:800;padding:2px 9px;border-radius:50px;flex-shrink:0;}
+.q-edit-text{flex:1;font-size:0.82rem;font-weight:600;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.q-edit-ans{font-size:0.72rem;font-weight:700;color:#16a34a;flex-shrink:0;}
+.q-edit-img-badge{font-size:0.68rem;background:#fef3c7;color:#b45309;padding:2px 7px;border-radius:50px;flex-shrink:0;}
+.q-edit-actions{display:flex;gap:6px;flex-shrink:0;}
 
-/* ── RESULT SCREEN ── */
-.result-screen{display:none;position:fixed;inset:0;z-index:300;background:#f0f9ff;overflow-y:auto;flex-direction:column;}
-.result-screen.show{display:flex;}
-.result-header{background:#0ea5e9;padding:24px 16px;text-align:center;color:#fff;flex-shrink:0;}
-.result-name{font-size:0.85rem;color:rgba(255,255,255,0.8);margin-bottom:4px;}
-.result-score-big{font-size:2.4rem;font-weight:800;color:#fff;}
-.result-sub{font-size:0.75rem;color:rgba(255,255,255,0.75);margin-top:4px;}
-.result-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px;}
-.result-stat-card{background:#fff;border-radius:12px;padding:14px 10px;text-align:center;border:1px solid #e0f2fe;}
-.result-stat-val{font-size:1.3rem;font-weight:800;}
-.result-stat-lbl{font-size:0.68rem;color:#64748b;margin-top:2px;font-weight:600;}
-.rank-row{display:flex;align-items:center;justify-content:center;gap:20px;padding:12px 16px;background:#fff;margin:0 16px 12px;border-radius:12px;border:1px solid #e0f2fe;}
-.rank-item{text-align:center;}
-.rank-val{font-size:1.1rem;font-weight:800;color:#0ea5e9;}
-.rank-lbl{font-size:0.65rem;color:#64748b;font-weight:600;}
+/* Edit Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:20px;padding:28px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.15);}
+.modal-title{font-size:1rem;font-weight:800;color:#111827;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
+.modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:#64748b;line-height:1;}
+.modal-form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.modal-form-group label{font-size:0.78rem;font-weight:700;color:#475569;}
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:480px){.opt-grid{grid-template-columns:1fr;}}
 
-/* Result Tabs */
-.result-tabs{display:flex;border-bottom:1px solid #e0f2fe;background:#fff;position:sticky;top:0;z-index:5;}
-.rtab-btn{flex:1;padding:12px 4px;border:none;background:transparent;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;color:#64748b;border-bottom:2px solid transparent;}
-.rtab-btn.active{color:#0ea5e9;border-bottom-color:#0ea5e9;}
+/* Image upload in modal */
+.img-upload-area{border:2px dashed #bae6fd;border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:all 0.2s;background:#f0f9ff;position:relative;}
+.img-upload-area:hover{border-color:#0ea5e9;background:#e0f2fe;}
+.img-upload-area input[type=file]{display:none;}
+.img-preview-wrap{margin-top:12px;position:relative;display:inline-block;}
+.img-preview-wrap img{max-width:100%;max-height:180px;border-radius:8px;border:1.5px solid #e0f2fe;display:block;}
+.img-remove-btn{position:absolute;top:-6px;right:-6px;background:#dc2626;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;}
+.img-uploading{font-size:0.78rem;color:#0284c7;font-weight:600;margin-top:6px;}
 
-/* Leaderboard */
-.lb-podium{display:flex;justify-content:center;align-items:flex-end;gap:10px;padding:20px 16px;}
-.lb-podium-item{display:flex;flex-direction:column;align-items:center;gap:4px;}
-.lb-circle{border-radius:50%;background:#0ea5e9;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;color:#fff;}
-.lp-lg{width:52px;height:52px;}.lp-md{width:44px;height:44px;}
-.lb-pname{font-size:0.68rem;font-weight:700;color:#475569;text-align:center;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.lb-pscore{font-size:0.72rem;font-weight:800;color:#0284c7;}
-.lb-row{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid #e0f2fe;font-size:0.82rem;}
-.lb-row.lb-me{background:#e0f2fe;}
-.lb-pos{width:24px;font-weight:800;color:#94a3b8;font-size:0.78rem;}
-.lb-name{flex:1;font-weight:600;color:#111827;}
-.lb-score{font-weight:800;color:#0ea5e9;}
-.lb-type{font-size:0.65rem;color:#94a3b8;margin-left:4px;}
+/* Add Q button */
+.add-q-bar{display:flex;justify-content:flex-end;margin-bottom:12px;}
 
-/* Solutions */
-.sol-filter-row{display:flex;border-bottom:1px solid #e0f2fe;background:#fff;position:sticky;top:0;z-index:5;}
-.a-tab{flex:1;padding:11px 4px;border:none;background:transparent;font-size:0.72rem;font-weight:600;cursor:pointer;font-family:inherit;color:#64748b;border-bottom:2px solid transparent;}
-.a-tab.active{color:#0ea5e9;border-bottom-color:#0ea5e9;font-weight:700;}
-.sol-body{padding:16px;flex:1;overflow-y:auto;}
-.sol-nav{padding:12px 16px;border-top:1px solid #e0f2fe;display:flex;align-items:center;justify-content:space-between;background:#fff;}
-.sol-nav-btn{padding:9px 18px;border-radius:8px;border:1.5px solid #cbd5e1;background:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;color:#111827;}
-.sol-nav-btn.next-btn{border:none;background:#0ea5e9;color:#fff;}
-.sol-counter{font-size:0.82rem;color:#475569;font-weight:600;}
+.toast{position:fixed;bottom:24px;right:24px;background:#111827;color:#fff;padding:12px 20px;border-radius:10px;font-size:0.82rem;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:all 0.3s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.success{background:#15803d;}
+.toast.error{background:#dc2626;}
 
-.ana-q-card{background:#fff;border-radius:12px;border:1.5px solid #e0f2fe;overflow:hidden;}
-.ana-q-header{padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #e0f2fe;}
-.ana-status-badge{font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:50px;}
-.ana-status-badge.correct{background:#dcfce7;color:#15803d;}
-.ana-status-badge.wrong{background:#fee2e2;color:#dc2626;}
-.ana-status-badge.skip{background:#f1f5f9;color:#64748b;}
-.ana-q-num{font-size:0.72rem;color:#94a3b8;font-weight:600;}
-.ana-q-text{padding:12px 14px;font-size:0.88rem;font-weight:600;line-height:1.7;color:#111827;white-space:pre-line;}
-.ana-opts{padding:0 14px 14px;display:flex;flex-direction:column;gap:7px;}
-.ana-opt{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;border:1.5px solid #e0f2fe;font-size:0.82rem;color:#111827;}
-.ana-opt.correct{border-color:#16a34a;background:#dcfce7;color:#15803d;font-weight:700;}
-.ana-opt.wrong{border-color:#dc2626;background:#fee2e2;color:#dc2626;font-weight:700;}
-.ana-opt-label{width:24px;height:24px;border-radius:50%;background:#e0f2fe;display:flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:800;flex-shrink:0;color:#0284c7;}
-.ana-opt.correct .ana-opt-label{background:#16a34a;color:#fff;}
-.ana-opt.wrong .ana-opt-label{background:#dc2626;color:#fff;}
-.ana-explanation{margin:0 14px 14px;background:#f0f9ff;border:1.5px solid #0ea5e9;border-radius:9px;padding:10px 12px;font-size:0.8rem;line-height:1.6;color:#111827;}
+.tabs{display:flex;border-bottom:2px solid #e0f2fe;margin-bottom:20px;overflow-x:auto;}
+.tab-btn{padding:10px 18px;border:none;background:none;font-family:inherit;font-size:0.82rem;font-weight:700;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.2s;white-space:nowrap;}
+.tab-btn.active{color:#0ea5e9;border-bottom-color:#0ea5e9;}
 
-/* Result Buttons */
-.result-btns{display:flex;gap:10px;padding:16px;}
-.btn-share,.btn-back-result{flex:1;padding:13px;border-radius:11px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;border:none;}
-.btn-share{background:#e0f2fe;color:#0284c7;}
-.btn-back-result{background:#0ea5e9;color:#fff;}
-
-/* Ended Screen */
-.ended-screen{max-width:440px;margin:60px auto;padding:0 16px;text-align:center;}
-.ended-card{background:#fff;border-radius:20px;padding:40px 28px;border:2px solid #e0f2fe;}
-
-/* Spinner */
-.spinner{display:inline-block;width:18px;height:18px;border:3px solid #e0f2fe;border-top-color:#0ea5e9;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;}
+.empty-state{text-align:center;padding:40px;color:#94a3b8;font-size:0.85rem;}
+.empty-state div{font-size:2rem;margin-bottom:8px;}
+.spinner{display:inline-block;width:18px;height:18px;border:3px solid #e0f2fe;border-top-color:#0ea5e9;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px;}
 @keyframes spin{to{transform:rotate(360deg);}}
-
-/* Lang toggle */
-.lang-toggle{display:none;gap:4px;}
-.lang-btn{padding:4px 10px;border-radius:6px;border:1.5px solid rgba(255,255,255,0.3);background:none;color:rgba(255,255,255,0.8);font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;}
-.lang-btn.active{background:#fff;border-color:#fff;color:#0ea5e9;}
-
-/* Offline bar */
-#offlineBar{display:none;background:#dc2626;color:#fff;text-align:center;font-size:0.78rem;font-weight:600;padding:8px;}
-#offlineBar.show{display:block;}
 </style>
 </head>
 <body>
 
-<div id="offlineBar">📡 Network nahi hai — answers locally save ho rahe hain</div>
-
-<header class="header">
-  <a class="logo" href="index.html">SSC <span>HUSTLERS</span></a>
-  <span class="live-badge">🔴 LIVE TEST</span>
+<header class="admin-header">
+  <a class="admin-logo" href="dashboard.html">SSC <span>HUSTLERS</span></a>
+  <span class="admin-badge">🔴 LIVE TEST ADMIN</span>
 </header>
 
-<!-- ══ SCREEN: NAME ENTRY ══ -->
-<div class="screen show" id="screenName">
-  <div class="name-screen">
-    <div class="name-card">
-      <div class="name-crown">✏️</div>
-      <div class="name-title" id="testDisplayName">Live Test</div>
-      <div class="name-sub" id="testInstructions">Apna naam daalkar test mein join karo. Koi login ki zaroorat nahi!</div>
+<div class="admin-main">
 
-      <div class="test-info-pills" id="testInfoPills"></div>
-
-      <input class="name-input" type="text" id="participantName" placeholder="Apna naam likho..." maxlength="40" oninput="clearNameError()">
-      <div class="name-error" id="nameError">⚠️ Ye naam allowed nahi hai. Sahi naam likho.</div>
-
-      <button class="btn-join" id="btnJoin" onclick="joinTest()">Join Test →</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ SCREEN: WAITING ══ -->
-<div class="screen" id="screenWait">
-  <div class="wait-screen">
-    <div class="wait-card">
-      <div class="wait-icon">⏳</div>
-      <div class="wait-title">Test shuru hone wala hai!</div>
-      <div class="countdown-box">
-        <div class="countdown-label">TEST SHURU HOGA</div>
-        <div class="countdown-time" id="countdownTime">--:--:--</div>
-      </div>
-      <div class="wait-sub">Ye page khula rakho. Test automatically shuru ho jayega.</div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ SCREEN: ENDED ══ -->
-<div class="screen" id="screenEnded">
-  <div class="ended-screen">
-    <div class="ended-card">
-      <div style="font-size:3rem;margin-bottom:16px;">⏰</div>
-      <div style="font-size:1.1rem;font-weight:800;color:#111827;margin-bottom:8px;">Test khatam ho gaya</div>
-      <div style="font-size:0.82rem;color:#64748b;line-height:1.6;">Ye live test schedule khatam ho chuka hai. Admin se naye test ke liye poochho.</div>
-      <a href="index.html" style="display:inline-block;margin-top:20px;background:#0ea5e9;color:#fff;padding:12px 28px;border-radius:10px;font-weight:700;text-decoration:none;">← Home</a>
-    </div>
-  </div>
-</div>
-
-<!-- ══ QUIZ OVERLAY ══ -->
-<div class="quiz-overlay" id="quizOverlay">
-
-  <div class="quiz-header">
-    <div class="qh-left">
-      <button class="btn-exit" onclick="confirmExit()">✕ Exit</button>
-      <div>
-        <div class="qh-test" id="qhTestName">Test</div>
-        <div class="qh-name" id="qhParticipantName"></div>
-      </div>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <div class="lang-toggle" id="langToggle">
-        <button class="lang-btn active" id="langEN" onclick="setLang('en')">EN</button>
-        <button class="lang-btn" id="langHI" onclick="setLang('hi')">HI</button>
-      </div>
-      <button class="btn-toggle-panel" onclick="togglePanel()">📋 Panel</button>
-      <div class="quiz-timer" id="quizTimer">--:--</div>
-    </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('schedule',this)">📅 Schedule New Test</button>
+    <button class="tab-btn" onclick="switchTab('manage',this)">📋 Manage Tests</button>
+    <button class="tab-btn" onclick="switchTab('edit',this)">✏️ Edit Questions</button>
   </div>
 
-  <div class="quiz-progress"><div class="quiz-progress-fill" id="progressFill" style="width:0%"></div></div>
-  <div class="progress-text" id="progressText">0/0</div>
-
-  <div class="nta-body">
-    <!-- Left: Question -->
-    <div class="nta-left">
-      <div class="marks-bar">
-        Correct: <strong style="color:#15803d">+<span id="mPos">2</span></strong>
-        &nbsp;|&nbsp; Wrong: <strong style="color:#dc2626">-<span id="mNeg">0.5</span></strong>
-      </div>
-      <div class="quiz-body" id="quizBody">
-        <div class="q-number" id="qNumber">Question 1</div>
-        <div class="q-text" id="qText"></div>
-        <div class="options-list" id="optionsList"></div>
-        <div class="explanation-box" id="explanationBox"><strong>💡 Explanation:</strong> <span id="explanationText"></span></div>
-      </div>
-      <div class="quiz-footer">
-        <div class="marking-info">✅ +<span id="mPosInfo">2</span> &nbsp;❌ -<span id="mNegInfo">0.5</span></div>
-        <div class="quiz-nav">
-          <button class="btn-mark-rev" onclick="markReview()">Mark Review</button>
-          <button class="btn-clear" onclick="clearResp()">Clear</button>
-          <button class="btn-prev" id="btnPrev" onclick="prevQ()">← Prev</button>
-          <button class="btn-next" id="btnNext" onclick="nextQ()">Save & Next →</button>
-          <button class="btn-submit" id="btnSubmit" onclick="submitQuiz()">✅ Submit</button>
+  <!-- ══ TAB: SCHEDULE ══ -->
+  <div id="tabSchedule">
+    <div class="card">
+      <div class="section-title">📝 Test Details</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Test Name *</label>
+          <input type="text" id="ltName" placeholder="e.g. Maths Live Test #1">
+        </div>
+        <div class="form-group">
+          <label>Subject</label>
+          <select id="ltSubject">
+            <option value="maths">🔢 Maths</option>
+            <option value="english">📖 English</option>
+            <option value="reasoning">🧠 Reasoning</option>
+            <option value="ga">🌍 General Awareness</option>
+            <option value="full_test">📋 Full Mock Test</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Start Time *</label>
+          <input type="datetime-local" id="ltStart">
+        </div>
+        <div class="form-group">
+          <label>End Time *</label>
+          <input type="datetime-local" id="ltEnd">
+        </div>
+        <div class="form-group">
+          <label>Duration (minutes)</label>
+          <input type="number" id="ltDuration" value="20" min="5" max="180">
+        </div>
+        <div class="form-group">
+          <label>Positive Marking</label>
+          <input type="number" id="ltPos" value="2" step="0.5" min="0">
+        </div>
+        <div class="form-group">
+          <label>Negative Marking</label>
+          <input type="number" id="ltNeg" value="0.5" step="0.5" min="0">
+        </div>
+        <div class="form-group">
+          <label>Share Link (auto-generated)</label>
+          <input type="text" id="ltLink" readonly placeholder="Schedule karne ke baad milega..." style="background:#f8fafc;color:#64748b;">
+        </div>
+        <div class="form-group full">
+          <label>Instructions (optional)</label>
+          <textarea id="ltInstructions" placeholder="Students ke liye koi instructions..."></textarea>
         </div>
       </div>
     </div>
 
-    <!-- Right: Sidebar -->
-    <div class="nta-sidebar" id="ntaSidebar">
-      <div class="nta-legend">
-        <div class="legend-row"><span class="ld-dot ld-green" id="cntAnswered">0</span> Answered</div>
-        <div class="legend-row"><span class="ld-dot ld-red" id="cntNotAns">0</span> Not Answered</div>
-        <div class="legend-row"><span class="ld-dot ld-grey" id="cntNotVis">0</span> Not Visited</div>
-        <div class="legend-row"><span class="ld-dot ld-purple" id="cntMarked">0</span> Marked</div>
+    <div class="card">
+      <div class="section-title">📊 Upload Questions (Excel)</div>
+      <div class="file-drop" id="fileDrop" onclick="document.getElementById('fileInput').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+        <div class="file-drop-icon">📂</div>
+        <div class="file-drop-text">Click karo ya Excel file drag karo</div>
+        <div class="file-drop-sub">Columns: question_text, option_a, option_b, option_c, option_d, correct_answer, explanation — Serial order maintain hoga</div>
       </div>
-      <div class="nta-sec-hdr">Questions</div>
-      <div class="q-nav-dots" id="qNavDots"></div>
-      <div class="nta-submit-wrap">
-        <button class="nta-submit-btn" onclick="submitQuiz()">Submit Test</button>
+      <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
+
+      <div id="previewSection" style="display:none;margin-top:16px;">
+        <div class="preview-count" id="previewCount"></div>
+        <div class="preview-wrap">
+          <table class="preview-table">
+            <thead><tr><th>#</th><th>Question</th><th>A</th><th>B</th><th>C</th><th>D</th><th>Answer</th></tr></thead>
+            <tbody id="previewBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="btnSchedule" onclick="scheduleTest()">🚀 Schedule Live Test</button>
+  </div>
+
+  <!-- ══ TAB: MANAGE ══ -->
+  <div id="tabManage" style="display:none;">
+    <div class="card">
+      <div class="section-title">📋 All Live Tests</div>
+      <div id="liveTestsList"><div class="empty-state"><div>📭</div>Loading...</div></div>
+    </div>
+    <div id="monitorSection" style="display:none;">
+      <div class="card">
+        <div class="section-title" id="monitorTitle">📡 Live Monitor</div>
+        <div class="monitor-stats">
+          <div class="m-stat"><div class="m-stat-val" id="mTotal">0</div><div class="m-stat-lbl">Participants</div></div>
+          <div class="m-stat"><div class="m-stat-val" id="mSubmitted">0</div><div class="m-stat-lbl">Submitted</div></div>
+          <div class="m-stat"><div class="m-stat-val" id="mAvgScore">-</div><div class="m-stat-lbl">Avg Score</div></div>
+        </div>
+        <div id="monitorLeaderboard"></div>
       </div>
     </div>
   </div>
+
+  <!-- ══ TAB: EDIT ══ -->
+  <div id="tabEdit" style="display:none;">
+    <div class="card">
+      <div class="section-title">✏️ Test Choose Karo</div>
+      <div class="edit-test-select">
+        <select id="editTestSelect" onchange="loadEditQuestions()">
+          <option value="">-- Test select karo --</option>
+        </select>
+        <button class="btn-sm btn-blue" onclick="loadEditTestList()">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <div id="editQuestionsSection" style="display:none;">
+      <div class="card" style="padding:16px 20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div class="section-title" style="margin-bottom:0;" id="editSectionTitle">Questions</div>
+          <button class="btn-sm btn-purple" onclick="openAddModal()">➕ Add New Question</button>
+        </div>
+        <div id="editQList"></div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<!-- ══ RESULT SCREEN ══ -->
-<div class="result-screen" id="resultScreen">
-  <div class="result-header">
-    <div class="result-name" id="resultNameDisplay"></div>
-    <div class="result-score-big" id="resultScore">0</div>
-    <div class="result-sub" id="resultSub"></div>
-  </div>
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
-  <div class="result-cards">
-    <div class="result-stat-card"><div class="result-stat-val" style="color:#16a34a" id="rCorrect">0</div><div class="result-stat-lbl">Correct</div></div>
-    <div class="result-stat-card"><div class="result-stat-val" style="color:#dc2626" id="rWrong">0</div><div class="result-stat-lbl">Wrong</div></div>
-    <div class="result-stat-card"><div class="result-stat-val" style="color:#64748b" id="rSkip">0</div><div class="result-stat-lbl">Skipped</div></div>
-    <div class="result-stat-card"><div class="result-stat-val" style="color:#0ea5e9" id="rAccuracy">0%</div><div class="result-stat-lbl">Accuracy</div></div>
-    <div class="result-stat-card"><div class="result-stat-val" id="rAttempted">0</div><div class="result-stat-lbl">Attempted</div></div>
-    <div class="result-stat-card"><div class="result-stat-val" id="rTotal">0</div><div class="result-stat-lbl">Total Qs</div></div>
-  </div>
-
-  <div class="rank-row" id="rankRow" style="display:none;">
-    <div class="rank-item"><div class="rank-val" id="rpRank">--</div><div class="rank-lbl">Your Rank</div></div>
-    <div class="rank-item"><div class="rank-val" id="rpTotal">--</div><div class="rank-lbl">Total Students</div></div>
-    <div class="rank-item"><div class="rank-val" id="rpPercentile">--</div><div class="rank-lbl">Percentile</div></div>
-  </div>
-
-  <div class="result-tabs">
-    <button class="rtab-btn active" onclick="switchResultTab('leaderboard')">🏆 Leaderboard</button>
-    <button class="rtab-btn" onclick="switchResultTab('solutions')">🔍 Solutions</button>
-  </div>
-
-  <!-- Leaderboard Tab -->
-  <div id="rtabLeaderboard" style="overflow-y:auto;">
-    <div id="lbList" style="padding-bottom:16px;"></div>
-  </div>
-
-  <!-- Solutions Tab -->
-  <div id="rtabSolutions" style="display:none;flex-direction:column;flex:1;">
-    <div class="sol-filter-row">
-      <button class="a-tab active" onclick="setSolFilter('all')">All</button>
-      <button class="a-tab" onclick="setSolFilter('correct')">✅ Correct</button>
-      <button class="a-tab" onclick="setSolFilter('wrong')">❌ Wrong</button>
-      <button class="a-tab" onclick="setSolFilter('skip')">⏭ Skipped</button>
+<!-- ══ EDIT MODAL ══ -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span id="modalTitleText">Question Edit Karo</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-    <div class="sol-body" id="solBody"></div>
-    <div class="sol-nav">
-      <button class="sol-nav-btn" onclick="solPrev()">← Prev</button>
-      <span class="sol-counter" id="solCounter">1 / 1</span>
-      <button class="sol-nav-btn next-btn" onclick="solNext()">Next →</button>
-    </div>
-  </div>
 
-  <div class="result-btns">
-    <button class="btn-share" onclick="shareResult()">📤 Share</button>
-    <button class="btn-back-result" onclick="window.location.href='index.html'">← Home</button>
+    <input type="hidden" id="modalQId">
+
+    <div class="modal-form-group">
+      <label>Question Text *</label>
+      <textarea id="modalQText" rows="4" placeholder="Question likho (Hindi + English dono likh sakte ho)..."></textarea>
+    </div>
+
+    <div class="opt-grid">
+      <div class="modal-form-group">
+        <label>Option A *</label>
+        <input type="text" id="modalOptA" placeholder="Option A">
+      </div>
+      <div class="modal-form-group">
+        <label>Option B *</label>
+        <input type="text" id="modalOptB" placeholder="Option B">
+      </div>
+      <div class="modal-form-group">
+        <label>Option C *</label>
+        <input type="text" id="modalOptC" placeholder="Option C">
+      </div>
+      <div class="modal-form-group">
+        <label>Option D *</label>
+        <input type="text" id="modalOptD" placeholder="Option D">
+      </div>
+    </div>
+
+    <div class="modal-form-group">
+      <label>Correct Answer *</label>
+      <select id="modalCorrect">
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="D">D</option>
+      </select>
+    </div>
+
+    <div class="modal-form-group">
+      <label>Explanation (optional)</label>
+      <textarea id="modalExplanation" rows="2" placeholder="Solution explanation..."></textarea>
+    </div>
+
+    <!-- IMAGE UPLOAD -->
+    <div class="modal-form-group">
+      <label>Question Image (optional) — Reasoning diagrams, figures, etc.</label>
+      <div class="img-upload-area" id="imgUploadArea" onclick="document.getElementById('modalImgInput').click()">
+        <div style="font-size:1.8rem;margin-bottom:6px;">🖼️</div>
+        <div style="font-size:0.82rem;font-weight:600;color:#0284c7;">Click karo image upload karne ke liye</div>
+        <div style="font-size:0.7rem;color:#64748b;margin-top:4px;">JPG, PNG, GIF — max 5MB</div>
+        <input type="file" id="modalImgInput" accept="image/*" onchange="handleImageSelect(this.files[0])">
+      </div>
+      <div class="img-uploading" id="imgUploading" style="display:none;"><span class="spinner"></span>Image upload ho rahi hai...</div>
+      <div id="imgPreviewWrap" style="display:none;margin-top:10px;text-align:center;">
+        <div class="img-preview-wrap">
+          <img id="imgPreview" src="" alt="preview">
+          <button class="img-remove-btn" onclick="removeImage()" title="Image hatao">✕</button>
+        </div>
+      </div>
+      <input type="hidden" id="modalImgUrl">
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn-primary" style="flex:1;" onclick="saveQuestion()">💾 Save Question</button>
+      <button class="btn-sm btn-red" style="padding:12px 18px;font-size:0.85rem;" id="modalDeleteBtn" onclick="deleteQuestion()">🗑 Delete</button>
+    </div>
   </div>
 </div>
 
 <script>
-// ══════════════════════════════════════════
-// CONFIG
-// ══════════════════════════════════════════
 const SUPABASE_URL  = 'https://wwfhoyxqlversdkdqcgd.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3ZmhveXhxbHZlcnNka2RxY2dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDAwMTMsImV4cCI6MjA4ODQ3NjAxM30.qaQp8LJXGxN6EfOoNPOgdhdNqY7M0nC2aR8fBSYejrw';
+const STORAGE_BUCKET = 'question-images';
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// ── ABUSIVE WORD FILTER ──
-const ABUSIVE_WORDS = [
-  'bc','mc','bsdk','gaand','gand','gnd','behnchod','madarchod','madrchod',
-  'bhosdi','chutiya','chutiye','lund','lauda','randi','harami','bhosdike',
-  'bhadwa','kamina','suar','kutte','kamine','bhenchod','bhen','bhenke',
-  'teri ma','teri maa','lavda','lawda','saala','saali','gandu','gandoo',
-  'bhosadike','maderchod','behenchod','bkl','bklod','mkc','lodu','choot'
-];
+let parsedQuestions = [];
+let monitorInterval  = null;
+let currentEditTestId = null;
+let editQuestions    = [];
+let isAddingNew      = false;
 
-function containsAbusive(name) {
-  const lower = name.toLowerCase().replace(/\s+/g,'');
-  return ABUSIVE_WORDS.some(w => lower.includes(w.replace(/\s+/g,'')));
+// ══════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tabSchedule').style.display = tab === 'schedule' ? 'block' : 'none';
+  document.getElementById('tabManage').style.display   = tab === 'manage'   ? 'block' : 'none';
+  document.getElementById('tabEdit').style.display     = tab === 'edit'     ? 'block' : 'none';
+  if (tab === 'manage') loadLiveTests();
+  if (tab === 'edit')   loadEditTestList();
 }
 
-// ── STATE ──
-let liveTest = null;
-let questions = [];
-let currentQ = 0;
-let answers = {};
-let qStatus = {};
-let timeLeft = 0;
-let timerInterval = null;
-let waitInterval = null;
-let participantName = '';
-let attemptId = null;
-let currentLang = 'en';
-let hasHindi = false;
-let solFilter = 'all';
-let solIdx = 0;
-let solFiltered = [];
-let posMarking = 2, negMarking = 0.5;
+// ══════════════════════════════════════════
+// EXCEL PARSE — Serial order strict
+// ══════════════════════════════════════════
+function dragOver(e) { e.preventDefault(); document.getElementById('fileDrop').classList.add('drag'); }
+function dragLeave()  { document.getElementById('fileDrop').classList.remove('drag'); }
+function dropFile(e)  { e.preventDefault(); dragLeave(); handleFile(e.dataTransfer.files[0]); }
 
-function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;'); }
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      // raw:true keeps row order, header:1 gives array — use sheet_to_json for named cols
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
 
-// ── INIT ──
-async function init() {
-  const params = new URLSearchParams(window.location.search);
-  const code   = params.get('code');
-  if (!code) { showScreen('screenEnded'); return; }
+      // q_order = 1,2,3... strictly from Excel row position
+      parsedQuestions = rows.map((r, i) => ({
+        question_text:  String(r['question_text'] || r['Question'] || '').trim(),
+        option_a:       String(r['option_a'] || r['A'] || r['Option A'] || '').trim(),
+        option_b:       String(r['option_b'] || r['B'] || r['Option B'] || '').trim(),
+        option_c:       String(r['option_c'] || r['C'] || r['Option C'] || '').trim(),
+        option_d:       String(r['option_d'] || r['D'] || r['Option D'] || '').trim(),
+        correct_answer: String(r['correct_answer'] || r['ans'] || r['Answer'] || r['Correct'] || r['answer'] || '').trim().toUpperCase(),
+        explanation:    String(r['explanation'] || r['Explanation'] || '').trim(),
+        image_url:      '',
+        q_order:        i + 1   // strict serial from Excel position
+      })).filter(q => q.question_text);
 
-  const { data, error } = await sb.from('live_tests').select('*').eq('code', code).single();
-  if (error || !data) { showScreen('screenEnded'); return; }
-  liveTest = data;
+      if (parsedQuestions.length === 0) { showToast('Koi valid question nahi mila!', 'error'); return; }
 
-  // Display test info on name screen
-  document.getElementById('testDisplayName').textContent = data.name;
-  if (data.instructions) document.getElementById('testInstructions').textContent = data.instructions;
+      const drop = document.getElementById('fileDrop');
+      drop.classList.add('file-selected');
+      drop.querySelector('.file-drop-text').textContent = `✅ ${file.name}`;
+      drop.querySelector('.file-drop-sub').textContent  = `${parsedQuestions.length} questions — serial order maintain hoga`;
 
-  posMarking = data.positive_marking || 2;
-  negMarking = data.negative_marking || 0.5;
+      document.getElementById('previewCount').textContent = `${parsedQuestions.length} questions (first 5 preview):`;
+      document.getElementById('previewBody').innerHTML = parsedQuestions.slice(0,5).map((q,i) => `
+        <tr>
+          <td><strong>${q.q_order}</strong></td>
+          <td title="${q.question_text}">${q.question_text.substring(0,55)}${q.question_text.length>55?'...':''}</td>
+          <td>${q.option_a.substring(0,18)}</td>
+          <td>${q.option_b.substring(0,18)}</td>
+          <td>${q.option_c.substring(0,18)}</td>
+          <td>${q.option_d.substring(0,18)}</td>
+          <td><strong>${q.correct_answer}</strong></td>
+        </tr>`).join('');
+      document.getElementById('previewSection').style.display = 'block';
+    } catch(err) { showToast('File read error: ' + err.message, 'error'); }
+  };
+  reader.readAsBinaryString(file);
+}
 
-  // Pills
-  const start = new Date(data.start_time);
-  const end   = new Date(data.end_time);
-  document.getElementById('testInfoPills').innerHTML = `
-    <span class="pill">❓ ${data.total_questions} Questions</span>
-    <span class="pill">⏱ ${data.duration_minutes} min</span>
-    <span class="pill">+${posMarking} / -${negMarking}</span>
-    <span class="pill">📅 ${start.toLocaleDateString('en-IN')}</span>`;
+// ══════════════════════════════════════════
+// SCHEDULE TEST
+// ══════════════════════════════════════════
+async function scheduleTest() {
+  const name  = document.getElementById('ltName').value.trim();
+  const subj  = document.getElementById('ltSubject').value;
+  const start = document.getElementById('ltStart').value;
+  const end   = document.getElementById('ltEnd').value;
+  const dur   = parseInt(document.getElementById('ltDuration').value) || 20;
+  const pos   = parseFloat(document.getElementById('ltPos').value) || 2;
+  const neg   = parseFloat(document.getElementById('ltNeg').value) || 0.5;
+  const inst  = document.getElementById('ltInstructions').value.trim();
+
+  if (!name)  { showToast('Test name daalo!', 'error'); return; }
+  if (!start) { showToast('Start time daalo!', 'error'); return; }
+  if (!end)   { showToast('End time daalo!', 'error'); return; }
+  if (parsedQuestions.length === 0) { showToast('Excel file upload karo!', 'error'); return; }
+  if (new Date(end) <= new Date(start)) { showToast('End time start se baad hona chahiye!', 'error'); return; }
+
+  const btn = document.getElementById('btnSchedule');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Scheduling...';
+
+  try {
+    const code = name.toLowerCase().replace(/[^a-z0-9]/g,'_') + '_' + Date.now();
+
+    const { data: lt, error: ltErr } = await sb.from('live_tests').insert({
+      name, subject: subj,
+      start_time: new Date(start).toISOString(),
+      end_time:   new Date(end).toISOString(),
+      duration_minutes: dur, positive_marking: pos, negative_marking: neg,
+      instructions: inst, code, status: 'scheduled',
+      total_questions: parsedQuestions.length
+    }).select('id').single();
+    if (ltErr) throw ltErr;
+
+    // Insert questions with strict q_order from Excel
+    const chunkSize = 50;
+    const qRows = parsedQuestions.map(q => ({ ...q, live_test_id: lt.id }));
+    for (let i = 0; i < qRows.length; i += chunkSize) {
+      const { error: qErr } = await sb.from('live_test_questions').insert(qRows.slice(i, i+chunkSize));
+      if (qErr) throw qErr;
+    }
+
+    const link = `${window.location.href.replace('live_test_admin.html','')}live_test.html?code=${code}`;
+    document.getElementById('ltLink').value = link;
+    navigator.clipboard.writeText(link).catch(()=>{});
+    showToast('✅ Scheduled! Link copy ho gaya!', 'success');
+    btn.disabled = false; btn.innerHTML = '🚀 Schedule Live Test';
+  } catch(err) {
+    showToast('Error: ' + err.message, 'error');
+    btn.disabled = false; btn.innerHTML = '🚀 Schedule Live Test';
+  }
+}
+
+// ══════════════════════════════════════════
+// MANAGE TAB
+// ══════════════════════════════════════════
+async function loadLiveTests() {
+  const el = document.getElementById('liveTestsList');
+  el.innerHTML = '<div class="empty-state"><span class="spinner"></span> Loading...</div>';
+
+  const { data, error } = await sb.from('live_tests').select('*').order('start_time',{ascending:false}).limit(30);
+  if (error || !data || data.length===0) { el.innerHTML='<div class="empty-state"><div>📭</div>Koi live test nahi hai.</div>'; return; }
 
   const now = new Date();
-  if (now > end) { showScreen('screenEnded'); return; }
-
-  window.addEventListener('online',  () => document.getElementById('offlineBar').classList.remove('show'));
-  window.addEventListener('offline', () => document.getElementById('offlineBar').classList.add('show'));
+  el.innerHTML = data.map(lt => {
+    const start = new Date(lt.start_time), end = new Date(lt.end_time);
+    const isLive = now>=start && now<=end, isUp = now<start;
+    const st = isLive?'live':isUp?'upcoming':'ended';
+    const sl = isLive?'🔴 LIVE':isUp?'⏰ Upcoming':'✅ Ended';
+    const link = `${window.location.href.replace('live_test_admin.html','')}live_test.html?code=${lt.code}`;
+    return `<div class="live-test-item">
+      <div class="lt-status ${st}"></div>
+      <div class="lt-info">
+        <div class="lt-name">${lt.name} <span class="lt-badge ${st}">${sl}</span></div>
+        <div class="lt-meta">📅 ${start.toLocaleDateString('en-IN')} ${start.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})} → ${end.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})} &nbsp;|&nbsp; ❓ ${lt.total_questions} Qs &nbsp;|&nbsp; ⏱ ${lt.duration_minutes} min</div>
+      </div>
+      <div class="lt-actions">
+        <button class="btn-sm btn-blue" onclick="copyLink('${link}')">🔗 Link</button>
+        ${isLive||st==='ended'?`<button class="btn-sm btn-green" onclick="monitorTest('${lt.id}','${lt.name}')">📡 Monitor</button>`:''}
+        <button class="btn-sm btn-red" onclick="deleteTest('${lt.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-// ── NAME ENTRY ──
-function clearNameError() { document.getElementById('nameError').classList.remove('show'); }
+function copyLink(link) {
+  navigator.clipboard.writeText(link).then(()=>showToast('Link copied!','success')).catch(()=>prompt('Copy karo:',link));
+}
 
-async function joinTest() {
-  const nameInput = document.getElementById('participantName').value.trim();
-  if (!nameInput) { showNameError('Naam toh likho bhai!'); return; }
-  if (nameInput.length < 2) { showNameError('Naam thoda lamba likho.'); return; }
-  if (containsAbusive(nameInput)) { showNameError('⚠️ Ye naam allowed nahi hai. Sahi naam likho.'); return; }
+async function deleteTest(id) {
+  if (!confirm('Ye test delete karna chahte ho? Saare questions aur attempts bhi delete honge.')) return;
+  await sb.from('live_test_attempts').delete().eq('live_test_id',id);
+  await sb.from('live_test_questions').delete().eq('live_test_id',id);
+  await sb.from('live_tests').delete().eq('id',id);
+  showToast('Test deleted!','success');
+  loadLiveTests();
+}
 
-  participantName = nameInput;
-  document.getElementById('btnJoin').disabled = true;
-  document.getElementById('btnJoin').innerHTML = '<span class="spinner"></span> Joining...';
+async function monitorTest(id, name) {
+  document.getElementById('monitorSection').style.display='block';
+  document.getElementById('monitorTitle').textContent=`📡 Monitor: ${name}`;
+  document.getElementById('monitorSection').scrollIntoView({behavior:'smooth'});
+  if (monitorInterval) clearInterval(monitorInterval);
+  await refreshMonitor(id);
+  monitorInterval = setInterval(()=>refreshMonitor(id), 10000);
+}
 
-  // Load questions
-  const { data: qs, error: qErr } = await sb.from('live_test_questions')
-    .select('*').eq('live_test_id', liveTest.id).order('q_order', { ascending: true });
+async function refreshMonitor(id) {
+  const {data} = await sb.from('live_test_attempts').select('participant_name,score,submitted_at,correct,wrong,skipped').eq('live_test_id',id).order('score',{ascending:false});
+  if (!data) return;
+  const sub = data.filter(d=>d.submitted_at);
+  const avg = sub.length>0?(sub.reduce((a,b)=>a+b.score,0)/sub.length).toFixed(1):'-';
+  document.getElementById('mTotal').textContent=data.length;
+  document.getElementById('mSubmitted').textContent=sub.length;
+  document.getElementById('mAvgScore').textContent=avg;
+  const lb=document.getElementById('monitorLeaderboard');
+  if (sub.length===0){lb.innerHTML='<div style="text-align:center;padding:20px;color:#94a3b8;font-size:0.82rem;">Abhi kisi ne submit nahi kiya</div>';return;}
+  lb.innerHTML=`<table class="preview-table"><thead><tr><th>#</th><th>Name</th><th>Score</th><th>Correct</th><th>Wrong</th><th>Skipped</th><th>Time</th></tr></thead><tbody>${sub.map((s,i)=>`<tr><td>${i+1}</td><td><strong>${s.participant_name}</strong></td><td style="color:#0ea5e9;font-weight:800;">${s.score}</td><td style="color:#16a34a;">${s.correct}</td><td style="color:#dc2626;">${s.wrong}</td><td style="color:#64748b;">${s.skipped}</td><td>${s.submitted_at?new Date(s.submitted_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'-'}</td></tr>`).join('')}</tbody></table>`;
+}
 
-  if (qErr || !qs || qs.length === 0) {
-    showNameError('Questions load nahi hue. Dobara try karo.');
-    document.getElementById('btnJoin').disabled = false;
-    document.getElementById('btnJoin').textContent = 'Join Test →';
+// ══════════════════════════════════════════
+// EDIT TAB — Load test list
+// ══════════════════════════════════════════
+async function loadEditTestList() {
+  const sel = document.getElementById('editTestSelect');
+  sel.innerHTML = '<option value="">Loading...</option>';
+  const {data} = await sb.from('live_tests').select('id,name').order('start_time',{ascending:false}).limit(30);
+  sel.innerHTML = '<option value="">-- Test select karo --</option>';
+  if (data) data.forEach(lt => {
+    const opt = document.createElement('option');
+    opt.value = lt.id; opt.textContent = lt.name;
+    sel.appendChild(opt);
+  });
+  document.getElementById('editQuestionsSection').style.display='none';
+}
+
+// ══════════════════════════════════════════
+// LOAD QUESTIONS FOR EDITING — strict q_order
+// ══════════════════════════════════════════
+async function loadEditQuestions() {
+  const testId = document.getElementById('editTestSelect').value;
+  if (!testId) { document.getElementById('editQuestionsSection').style.display='none'; return; }
+  currentEditTestId = testId;
+
+  const el = document.getElementById('editQList');
+  el.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Loading questions...</div>';
+  document.getElementById('editQuestionsSection').style.display='block';
+
+  // Always order by q_order ASC — strict serial
+  const {data, error} = await sb.from('live_test_questions')
+    .select('*').eq('live_test_id', testId).order('q_order', {ascending:true});
+
+  if (error||!data||data.length===0) {
+    el.innerHTML='<div class="empty-state"><div>📭</div>Koi question nahi hai is test mein.</div>';
     return;
   }
-  questions = qs;
+  editQuestions = data;
 
-  const now = new Date();
-  const start = new Date(liveTest.start_time);
-  const end   = new Date(liveTest.end_time);
+  const testName = document.getElementById('editTestSelect').options[document.getElementById('editTestSelect').selectedIndex].text;
+  document.getElementById('editSectionTitle').textContent = `Questions — ${testName} (${data.length} total)`;
 
-  if (now < start) {
-    // Waiting
-    showScreen('screenWait');
-    startCountdown(start);
-  } else if (now >= start && now <= end) {
-    // Start directly
-    startQuiz();
-  } else {
-    showScreen('screenEnded');
-  }
+  el.innerHTML = data.map((q,i) => `
+    <div class="q-edit-item" id="qitem_${q.id}">
+      <div class="q-edit-header">
+        <span class="q-edit-num">${q.q_order}</span>
+        <span class="q-edit-text" title="${q.question_text}">${q.question_text.substring(0,70)}${q.question_text.length>70?'...':''}</span>
+        ${q.image_url ? `<span class="q-edit-img-badge">🖼 Image</span>` : ''}
+        <span class="q-edit-ans">Ans: ${q.correct_answer}</span>
+        <div class="q-edit-actions">
+          <button class="btn-sm btn-orange" onclick="openEditModal('${q.id}')">✏️ Edit</button>
+        </div>
+      </div>
+    </div>`).join('');
 }
 
-function showNameError(msg) {
-  const el = document.getElementById('nameError');
-  el.textContent = '⚠️ ' + msg;
-  el.classList.add('show');
-  document.getElementById('btnJoin').disabled = false;
-  document.getElementById('btnJoin').textContent = 'Join Test →';
-}
-
-// ── COUNTDOWN ──
-function startCountdown(startTime) {
-  updateCountdown(startTime);
-  waitInterval = setInterval(() => {
-    const remaining = startTime - new Date();
-    if (remaining <= 0) {
-      clearInterval(waitInterval);
-      startQuiz();
-    } else {
-      updateCountdown(startTime);
-    }
-  }, 1000);
-}
-
-function updateCountdown(startTime) {
-  const diff = Math.max(0, startTime - new Date());
-  const h = Math.floor(diff / 3600000);
-  const m = Math.floor((diff % 3600000) / 60000);
-  const s = Math.floor((diff % 60000) / 1000);
-  document.getElementById('countdownTime').textContent =
-    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-}
-
-// ── START QUIZ ──
-function startQuiz() {
-  showScreen(null);
-  document.getElementById('quizOverlay').classList.add('show');
-  document.getElementById('qhTestName').textContent = liveTest.name;
-  document.getElementById('qhParticipantName').textContent = '👤 ' + participantName;
-  document.getElementById('mPos').textContent = posMarking;
-  document.getElementById('mNeg').textContent = negMarking;
-  document.getElementById('mPosInfo').textContent = posMarking;
-  document.getElementById('mNegInfo').textContent = negMarking;
-
-  // Calculate time left based on test end time vs duration
-  const now      = new Date();
-  const end      = new Date(liveTest.end_time);
-  const maxSecs  = liveTest.duration_minutes * 60;
-  const remSecs  = Math.floor((end - now) / 1000);
-  timeLeft = Math.min(maxSecs, remSecs);
-
-  // Init status
-  questions.forEach((_, i) => { qStatus[i] = 'not_visited'; });
-  qStatus[0] = 'not_answered';
-
-  detectHindi();
-  showQuestion(0);
-  buildDots();
-  startTimer();
-}
-
-// ── TIMER ──
-function startTimer() {
-  updateTimerDisplay();
-  timerInterval = setInterval(() => {
-    timeLeft--;
-    updateTimerDisplay();
-    if (timeLeft <= 0) { clearInterval(timerInterval); submitQuiz(true); }
-  }, 1000);
-}
-
-function updateTimerDisplay() {
-  const m = Math.floor(timeLeft / 60);
-  const s = timeLeft % 60;
-  const el = document.getElementById('quizTimer');
-  el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  el.classList.toggle('warn', timeLeft <= 120);
-}
-
-// ── QUESTION DISPLAY ──
-function showQuestion(idx) {
-  currentQ = idx;
-  const q = questions[idx];
+// ══════════════════════════════════════════
+// OPEN EDIT MODAL
+// ══════════════════════════════════════════
+function openEditModal(qId) {
+  isAddingNew = false;
+  const q = editQuestions.find(x => x.id === qId);
   if (!q) return;
 
-  if (qStatus[idx] === 'not_visited') qStatus[idx] = 'not_answered';
+  document.getElementById('modalTitleText').textContent = `✏️ Edit — Q${q.q_order}`;
+  document.getElementById('modalQId').value       = q.id;
+  document.getElementById('modalQText').value     = q.question_text || '';
+  document.getElementById('modalOptA').value      = q.option_a || '';
+  document.getElementById('modalOptB').value      = q.option_b || '';
+  document.getElementById('modalOptC').value      = q.option_c || '';
+  document.getElementById('modalOptD').value      = q.option_d || '';
+  document.getElementById('modalCorrect').value   = q.correct_answer || 'A';
+  document.getElementById('modalExplanation').value = q.explanation || '';
+  document.getElementById('modalImgUrl').value    = q.image_url || '';
+  document.getElementById('modalDeleteBtn').style.display = '';
 
-  document.getElementById('qNumber').textContent = `Question ${idx + 1} of ${questions.length}`;
-  document.getElementById('qText').textContent = getLangText(q.question_text);
-
-  // Progress
-  const pct = ((idx + 1) / questions.length) * 100;
-  document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('progressText').textContent = `${idx + 1}/${questions.length}`;
-
-  // Options
-  const opts = document.getElementById('optionsList');
-  opts.innerHTML = ['A','B','C','D'].map(l => {
-    const val = q['option_' + l.toLowerCase()];
-    const txt = getLangText(val);
-    return `<button class="option-btn" id="opt${l}" onclick="selectOption('${l}')">
-      <span class="option-label">${l}</span>
-      <span>${esc(txt)}</span>
-    </button>`;
-  }).join('');
-
-  // Restore selection
-  const ans = answers[idx];
-  if (ans) {
-    const btn = document.getElementById('opt' + ans);
-    if (btn) btn.classList.add('selected');
+  // Image preview
+  if (q.image_url) {
+    document.getElementById('imgPreview').src = q.image_url;
+    document.getElementById('imgPreviewWrap').style.display = 'block';
+    document.getElementById('imgUploadArea').style.display = 'none';
+  } else {
+    document.getElementById('imgPreviewWrap').style.display = 'none';
+    document.getElementById('imgUploadArea').style.display = 'block';
   }
-
-  // Explanation - hide
-  document.getElementById('explanationBox').classList.remove('show');
-
-  // Nav buttons
-  document.getElementById('btnPrev').style.display  = idx === 0 ? 'none' : '';
-  const isLast = idx === questions.length - 1;
-  document.getElementById('btnNext').style.display   = isLast ? 'none' : '';
-  document.getElementById('btnSubmit').style.display = isLast ? '' : 'none';
-
-  buildDots();
-  updateLegend();
+  document.getElementById('imgUploading').style.display='none';
+  document.getElementById('editModal').classList.add('show');
 }
 
-function selectOption(letter) {
-  answers[currentQ] = letter;
-  qStatus[currentQ] = qStatus[currentQ] === 'marked' ? 'ans_marked' : 'answered';
-  ['A','B','C','D'].forEach(l => document.getElementById('opt'+l)?.classList.remove('selected'));
-  document.getElementById('opt' + letter)?.classList.add('selected');
-  buildDots();
-  updateLegend();
+// ══════════════════════════════════════════
+// OPEN ADD NEW MODAL
+// ══════════════════════════════════════════
+function openAddModal() {
+  if (!currentEditTestId) { showToast('Pehle test select karo!','error'); return; }
+  isAddingNew = true;
+  document.getElementById('modalTitleText').textContent = '➕ Add New Question';
+  document.getElementById('modalQId').value = '';
+  document.getElementById('modalQText').value = '';
+  document.getElementById('modalOptA').value = '';
+  document.getElementById('modalOptB').value = '';
+  document.getElementById('modalOptC').value = '';
+  document.getElementById('modalOptD').value = '';
+  document.getElementById('modalCorrect').value = 'A';
+  document.getElementById('modalExplanation').value = '';
+  document.getElementById('modalImgUrl').value = '';
+  document.getElementById('imgPreviewWrap').style.display='none';
+  document.getElementById('imgUploadArea').style.display='block';
+  document.getElementById('imgUploading').style.display='none';
+  document.getElementById('modalDeleteBtn').style.display='none';
+  document.getElementById('editModal').classList.add('show');
 }
 
-function clearResp() {
-  delete answers[currentQ];
-  qStatus[currentQ] = 'not_answered';
-  ['A','B','C','D'].forEach(l => document.getElementById('opt'+l)?.classList.remove('selected'));
-  buildDots();
-  updateLegend();
+function closeModal() {
+  document.getElementById('editModal').classList.remove('show');
 }
 
-function markReview() {
-  qStatus[currentQ] = answers[currentQ] ? 'ans_marked' : 'marked';
-  buildDots();
-  updateLegend();
-}
+// ══════════════════════════════════════════
+// IMAGE UPLOAD — Supabase Storage
+// ══════════════════════════════════════════
+async function handleImageSelect(file) {
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('Image 5MB se badi hai!','error'); return; }
 
-function nextQ() { if (currentQ < questions.length - 1) showQuestion(currentQ + 1); }
-function prevQ() { if (currentQ > 0) showQuestion(currentQ - 1); }
-
-// ── DOTS ──
-function buildDots() {
-  const wrap = document.getElementById('qNavDots');
-  wrap.innerHTML = questions.map((_, i) => {
-    let cls = '';
-    const s = qStatus[i];
-    if (s === 'answered' || s === 'ans_marked') cls = 'answered';
-    else if (s === 'not_answered') cls = 'not-answered';
-    else if (s === 'marked') cls = 'marked';
-    if (i === currentQ) cls += ' current';
-    return `<div class="q-dot ${cls}" onclick="showQuestion(${i})">${i+1}</div>`;
-  }).join('');
-}
-
-function updateLegend() {
-  const vals = Object.values(qStatus);
-  document.getElementById('cntAnswered').textContent  = vals.filter(s => s === 'answered' || s === 'ans_marked').length;
-  document.getElementById('cntNotAns').textContent    = vals.filter(s => s === 'not_answered').length;
-  document.getElementById('cntNotVis').textContent    = vals.filter(s => s === 'not_visited').length;
-  document.getElementById('cntMarked').textContent    = vals.filter(s => s === 'marked' || s === 'ans_marked').length;
-}
-
-// ── PANEL TOGGLE ──
-function togglePanel() {
-  const sb = document.getElementById('ntaSidebar');
-  if (window.innerWidth <= 600) sb.classList.toggle('mob-open');
-  else sb.classList.toggle('collapsed');
-}
-
-function confirmExit() {
-  if (confirm('Test chod dena chahte ho? Progress save nahi hogi.')) {
-    clearInterval(timerInterval);
-    window.location.href = 'index.html';
-  }
-}
-
-// ── BILINGUAL ──
-function hasDevanagari(text) { return /[\u0900-\u097F]/.test(text||''); }
-function detectHindi() {
-  hasHindi = questions.some(q => hasDevanagari(q.question_text) || hasDevanagari(q.option_a));
-  document.getElementById('langToggle').style.display = hasHindi ? 'flex' : 'none';
-  if (!hasHindi) currentLang = 'en';
-}
-function setLang(lang) {
-  currentLang = lang;
-  document.getElementById('langEN').classList.toggle('active', lang === 'en');
-  document.getElementById('langHI').classList.toggle('active', lang === 'hi');
-  showQuestion(currentQ);
-}
-function getLangText(text) {
-  if (!text) return '';
-  if (!hasDevanagari(text)) return text.trim();
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  const en = [], hi = [], neu = [];
-  for (const l of lines) {
-    if (/[\u0900-\u097F]/.test(l)) hi.push(l);
-    else if (!/[a-zA-Z]/.test(l)) neu.push(l);
-    else en.push(l);
-  }
-  if (currentLang === 'en') return ([...en,...neu].join('\n').trim() || text.trim());
-  if (hi.length === 0) return text.trim();
-  return [...neu,...hi].join('\n');
-}
-
-// ── SUBMIT ──
-async function submitQuiz(autoSubmit = false) {
-  if (!autoSubmit && !confirm('Test submit karna chahte ho?')) return;
-  clearInterval(timerInterval);
-  document.getElementById('quizOverlay').classList.remove('show');
-
-  // Calculate score
-  let correct = 0, wrong = 0, skipped = 0, score = 0;
-  questions.forEach((q, i) => {
-    const ans = answers[i];
-    if (!ans) { skipped++; return; }
-    if (ans === q.correct_answer) { correct++; score += posMarking; }
-    else { wrong++; score -= negMarking; }
-  });
-  score = Math.max(0, Math.round(score * 10) / 10);
-  const attempted = correct + wrong;
-  const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
-
-  // Save to Supabase
-  try {
-    const { data: attempt } = await sb.from('live_test_attempts').insert({
-      live_test_id:     liveTest.id,
-      participant_name: participantName,
-      score, correct, wrong, skipped,
-      answers:          JSON.stringify(answers),
-      submitted_at:     new Date().toISOString(),
-      is_registered:    false
-    }).select('id').single();
-    if (attempt) attemptId = attempt.id;
-  } catch(e) { console.error('Save error:', e); }
-
-  // Show result
-  showResultScreen(score, correct, wrong, skipped, attempted, accuracy);
-}
-
-// ── RESULT ──
-async function showResultScreen(score, correct, wrong, skipped, attempted, accuracy) {
-  document.getElementById('resultNameDisplay').textContent = '👤 ' + participantName;
-  document.getElementById('resultScore').textContent = score + ' pts';
-  document.getElementById('resultSub').textContent   = `Correct: ${correct} | Wrong: ${wrong} | Skipped: ${skipped}`;
-  document.getElementById('rCorrect').textContent   = correct;
-  document.getElementById('rWrong').textContent     = wrong;
-  document.getElementById('rSkip').textContent      = skipped;
-  document.getElementById('rAccuracy').textContent  = accuracy + '%';
-  document.getElementById('rAttempted').textContent = attempted;
-  document.getElementById('rTotal').textContent     = questions.length;
-
-  document.getElementById('resultScreen').classList.add('show');
-
-  // Load leaderboard (live + registered)
-  await loadLeaderboard(score);
-}
-
-async function loadLeaderboard(myScore) {
-  const el = document.getElementById('lbList');
-  el.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Loading...</div>';
+  document.getElementById('imgUploading').style.display='block';
+  document.getElementById('imgUploadArea').style.display='none';
 
   try {
-    // Live test attempts
-    const { data: liveAttempts } = await sb.from('live_test_attempts')
-      .select('participant_name, score, is_registered, submitted_at')
-      .eq('live_test_id', liveTest.id)
-      .not('submitted_at', 'is', null)
-      .order('score', { ascending: false });
+    const ext = file.name.split('.').pop();
+    const fileName = `live_q_${Date.now()}_${Math.random().toString(36).substring(2,7)}.${ext}`;
 
-    // Registered user attempts for same test (test_name match)
-    const { data: regAttempts } = await sb.from('test_attempts')
-      .select('profiles(full_name), score')
-      .eq('test_name', liveTest.name)
-      .not('score', 'is', null)
-      .order('score', { ascending: false })
-      .limit(50);
+    const {data, error} = await sb.storage.from(STORAGE_BUCKET).upload(fileName, file, {
+      cacheControl: '3600', upsert: false, contentType: file.type
+    });
+    if (error) throw error;
 
-    // Merge
-    let all = [];
-    if (liveAttempts) all = [...liveAttempts.map(a => ({ name: a.participant_name, score: a.score, type: a.is_registered ? 'registered' : 'live' }))];
-    if (regAttempts) {
-      regAttempts.forEach(r => {
-        const name = r.profiles?.full_name || 'Student';
-        if (!all.find(a => a.name === name)) all.push({ name, score: r.score, type: 'registered' });
-      });
-    }
+    const {data: urlData} = sb.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
+    const publicUrl = urlData.publicUrl;
 
-    all.sort((a,b) => b.score - a.score);
-    const total = all.length;
-    const myRank = all.findIndex(a => a.name === participantName && a.score === myScore) + 1;
-    const percentile = myRank > 0 && total > 0 ? Math.round(((total - myRank) / total) * 100) : 0;
-
-    // Show rank row
-    if (myRank > 0) {
-      document.getElementById('rankRow').style.display = 'flex';
-      document.getElementById('rpRank').textContent = '#' + myRank;
-      document.getElementById('rpTotal').textContent = total;
-      document.getElementById('rpPercentile').textContent = percentile + '%';
-    }
-
-    // Podium (top 3)
-    const top3 = all.slice(0, 3);
-    const rest  = all.slice(3);
-    const medals = ['🥇','🥈','🥉'];
-    const sizes  = ['lp-lg','lp-md','lp-md'];
-    const reordered = [top3[1], top3[0], top3[2]].filter(Boolean);
-    const orderMap  = [1, 0, 2];
-
-    const podiumHtml = top3.length >= 1 ? `<div class="lb-podium">${reordered.map((r, pi) => {
-      const origIdx = orderMap[pi];
-      const isMe = r.name === participantName;
-      const initials = r.name.slice(0, 2).toUpperCase();
-      return `<div class="lb-podium-item">
-        <span>${medals[origIdx] || ''}</span>
-        <div class="lb-circle ${sizes[pi] || 'lp-md'}">${initials}</div>
-        <div class="lb-pname">${isMe ? '⭐ ' + r.name : r.name}</div>
-        <div class="lb-pscore">${r.score} pts</div>
-      </div>`;
-    }).join('')}</div>` : '';
-
-    const restHtml = rest.map((r, i) => {
-      const isMe = r.name === participantName;
-      return `<div class="lb-row ${isMe ? 'lb-me' : ''}">
-        <span class="lb-pos">#${i + 4}</span>
-        <span class="lb-name">${isMe ? '⭐ ' + r.name : r.name}
-          <span class="lb-type">${r.type === 'registered' ? '✔ reg' : '👤 live'}</span>
-        </span>
-        <span class="lb-score">${r.score} pts</span>
-      </div>`;
-    }).join('');
-
-    el.innerHTML = all.length === 0
-      ? '<div style="text-align:center;padding:24px;color:#94a3b8;font-size:0.82rem;">Abhi koi result nahi</div>'
-      : podiumHtml + restHtml;
-
-  } catch(e) {
-    el.innerHTML = '<div style="text-align:center;padding:20px;color:#dc2626;font-size:0.82rem;">Leaderboard load nahi hua</div>';
+    document.getElementById('modalImgUrl').value = publicUrl;
+    document.getElementById('imgPreview').src = publicUrl;
+    document.getElementById('imgPreviewWrap').style.display='block';
+    document.getElementById('imgUploading').style.display='none';
+    showToast('✅ Image upload ho gayi!','success');
+  } catch(err) {
+    document.getElementById('imgUploading').style.display='none';
+    document.getElementById('imgUploadArea').style.display='block';
+    showToast('Image upload failed: ' + err.message,'error');
   }
 }
 
-// ── SOLUTIONS ──
-function setSolFilter(filter) {
-  document.querySelectorAll('.a-tab').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-  solFilter = filter;
-  solIdx = 0;
-  buildSolList();
-  showSolution();
+function removeImage() {
+  document.getElementById('modalImgUrl').value='';
+  document.getElementById('imgPreview').src='';
+  document.getElementById('imgPreviewWrap').style.display='none';
+  document.getElementById('imgUploadArea').style.display='block';
 }
 
-function buildSolList() {
-  solFiltered = questions.map((q, i) => ({ q, i, ans: answers[i] })).filter(({ q, ans }) => {
-    if (solFilter === 'all') return true;
-    if (solFilter === 'correct') return ans === q.correct_answer;
-    if (solFilter === 'wrong')   return ans && ans !== q.correct_answer;
-    if (solFilter === 'skip')    return !ans;
-    return true;
-  });
-}
+// ══════════════════════════════════════════
+// SAVE QUESTION (Edit or Add)
+// ══════════════════════════════════════════
+async function saveQuestion() {
+  const qText = document.getElementById('modalQText').value.trim();
+  const optA  = document.getElementById('modalOptA').value.trim();
+  const optB  = document.getElementById('modalOptB').value.trim();
+  const optC  = document.getElementById('modalOptC').value.trim();
+  const optD  = document.getElementById('modalOptD').value.trim();
+  const correct = document.getElementById('modalCorrect').value;
+  const expl  = document.getElementById('modalExplanation').value.trim();
+  const imgUrl= document.getElementById('modalImgUrl').value;
 
-function showSolution() {
-  const el = document.getElementById('solBody');
-  if (solFiltered.length === 0) {
-    el.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">Koi question nahi is filter mein</div>';
-    document.getElementById('solCounter').textContent = '0 / 0';
-    return;
+  if (!qText)  { showToast('Question text daalo!','error'); return; }
+  if (!optA||!optB||!optC||!optD) { showToast('Saare options daalo!','error'); return; }
+
+  const payload = {
+    question_text: qText, option_a: optA, option_b: optB,
+    option_c: optC, option_d: optD, correct_answer: correct,
+    explanation: expl, image_url: imgUrl
+  };
+
+  try {
+    if (isAddingNew) {
+      // New question — q_order = max + 1
+      const maxOrder = editQuestions.length > 0 ? Math.max(...editQuestions.map(q=>q.q_order)) : 0;
+      payload.live_test_id = currentEditTestId;
+      payload.q_order = maxOrder + 1;
+      const {error} = await sb.from('live_test_questions').insert(payload);
+      if (error) throw error;
+      // Update total_questions count
+      await sb.from('live_tests').update({total_questions: editQuestions.length+1}).eq('id',currentEditTestId);
+      showToast('✅ Question add ho gaya!','success');
+    } else {
+      const qId = document.getElementById('modalQId').value;
+      const {error} = await sb.from('live_test_questions').update(payload).eq('id',qId);
+      if (error) throw error;
+      showToast('✅ Question save ho gaya!','success');
+    }
+    closeModal();
+    await loadEditQuestions();
+  } catch(err) {
+    showToast('Save error: '+err.message,'error');
   }
-
-  const item = solFiltered[solIdx];
-  const { q, i, ans } = item;
-  const correct = ans === q.correct_answer;
-  const skipped = !ans;
-  const statusCls = skipped ? 'skip' : correct ? 'correct' : 'wrong';
-  const statusLbl = skipped ? '⏭ Skipped' : correct ? '✅ Correct' : '❌ Wrong';
-
-  el.innerHTML = `<div class="ana-q-card">
-    <div class="ana-q-header">
-      <span class="ana-status-badge ${statusCls}">${statusLbl}</span>
-      <span class="ana-q-num">Q${i+1}</span>
-    </div>
-    <div class="ana-q-text">${esc(getLangText(q.question_text))}</div>
-    <div class="ana-opts">
-      ${['A','B','C','D'].map(l => {
-        const val = getLangText(q['option_' + l.toLowerCase()]);
-        const isCorrect = l === q.correct_answer;
-        const isWrong   = l === ans && !isCorrect;
-        return `<div class="ana-opt ${isCorrect ? 'correct' : isWrong ? 'wrong' : ''}">
-          <span class="ana-opt-label">${l}</span>
-          <span>${esc(val)}</span>
-        </div>`;
-      }).join('')}
-    </div>
-    ${q.explanation ? `<div class="ana-explanation">💡 <strong>Explanation:</strong> ${esc(q.explanation)}</div>` : ''}
-  </div>`;
-
-  document.getElementById('solCounter').textContent = `${solIdx + 1} / ${solFiltered.length}`;
 }
 
-function solNext() { if (solIdx < solFiltered.length - 1) { solIdx++; showSolution(); } }
-function solPrev() { if (solIdx > 0) { solIdx--; showSolution(); } }
-
-// ── RESULT TABS ──
-function switchResultTab(tab) {
-  document.querySelectorAll('.rtab-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById('rtabLeaderboard').style.display = tab === 'leaderboard' ? 'block' : 'none';
-  document.getElementById('rtabSolutions').style.display   = tab === 'solutions'   ? 'flex'  : 'none';
-  if (tab === 'solutions') { buildSolList(); showSolution(); }
+// ══════════════════════════════════════════
+// DELETE QUESTION
+// ══════════════════════════════════════════
+async function deleteQuestion() {
+  const qId = document.getElementById('modalQId').value;
+  if (!qId || !confirm('Ye question delete karna chahte ho?')) return;
+  const {error} = await sb.from('live_test_questions').delete().eq('id',qId);
+  if (error) { showToast('Delete failed: '+error.message,'error'); return; }
+  // Update count
+  await sb.from('live_tests').update({total_questions: Math.max(0, editQuestions.length-1)}).eq('id',currentEditTestId);
+  showToast('Question deleted!','success');
+  closeModal();
+  await loadEditQuestions();
 }
 
-// ── SHARE ──
-function shareResult() {
-  const score   = document.getElementById('resultScore').textContent;
-  const correct = document.getElementById('rCorrect').textContent;
-  const wrong   = document.getElementById('rWrong').textContent;
-  const msg = `🎯 *SSC Hustlers — Live Test*\n\n📝 ${liveTest.name}\n👤 ${participantName}\n🏆 Score: ${score}\n✅ Correct: ${correct}  ❌ Wrong: ${wrong}\n\n🔗 ${window.location.href}`;
-  if (navigator.share) navigator.share({ title: 'SSC Hustlers', text: msg }).catch(() => copyToClipboard(msg));
-  else copyToClipboard(msg);
-}
-function copyToClipboard(text) {
-  navigator.clipboard.writeText(text).then(() => alert('✅ Result copied!')).catch(() => window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank'));
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+function showToast(msg, type='') {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'),3500);
 }
 
-// ── SCREEN HELPER ──
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('show'));
-  if (id) document.getElementById(id)?.classList.add('show');
-}
+// Close modal on overlay click
+document.getElementById('editModal').addEventListener('click', function(e){
+  if(e.target===this) closeModal();
+});
 
-init();
+// Default times
+const _now = new Date();
+_now.setMinutes(_now.getMinutes()+10);
+document.getElementById('ltStart').value=_now.toISOString().slice(0,16);
+_now.setMinutes(_now.getMinutes()+30);
+document.getElementById('ltEnd').value=_now.toISOString().slice(0,16);
 </script>
 </body>
 </html>
