@@ -853,7 +853,8 @@ async function submitQuiz(autoSubmit = false) {
   questions.forEach((q, i) => {
     const ans = answers[i];
     if (!ans) { skipped++; return; }
-    if (ans === q.correct_answer) { correct++; score += posMarking; }
+    const correctAns = (q.correct_answer || '').toString().trim().toUpperCase();
+    if (ans.toUpperCase() === correctAns) { correct++; score += posMarking; }
     else { wrong++; score -= negMarking; }
   });
   score = Math.round(score * 10) / 10;
@@ -990,9 +991,10 @@ function setSolFilter(filter) {
 
 function buildSolList() {
   solFiltered = questions.map((q, i) => ({ q, i, ans: answers[i] })).filter(({ q, ans }) => {
+    const correctAns = (q.correct_answer || '').toString().trim().toUpperCase();
     if (solFilter === 'all') return true;
-    if (solFilter === 'correct') return ans === q.correct_answer;
-    if (solFilter === 'wrong')   return ans && ans !== q.correct_answer;
+    if (solFilter === 'correct') return ans && ans.toUpperCase() === correctAns;
+    if (solFilter === 'wrong')   return ans && ans.toUpperCase() !== correctAns;
     if (solFilter === 'skip')    return !ans;
     return true;
   });
@@ -1008,7 +1010,8 @@ function showSolution() {
 
   const item = solFiltered[solIdx];
   const { q, i, ans } = item;
-  const correct = ans === q.correct_answer;
+  const correctAns = (q.correct_answer || '').toString().trim().toUpperCase();
+  const correct = ans && ans.toUpperCase() === correctAns;
   const skipped = !ans;
   const statusCls = skipped ? 'skip' : correct ? 'correct' : 'wrong';
   const statusLbl = skipped ? '⏭ Skipped' : correct ? '✅ Correct' : '❌ Wrong';
@@ -1022,8 +1025,8 @@ function showSolution() {
     <div class="ana-opts">
       ${['A','B','C','D'].map(l => {
         const val = getLangText(q['option_' + l.toLowerCase()]);
-        const isCorrect = l === q.correct_answer;
-        const isWrong   = l === ans && !isCorrect;
+        const isCorrect = l === correctAns;
+        const isWrong   = l === (ans||'').toUpperCase() && !isCorrect;
         return `<div class="ana-opt ${isCorrect ? 'correct' : isWrong ? 'wrong' : ''}">
           <span class="ana-opt-label">${l}</span>
           <span>${esc(val)}</span>
