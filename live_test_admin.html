@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Test Admin | SSC Hustlers</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-height:100vh;}
+
+.admin-header{background:#fff;border-bottom:2px solid #0ea5e9;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 6px rgba(14,165,233,0.1);}
+.admin-logo{color:#0ea5e9;font-size:1rem;font-weight:800;text-decoration:none;}
+.admin-logo span{color:#111827;}
+.admin-badge{background:#0ea5e9;color:#fff;font-size:0.65rem;font-weight:800;padding:3px 10px;border-radius:50px;}
+
+.admin-main{max-width:900px;margin:0 auto;padding:24px 16px;}
+.section-title{font-size:1rem;font-weight:800;color:#111827;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+
+.card{background:#fff;border-radius:16px;border:1.5px solid #e0f2fe;padding:24px;margin-bottom:24px;box-shadow:0 2px 8px rgba(14,165,233,0.06);}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr;}}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:0.78rem;font-weight:700;color:#475569;}
+input[type=text],input[type=datetime-local],input[type=number],select,textarea{
+  width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid #bae6fd;
+  font-size:0.85rem;font-family:inherit;outline:none;background:#fff;color:#111827;transition:border 0.2s;
+}
+input:focus,select:focus,textarea:focus{border-color:#0ea5e9;}
+textarea{resize:vertical;min-height:70px;}
+
+.file-drop{border:2px dashed #bae6fd;border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all 0.2s;background:#f0f9ff;}
+.file-drop:hover,.file-drop.drag{border-color:#0ea5e9;background:#e0f2fe;}
+.file-drop-icon{font-size:2rem;margin-bottom:8px;}
+.file-drop-text{font-size:0.85rem;font-weight:600;color:#0284c7;}
+.file-drop-sub{font-size:0.72rem;color:#64748b;margin-top:4px;}
+#fileInput{display:none;}
+.file-selected{background:#dcfce7;border-color:#16a34a;}
+
+.preview-wrap{overflow-x:auto;margin-top:16px;}
+.preview-table{width:100%;border-collapse:collapse;font-size:0.75rem;}
+.preview-table th{background:#0ea5e9;color:#fff;padding:8px 10px;text-align:left;font-weight:700;white-space:nowrap;}
+.preview-table td{padding:7px 10px;border-bottom:1px solid #e0f2fe;color:#111827;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.preview-table tr:hover td{background:#f0f9ff;}
+.preview-count{font-size:0.78rem;color:#0284c7;font-weight:700;margin-bottom:8px;}
+
+.btn-primary{background:#0ea5e9;color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:0.88rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background 0.2s;width:100%;}
+.btn-primary:hover{background:#0284c7;}
+.btn-primary:disabled{background:#bae6fd;cursor:not-allowed;}
+.btn-sm{padding:6px 12px;border-radius:7px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;border:none;white-space:nowrap;}
+.btn-green{background:#dcfce7;color:#15803d;}
+.btn-blue{background:#e0f2fe;color:#0284c7;}
+.btn-orange{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;}
+.btn-red{background:#fee2e2;color:#dc2626;}
+.btn-purple{background:#ede9fe;color:#6d28d9;}
+
+.live-test-item{background:#fff;border:1.5px solid #e0f2fe;border-radius:12px;padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;transition:all 0.2s;}
+.live-test-item:hover{border-color:#0ea5e9;box-shadow:0 2px 12px rgba(14,165,233,0.1);}
+.lt-status{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.lt-status.live{background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,0.2);animation:livePulse 1.5s infinite;}
+@keyframes livePulse{0%,100%{box-shadow:0 0 0 3px rgba(22,163,74,0.2);}50%{box-shadow:0 0 0 6px rgba(22,163,74,0.1);}}
+.lt-status.upcoming{background:#f59e0b;}
+.lt-status.ended{background:#94a3b8;}
+.lt-info{flex:1;min-width:0;}
+.lt-name{font-size:0.9rem;font-weight:700;color:#111827;margin-bottom:3px;}
+.lt-meta{font-size:0.72rem;color:#64748b;}
+.lt-actions{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;}
+.lt-badge{font-size:0.65rem;font-weight:700;padding:3px 8px;border-radius:50px;}
+.lt-badge.live{background:#dcfce7;color:#15803d;}
+.lt-badge.upcoming{background:#fef3c7;color:#b45309;}
+.lt-badge.ended{background:#f1f5f9;color:#64748b;}
+
+.monitor-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.m-stat{background:#f0f9ff;border-radius:10px;padding:14px;text-align:center;border:1px solid #e0f2fe;}
+.m-stat-val{font-size:1.4rem;font-weight:800;color:#0ea5e9;}
+.m-stat-lbl{font-size:0.68rem;color:#64748b;font-weight:600;margin-top:2px;}
+
+/* ── EDIT TAB ── */
+.edit-test-select{display:flex;gap:10px;margin-bottom:20px;align-items:center;}
+.edit-test-select select{flex:1;}
+
+/* Question list in edit */
+.q-edit-item{background:#fff;border:1.5px solid #e0f2fe;border-radius:12px;padding:14px 16px;margin-bottom:10px;transition:all 0.2s;}
+.q-edit-item:hover{border-color:#0ea5e9;}
+.q-edit-header{display:flex;align-items:center;gap:10px;margin-bottom:0;}
+.q-edit-num{background:#0ea5e9;color:#fff;font-size:0.72rem;font-weight:800;padding:2px 9px;border-radius:50px;flex-shrink:0;}
+.q-edit-text{flex:1;font-size:0.82rem;font-weight:600;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.q-edit-ans{font-size:0.72rem;font-weight:700;color:#16a34a;flex-shrink:0;}
+.q-edit-img-badge{font-size:0.68rem;background:#fef3c7;color:#b45309;padding:2px 7px;border-radius:50px;flex-shrink:0;}
+.q-edit-actions{display:flex;gap:6px;flex-shrink:0;}
+
+/* Edit Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#fff;border-radius:20px;padding:28px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.15);}
+.modal-title{font-size:1rem;font-weight:800;color:#111827;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
+.modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:#64748b;line-height:1;}
+.modal-form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.modal-form-group label{font-size:0.78rem;font-weight:700;color:#475569;}
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:480px){.opt-grid{grid-template-columns:1fr;}}
+
+/* Image upload in modal */
+.img-upload-area{border:2px dashed #bae6fd;border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:all 0.2s;background:#f0f9ff;position:relative;}
+.img-upload-area:hover{border-color:#0ea5e9;background:#e0f2fe;}
+.img-upload-area input[type=file]{display:none;}
+.img-preview-wrap{margin-top:12px;position:relative;display:inline-block;}
+.img-preview-wrap img{max-width:100%;max-height:180px;border-radius:8px;border:1.5px solid #e0f2fe;display:block;}
+.img-remove-btn{position:absolute;top:-6px;right:-6px;background:#dc2626;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;}
+.img-uploading{font-size:0.78rem;color:#0284c7;font-weight:600;margin-top:6px;}
+
+/* Add Q button */
+.add-q-bar{display:flex;justify-content:flex-end;margin-bottom:12px;}
+
+.toast{position:fixed;bottom:24px;right:24px;background:#111827;color:#fff;padding:12px 20px;border-radius:10px;font-size:0.82rem;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:all 0.3s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.success{background:#15803d;}
+.toast.error{background:#dc2626;}
+
+.tabs{display:flex;border-bottom:2px solid #e0f2fe;margin-bottom:20px;overflow-x:auto;}
+.tab-btn{padding:10px 18px;border:none;background:none;font-family:inherit;font-size:0.82rem;font-weight:700;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.2s;white-space:nowrap;}
+.tab-btn.active{color:#0ea5e9;border-bottom-color:#0ea5e9;}
+
+.empty-state{text-align:center;padding:40px;color:#94a3b8;font-size:0.85rem;}
+.empty-state div{font-size:2rem;margin-bottom:8px;}
+.spinner{display:inline-block;width:18px;height:18px;border:3px solid #e0f2fe;border-top-color:#0ea5e9;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<header class="admin-header">
+  <a class="admin-logo" href="dashboard.html">SSC <span>HUSTLERS</span></a>
+  <span class="admin-badge">🔴 LIVE TEST ADMIN</span>
+</header>
+
+<div class="admin-main">
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('schedule',this)">📅 Schedule New Test</button>
+    <button class="tab-btn" onclick="switchTab('manage',this)">📋 Manage Tests</button>
+    <button class="tab-btn" onclick="switchTab('edit',this)">✏️ Edit Questions</button>
+  </div>
+
+  <!-- ══ TAB: SCHEDULE ══ -->
+  <div id="tabSchedule">
+    <div class="card">
+      <div class="section-title">📝 Test Details</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Test Name *</label>
+          <input type="text" id="ltName" placeholder="e.g. Maths Live Test #1">
+        </div>
+        <div class="form-group">
+          <label>Subject</label>
+          <select id="ltSubject">
+            <option value="maths">🔢 Maths</option>
+            <option value="english">📖 English</option>
+            <option value="reasoning">🧠 Reasoning</option>
+            <option value="ga">🌍 General Awareness</option>
+            <option value="full_test">📋 Full Mock Test</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Start Time *</label>
+          <input type="datetime-local" id="ltStart">
+        </div>
+        <div class="form-group">
+          <label>End Time *</label>
+          <input type="datetime-local" id="ltEnd">
+        </div>
+        <div class="form-group">
+          <label>Duration (minutes)</label>
+          <input type="number" id="ltDuration" value="20" min="5" max="180">
+        </div>
+        <div class="form-group">
+          <label>Positive Marking</label>
+          <input type="number" id="ltPos" value="2" step="0.5" min="0">
+        </div>
+        <div class="form-group">
+          <label>Negative Marking</label>
+          <input type="number" id="ltNeg" value="0.5" step="0.5" min="0">
+        </div>
+        <div class="form-group">
+          <label>Share Link (auto-generated)</label>
+          <input type="text" id="ltLink" readonly placeholder="Schedule karne ke baad milega..." style="background:#f8fafc;color:#64748b;">
+        </div>
+        <div class="form-group full">
+          <label>Instructions (optional)</label>
+          <textarea id="ltInstructions" placeholder="Students ke liye koi instructions..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">📊 Upload Questions (Excel)</div>
+      <div class="file-drop" id="fileDrop" onclick="document.getElementById('fileInput').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+        <div class="file-drop-icon">📂</div>
+        <div class="file-drop-text">Click karo ya Excel file drag karo</div>
+        <div class="file-drop-sub">Columns: question_text, option_a, option_b, option_c, option_d, correct_answer, explanation — Serial order maintain hoga</div>
+      </div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
+
+      <div id="previewSection" style="display:none;margin-top:16px;">
+        <div class="preview-count" id="previewCount"></div>
+        <div class="preview-wrap">
+          <table class="preview-table">
+            <thead><tr><th>#</th><th>Question</th><th>A</th><th>B</th><th>C</th><th>D</th><th>Answer</th></tr></thead>
+            <tbody id="previewBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="btnSchedule" onclick="scheduleTest()">🚀 Schedule Live Test</button>
+  </div>
+
+  <!-- ══ TAB: MANAGE ══ -->
+  <div id="tabManage" style="display:none;">
+    <div class="card">
+      <div class="section-title">📋 All Live Tests</div>
+      <div id="liveTestsList"><div class="empty-state"><div>📭</div>Loading...</div></div>
+    </div>
+    <div id="monitorSection" style="display:none;">
+      <div class="card">
+        <div class="section-title" id="monitorTitle">📡 Live Monitor</div>
+        <div class="monitor-stats">
+          <div class="m-stat"><div class="m-stat-val" id="mTotal">0</div><div class="m-stat-lbl">Participants</div></div>
+          <div class="m-stat"><div class="m-stat-val" id="mSubmitted">0</div><div class="m-stat-lbl">Submitted</div></div>
+          <div class="m-stat"><div class="m-stat-val" id="mAvgScore">-</div><div class="m-stat-lbl">Avg Score</div></div>
+        </div>
+        <div id="monitorLeaderboard"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: EDIT ══ -->
+  <div id="tabEdit" style="display:none;">
+    <div class="card">
+      <div class="section-title">✏️ Test Choose Karo</div>
+      <div class="edit-test-select">
+        <select id="editTestSelect" onchange="loadEditQuestions()">
+          <option value="">-- Test select karo --</option>
+        </select>
+        <button class="btn-sm btn-blue" onclick="loadEditTestList()">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <div id="editQuestionsSection" style="display:none;">
+      <div class="card" style="padding:16px 20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div class="section-title" style="margin-bottom:0;" id="editSectionTitle">Questions</div>
+          <button class="btn-sm btn-purple" onclick="openAddModal()">➕ Add New Question</button>
+        </div>
+        <div id="editQList"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ══ EDIT MODAL ══ -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span id="modalTitleText">Question Edit Karo</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <input type="hidden" id="modalQId">
+
+    <div class="modal-form-group">
+      <label>Question Text *</label>
+      <textarea id="modalQText" rows="4" placeholder="Question likho (Hindi + English dono likh sakte ho)..."></textarea>
+    </div>
+
+    <div class="opt-grid">
+      <div class="modal-form-group">
+        <label>Option A *</label>
+        <input type="text" id="modalOptA" placeholder="Option A">
+      </div>
+      <div class="modal-form-group">
+        <label>Option B *</label>
+        <input type="text" id="modalOptB" placeholder="Option B">
+      </div>
+      <div class="modal-form-group">
+        <label>Option C *</label>
+        <input type="text" id="modalOptC" placeholder="Option C">
+      </div>
+      <div class="modal-form-group">
+        <label>Option D *</label>
+        <input type="text" id="modalOptD" placeholder="Option D">
+      </div>
+    </div>
+
+    <div class="modal-form-group">
+      <label>Correct Answer *</label>
+      <select id="modalCorrect">
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="D">D</option>
+      </select>
+    </div>
+
+    <div class="modal-form-group">
+      <label>Explanation (optional)</label>
+      <textarea id="modalExplanation" rows="2" placeholder="Solution explanation..."></textarea>
+    </div>
+
+    <!-- IMAGE UPLOAD -->
+    <div class="modal-form-group">
+      <label>Question Image (optional) — Reasoning diagrams, figures, etc.</label>
+      <div class="img-upload-area" id="imgUploadArea" onclick="document.getElementById('modalImgInput').click()">
+        <div style="font-size:1.8rem;margin-bottom:6px;">🖼️</div>
+        <div style="font-size:0.82rem;font-weight:600;color:#0284c7;">Click karo image upload karne ke liye</div>
+        <div style="font-size:0.7rem;color:#64748b;margin-top:4px;">JPG, PNG, GIF — max 5MB</div>
+        <input type="file" id="modalImgInput" accept="image/*" onchange="handleImageSelect(this.files[0])">
+      </div>
+      <div class="img-uploading" id="imgUploading" style="display:none;"><span class="spinner"></span>Image upload ho rahi hai...</div>
+      <div id="imgPreviewWrap" style="display:none;margin-top:10px;text-align:center;">
+        <div class="img-preview-wrap">
+          <img id="imgPreview" src="" alt="preview">
+          <button class="img-remove-btn" onclick="removeImage()" title="Image hatao">✕</button>
+        </div>
+      </div>
+      <input type="hidden" id="modalImgUrl">
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn-primary" style="flex:1;" onclick="saveQuestion()">💾 Save Question</button>
+      <button class="btn-sm btn-red" style="padding:12px 18px;font-size:0.85rem;" id="modalDeleteBtn" onclick="deleteQuestion()">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://wwfhoyxqlversdkdqcgd.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3ZmhveXhxbHZlcnNka2RxY2dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDAwMTMsImV4cCI6MjA4ODQ3NjAxM30.qaQp8LJXGxN6EfOoNPOgdhdNqY7M0nC2aR8fBSYejrw';
+const STORAGE_BUCKET = 'question-images';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let parsedQuestions = [];
+let monitorInterval  = null;
+let currentEditTestId = null;
+let editQuestions    = [];
+let isAddingNew      = false;
+
+// ══════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tabSchedule').style.display = tab === 'schedule' ? 'block' : 'none';
+  document.getElementById('tabManage').style.display   = tab === 'manage'   ? 'block' : 'none';
+  document.getElementById('tabEdit').style.display     = tab === 'edit'     ? 'block' : 'none';
+  if (tab === 'manage') loadLiveTests();
+  if (tab === 'edit')   loadEditTestList();
+}
+
+// ══════════════════════════════════════════
+// EXCEL PARSE — Serial order strict
+// ══════════════════════════════════════════
+function dragOver(e) { e.preventDefault(); document.getElementById('fileDrop').classList.add('drag'); }
+function dragLeave()  { document.getElementById('fileDrop').classList.remove('drag'); }
+function dropFile(e)  { e.preventDefault(); dragLeave(); handleFile(e.dataTransfer.files[0]); }
+
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      // raw:true keeps row order, header:1 gives array — use sheet_to_json for named cols
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
+
+      // q_order = 1,2,3... strictly from Excel row position
+      parsedQuestions = rows.map((r, i) => ({
+        question_text:  String(r['question_text'] || r['Question'] || '').trim(),
+        option_a:       String(r['option_a'] || r['A'] || r['Option A'] || '').trim(),
+        option_b:       String(r['option_b'] || r['B'] || r['Option B'] || '').trim(),
+        option_c:       String(r['option_c'] || r['C'] || r['Option C'] || '').trim(),
+        option_d:       String(r['option_d'] || r['D'] || r['Option D'] || '').trim(),
+        correct_answer: String(r['correct_answer'] || r['Answer'] || r['Correct'] || '').trim().toUpperCase(),
+        explanation:    String(r['explanation'] || r['Explanation'] || '').trim(),
+        image_url:      '',
+        q_order:        i + 1   // strict serial from Excel position
+      })).filter(q => q.question_text);
+
+      if (parsedQuestions.length === 0) { showToast('Koi valid question nahi mila!', 'error'); return; }
+
+      const drop = document.getElementById('fileDrop');
+      drop.classList.add('file-selected');
+      drop.querySelector('.file-drop-text').textContent = `✅ ${file.name}`;
+      drop.querySelector('.file-drop-sub').textContent  = `${parsedQuestions.length} questions — serial order maintain hoga`;
+
+      document.getElementById('previewCount').textContent = `${parsedQuestions.length} questions (first 5 preview):`;
+      document.getElementById('previewBody').innerHTML = parsedQuestions.slice(0,5).map((q,i) => `
+        <tr>
+          <td><strong>${q.q_order}</strong></td>
+          <td title="${q.question_text}">${q.question_text.substring(0,55)}${q.question_text.length>55?'...':''}</td>
+          <td>${q.option_a.substring(0,18)}</td>
+          <td>${q.option_b.substring(0,18)}</td>
+          <td>${q.option_c.substring(0,18)}</td>
+          <td>${q.option_d.substring(0,18)}</td>
+          <td><strong>${q.correct_answer}</strong></td>
+        </tr>`).join('');
+      document.getElementById('previewSection').style.display = 'block';
+    } catch(err) { showToast('File read error: ' + err.message, 'error'); }
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ══════════════════════════════════════════
+// SCHEDULE TEST
+// ══════════════════════════════════════════
+async function scheduleTest() {
+  const name  = document.getElementById('ltName').value.trim();
+  const subj  = document.getElementById('ltSubject').value;
+  const start = document.getElementById('ltStart').value;
+  const end   = document.getElementById('ltEnd').value;
+  const dur   = parseInt(document.getElementById('ltDuration').value) || 20;
+  const pos   = parseFloat(document.getElementById('ltPos').value) || 2;
+  const neg   = parseFloat(document.getElementById('ltNeg').value) || 0.5;
+  const inst  = document.getElementById('ltInstructions').value.trim();
+
+  if (!name)  { showToast('Test name daalo!', 'error'); return; }
+  if (!start) { showToast('Start time daalo!', 'error'); return; }
+  if (!end)   { showToast('End time daalo!', 'error'); return; }
+  if (parsedQuestions.length === 0) { showToast('Excel file upload karo!', 'error'); return; }
+  if (new Date(end) <= new Date(start)) { showToast('End time start se baad hona chahiye!', 'error'); return; }
+
+  const btn = document.getElementById('btnSchedule');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Scheduling...';
+
+  try {
+    const code = name.toLowerCase().replace(/[^a-z0-9]/g,'_') + '_' + Date.now();
+
+    const { data: lt, error: ltErr } = await sb.from('live_tests').insert({
+      name, subject: subj,
+      start_time: new Date(start).toISOString(),
+      end_time:   new Date(end).toISOString(),
+      duration_minutes: dur, positive_marking: pos, negative_marking: neg,
+      instructions: inst, code, status: 'scheduled',
+      total_questions: parsedQuestions.length
+    }).select('id').single();
+    if (ltErr) throw ltErr;
+
+    // Insert questions with strict q_order from Excel
+    const chunkSize = 50;
+    const qRows = parsedQuestions.map(q => ({ ...q, live_test_id: lt.id }));
+    for (let i = 0; i < qRows.length; i += chunkSize) {
+      const { error: qErr } = await sb.from('live_test_questions').insert(qRows.slice(i, i+chunkSize));
+      if (qErr) throw qErr;
+    }
+
+    const link = `${window.location.href.replace('live_test_admin.html','')}live_test.html?code=${code}`;
+    document.getElementById('ltLink').value = link;
+    navigator.clipboard.writeText(link).catch(()=>{});
+    showToast('✅ Scheduled! Link copy ho gaya!', 'success');
+    btn.disabled = false; btn.innerHTML = '🚀 Schedule Live Test';
+  } catch(err) {
+    showToast('Error: ' + err.message, 'error');
+    btn.disabled = false; btn.innerHTML = '🚀 Schedule Live Test';
+  }
+}
+
+// ══════════════════════════════════════════
+// MANAGE TAB
+// ══════════════════════════════════════════
+async function loadLiveTests() {
+  const el = document.getElementById('liveTestsList');
+  el.innerHTML = '<div class="empty-state"><span class="spinner"></span> Loading...</div>';
+
+  const { data, error } = await sb.from('live_tests').select('*').order('start_time',{ascending:false}).limit(30);
+  if (error || !data || data.length===0) { el.innerHTML='<div class="empty-state"><div>📭</div>Koi live test nahi hai.</div>'; return; }
+
+  const now = new Date();
+  el.innerHTML = data.map(lt => {
+    const start = new Date(lt.start_time), end = new Date(lt.end_time);
+    const isLive = now>=start && now<=end, isUp = now<start;
+    const st = isLive?'live':isUp?'upcoming':'ended';
+    const sl = isLive?'🔴 LIVE':isUp?'⏰ Upcoming':'✅ Ended';
+    const link = `${window.location.href.replace('live_test_admin.html','')}live_test.html?code=${lt.code}`;
+    return `<div class="live-test-item">
+      <div class="lt-status ${st}"></div>
+      <div class="lt-info">
+        <div class="lt-name">${lt.name} <span class="lt-badge ${st}">${sl}</span></div>
+        <div class="lt-meta">📅 ${start.toLocaleDateString('en-IN')} ${start.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})} → ${end.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})} &nbsp;|&nbsp; ❓ ${lt.total_questions} Qs &nbsp;|&nbsp; ⏱ ${lt.duration_minutes} min</div>
+      </div>
+      <div class="lt-actions">
+        <button class="btn-sm btn-blue" onclick="copyLink('${link}')">🔗 Link</button>
+        ${isLive||st==='ended'?`<button class="btn-sm btn-green" onclick="monitorTest('${lt.id}','${lt.name}')">📡 Monitor</button>`:''}
+        <button class="btn-sm btn-red" onclick="deleteTest('${lt.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function copyLink(link) {
+  navigator.clipboard.writeText(link).then(()=>showToast('Link copied!','success')).catch(()=>prompt('Copy karo:',link));
+}
+
+async function deleteTest(id) {
+  if (!confirm('Ye test delete karna chahte ho? Saare questions aur attempts bhi delete honge.')) return;
+  await sb.from('live_test_attempts').delete().eq('live_test_id',id);
+  await sb.from('live_test_questions').delete().eq('live_test_id',id);
+  await sb.from('live_tests').delete().eq('id',id);
+  showToast('Test deleted!','success');
+  loadLiveTests();
+}
+
+async function monitorTest(id, name) {
+  document.getElementById('monitorSection').style.display='block';
+  document.getElementById('monitorTitle').textContent=`📡 Monitor: ${name}`;
+  document.getElementById('monitorSection').scrollIntoView({behavior:'smooth'});
+  if (monitorInterval) clearInterval(monitorInterval);
+  await refreshMonitor(id);
+  monitorInterval = setInterval(()=>refreshMonitor(id), 10000);
+}
+
+async function refreshMonitor(id) {
+  const {data} = await sb.from('live_test_attempts').select('participant_name,score,submitted_at,correct,wrong,skipped').eq('live_test_id',id).order('score',{ascending:false});
+  if (!data) return;
+  const sub = data.filter(d=>d.submitted_at);
+  const avg = sub.length>0?(sub.reduce((a,b)=>a+b.score,0)/sub.length).toFixed(1):'-';
+  document.getElementById('mTotal').textContent=data.length;
+  document.getElementById('mSubmitted').textContent=sub.length;
+  document.getElementById('mAvgScore').textContent=avg;
+  const lb=document.getElementById('monitorLeaderboard');
+  if (sub.length===0){lb.innerHTML='<div style="text-align:center;padding:20px;color:#94a3b8;font-size:0.82rem;">Abhi kisi ne submit nahi kiya</div>';return;}
+  lb.innerHTML=`<table class="preview-table"><thead><tr><th>#</th><th>Name</th><th>Score</th><th>Correct</th><th>Wrong</th><th>Skipped</th><th>Time</th></tr></thead><tbody>${sub.map((s,i)=>`<tr><td>${i+1}</td><td><strong>${s.participant_name}</strong></td><td style="color:#0ea5e9;font-weight:800;">${s.score}</td><td style="color:#16a34a;">${s.correct}</td><td style="color:#dc2626;">${s.wrong}</td><td style="color:#64748b;">${s.skipped}</td><td>${s.submitted_at?new Date(s.submitted_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'-'}</td></tr>`).join('')}</tbody></table>`;
+}
+
+// ══════════════════════════════════════════
+// EDIT TAB — Load test list
+// ══════════════════════════════════════════
+async function loadEditTestList() {
+  const sel = document.getElementById('editTestSelect');
+  sel.innerHTML = '<option value="">Loading...</option>';
+  const {data} = await sb.from('live_tests').select('id,name').order('start_time',{ascending:false}).limit(30);
+  sel.innerHTML = '<option value="">-- Test select karo --</option>';
+  if (data) data.forEach(lt => {
+    const opt = document.createElement('option');
+    opt.value = lt.id; opt.textContent = lt.name;
+    sel.appendChild(opt);
+  });
+  document.getElementById('editQuestionsSection').style.display='none';
+}
+
+// ══════════════════════════════════════════
+// LOAD QUESTIONS FOR EDITING — strict q_order
+// ══════════════════════════════════════════
+async function loadEditQuestions() {
+  const testId = document.getElementById('editTestSelect').value;
+  if (!testId) { document.getElementById('editQuestionsSection').style.display='none'; return; }
+  currentEditTestId = testId;
+
+  const el = document.getElementById('editQList');
+  el.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Loading questions...</div>';
+  document.getElementById('editQuestionsSection').style.display='block';
+
+  // Always order by q_order ASC — strict serial
+  const {data, error} = await sb.from('live_test_questions')
+    .select('*').eq('live_test_id', testId).order('q_order', {ascending:true});
+
+  if (error||!data||data.length===0) {
+    el.innerHTML='<div class="empty-state"><div>📭</div>Koi question nahi hai is test mein.</div>';
+    return;
+  }
+  editQuestions = data;
+
+  const testName = document.getElementById('editTestSelect').options[document.getElementById('editTestSelect').selectedIndex].text;
+  document.getElementById('editSectionTitle').textContent = `Questions — ${testName} (${data.length} total)`;
+
+  el.innerHTML = data.map((q,i) => `
+    <div class="q-edit-item" id="qitem_${q.id}">
+      <div class="q-edit-header">
+        <span class="q-edit-num">${q.q_order}</span>
+        <span class="q-edit-text" title="${q.question_text}">${q.question_text.substring(0,70)}${q.question_text.length>70?'...':''}</span>
+        ${q.image_url ? `<span class="q-edit-img-badge">🖼 Image</span>` : ''}
+        <span class="q-edit-ans">Ans: ${q.correct_answer}</span>
+        <div class="q-edit-actions">
+          <button class="btn-sm btn-orange" onclick="openEditModal('${q.id}')">✏️ Edit</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════
+// OPEN EDIT MODAL
+// ══════════════════════════════════════════
+function openEditModal(qId) {
+  isAddingNew = false;
+  const q = editQuestions.find(x => x.id === qId);
+  if (!q) return;
+
+  document.getElementById('modalTitleText').textContent = `✏️ Edit — Q${q.q_order}`;
+  document.getElementById('modalQId').value       = q.id;
+  document.getElementById('modalQText').value     = q.question_text || '';
+  document.getElementById('modalOptA').value      = q.option_a || '';
+  document.getElementById('modalOptB').value      = q.option_b || '';
+  document.getElementById('modalOptC').value      = q.option_c || '';
+  document.getElementById('modalOptD').value      = q.option_d || '';
+  document.getElementById('modalCorrect').value   = q.correct_answer || 'A';
+  document.getElementById('modalExplanation').value = q.explanation || '';
+  document.getElementById('modalImgUrl').value    = q.image_url || '';
+  document.getElementById('modalDeleteBtn').style.display = '';
+
+  // Image preview
+  if (q.image_url) {
+    document.getElementById('imgPreview').src = q.image_url;
+    document.getElementById('imgPreviewWrap').style.display = 'block';
+    document.getElementById('imgUploadArea').style.display = 'none';
+  } else {
+    document.getElementById('imgPreviewWrap').style.display = 'none';
+    document.getElementById('imgUploadArea').style.display = 'block';
+  }
+  document.getElementById('imgUploading').style.display='none';
+  document.getElementById('editModal').classList.add('show');
+}
+
+// ══════════════════════════════════════════
+// OPEN ADD NEW MODAL
+// ══════════════════════════════════════════
+function openAddModal() {
+  if (!currentEditTestId) { showToast('Pehle test select karo!','error'); return; }
+  isAddingNew = true;
+  document.getElementById('modalTitleText').textContent = '➕ Add New Question';
+  document.getElementById('modalQId').value = '';
+  document.getElementById('modalQText').value = '';
+  document.getElementById('modalOptA').value = '';
+  document.getElementById('modalOptB').value = '';
+  document.getElementById('modalOptC').value = '';
+  document.getElementById('modalOptD').value = '';
+  document.getElementById('modalCorrect').value = 'A';
+  document.getElementById('modalExplanation').value = '';
+  document.getElementById('modalImgUrl').value = '';
+  document.getElementById('imgPreviewWrap').style.display='none';
+  document.getElementById('imgUploadArea').style.display='block';
+  document.getElementById('imgUploading').style.display='none';
+  document.getElementById('modalDeleteBtn').style.display='none';
+  document.getElementById('editModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('editModal').classList.remove('show');
+}
+
+// ══════════════════════════════════════════
+// IMAGE UPLOAD — Supabase Storage
+// ══════════════════════════════════════════
+async function handleImageSelect(file) {
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('Image 5MB se badi hai!','error'); return; }
+
+  document.getElementById('imgUploading').style.display='block';
+  document.getElementById('imgUploadArea').style.display='none';
+
+  try {
+    const ext = file.name.split('.').pop();
+    const fileName = `live_q_${Date.now()}_${Math.random().toString(36).substring(2,7)}.${ext}`;
+
+    const {data, error} = await sb.storage.from(STORAGE_BUCKET).upload(fileName, file, {
+      cacheControl: '3600', upsert: false, contentType: file.type
+    });
+    if (error) throw error;
+
+    const {data: urlData} = sb.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
+    const publicUrl = urlData.publicUrl;
+
+    document.getElementById('modalImgUrl').value = publicUrl;
+    document.getElementById('imgPreview').src = publicUrl;
+    document.getElementById('imgPreviewWrap').style.display='block';
+    document.getElementById('imgUploading').style.display='none';
+    showToast('✅ Image upload ho gayi!','success');
+  } catch(err) {
+    document.getElementById('imgUploading').style.display='none';
+    document.getElementById('imgUploadArea').style.display='block';
+    showToast('Image upload failed: ' + err.message,'error');
+  }
+}
+
+function removeImage() {
+  document.getElementById('modalImgUrl').value='';
+  document.getElementById('imgPreview').src='';
+  document.getElementById('imgPreviewWrap').style.display='none';
+  document.getElementById('imgUploadArea').style.display='block';
+}
+
+// ══════════════════════════════════════════
+// SAVE QUESTION (Edit or Add)
+// ══════════════════════════════════════════
+async function saveQuestion() {
+  const qText = document.getElementById('modalQText').value.trim();
+  const optA  = document.getElementById('modalOptA').value.trim();
+  const optB  = document.getElementById('modalOptB').value.trim();
+  const optC  = document.getElementById('modalOptC').value.trim();
+  const optD  = document.getElementById('modalOptD').value.trim();
+  const correct = document.getElementById('modalCorrect').value;
+  const expl  = document.getElementById('modalExplanation').value.trim();
+  const imgUrl= document.getElementById('modalImgUrl').value;
+
+  if (!qText)  { showToast('Question text daalo!','error'); return; }
+  if (!optA||!optB||!optC||!optD) { showToast('Saare options daalo!','error'); return; }
+
+  const payload = {
+    question_text: qText, option_a: optA, option_b: optB,
+    option_c: optC, option_d: optD, correct_answer: correct,
+    explanation: expl, image_url: imgUrl
+  };
+
+  try {
+    if (isAddingNew) {
+      // New question — q_order = max + 1
+      const maxOrder = editQuestions.length > 0 ? Math.max(...editQuestions.map(q=>q.q_order)) : 0;
+      payload.live_test_id = currentEditTestId;
+      payload.q_order = maxOrder + 1;
+      const {error} = await sb.from('live_test_questions').insert(payload);
+      if (error) throw error;
+      // Update total_questions count
+      await sb.from('live_tests').update({total_questions: editQuestions.length+1}).eq('id',currentEditTestId);
+      showToast('✅ Question add ho gaya!','success');
+    } else {
+      const qId = document.getElementById('modalQId').value;
+      const {error} = await sb.from('live_test_questions').update(payload).eq('id',qId);
+      if (error) throw error;
+      showToast('✅ Question save ho gaya!','success');
+    }
+    closeModal();
+    await loadEditQuestions();
+  } catch(err) {
+    showToast('Save error: '+err.message,'error');
+  }
+}
+
+// ══════════════════════════════════════════
+// DELETE QUESTION
+// ══════════════════════════════════════════
+async function deleteQuestion() {
+  const qId = document.getElementById('modalQId').value;
+  if (!qId || !confirm('Ye question delete karna chahte ho?')) return;
+  const {error} = await sb.from('live_test_questions').delete().eq('id',qId);
+  if (error) { showToast('Delete failed: '+error.message,'error'); return; }
+  // Update count
+  await sb.from('live_tests').update({total_questions: Math.max(0, editQuestions.length-1)}).eq('id',currentEditTestId);
+  showToast('Question deleted!','success');
+  closeModal();
+  await loadEditQuestions();
+}
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+function showToast(msg, type='') {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// Close modal on overlay click
+document.getElementById('editModal').addEventListener('click', function(e){
+  if(e.target===this) closeModal();
+});
+
+// Default times
+const _now = new Date();
+_now.setMinutes(_now.getMinutes()+10);
+document.getElementById('ltStart').value=_now.toISOString().slice(0,16);
+_now.setMinutes(_now.getMinutes()+30);
+document.getElementById('ltEnd').value=_now.toISOString().slice(0,16);
+</script>
+</body>
+</html>
