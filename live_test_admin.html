@@ -734,14 +734,79 @@ async function saveQuestion() {
       showToast('✅ Question add ho gaya!','success');
     } else {
       const qId = document.getElementById('modalQId').value;
+      // Check if correct_answer changed
+      const oldQ = editQuestions.find(x => x.id === qId);
+      const answerChanged = oldQ && oldQ.correct_answer !== correct;
+
       const {error} = await sb.from('live_test_questions').update(payload).eq('id',qId);
       if (error) throw error;
-      showToast('✅ Question save ho gaya!','success');
+
+      if (answerChanged) {
+        showToast('⏳ Answer changed — scores recalculate ho rahe hain...','');
+        await recalculateAllScores(currentEditTestId);
+        showToast('✅ Question save + scores recalculated!','success');
+      } else {
+        showToast('✅ Question save ho gaya!','success');
+      }
     }
     closeModal();
     await loadEditQuestions();
   } catch(err) {
     showToast('Save error: '+err.message,'error');
+  }
+}
+
+// ══════════════════════════════════════════
+// AUTO RECALCULATE SCORES
+// ══════════════════════════════════════════
+async function recalculateAllScores(testId) {
+  try {
+    // Load latest questions
+    const {data: qs, error: qErr} = await sb
+      .from('live_test_questions')
+      .select('q_order, correct_answer')
+      .eq('live_test_id', testId)
+      .order('q_order', {ascending: true});
+    if (qErr || !qs) return;
+
+    // Build correctMap — key = q_order - 1 (0-indexed)
+    const correctMap = {};
+    for (const q of qs) {
+      correctMap[String(q.q_order - 1)] = q.correct_answer.toUpperCase().trim();
+    }
+    const totalQ = qs.length;
+
+    // Load all attempts
+    const {data: attempts, error: aErr} = await sb
+      .from('live_test_attempts')
+      .select('id, answers')
+      .eq('live_test_id', testId);
+    if (aErr || !attempts) return;
+
+    // Recalculate each attempt
+    for (const attempt of attempts) {
+      let ans = attempt.answers;
+      if (typeof ans === 'string') { try { ans = JSON.parse(ans); } catch(e) { ans = {}; } }
+      if (!ans || typeof ans !== 'object' || Array.isArray(ans)) ans = {};
+
+      let correct = 0, wrong = 0, score = 0;
+      for (let i = 0; i < totalQ; i++) {
+        const key = String(i);
+        const studentAns = (ans[key] || '').toUpperCase().trim();
+        const correctAns = correctMap[key] || '';
+        if (!studentAns) continue;
+        if (studentAns === correctAns) { correct++; score += 2; }
+        else { wrong++; score -= 0.5; }
+      }
+      const skipped = totalQ - correct - wrong;
+      score = Math.round(score * 10) / 10;
+
+      await sb.from('live_test_attempts')
+        .update({ score, correct, wrong, skipped })
+        .eq('id', attempt.id);
+    }
+  } catch(e) {
+    console.error('Recalculate error:', e);
   }
 }
 
