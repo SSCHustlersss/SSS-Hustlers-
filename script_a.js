@@ -170,6 +170,71 @@ let currentExam = 'ssc_cgl', currentSubject = null, currentCategory = null, curr
 let questions = [], currentQ = 0, answers = {}, timerInterval = null;
 let timeLeft = 0, posMarking = 1, negMarking = 0, activeTestName = '';
 let isPaused = false;
+
+// ── SECTION SYSTEM ──
+let sections = [], currentSection = 0;
+const SSC_SECTION_MAP = {
+  reasoning: { label: 'General Intelligence & Reasoning', order: 0 },
+  quant:     { label: 'Quantitative Aptitude',            order: 1 },
+  gk:        { label: 'General Awareness',                order: 2 },
+  english:   { label: 'English Comprehension',            order: 3 },
+};
+const SECTION_KEYWORDS = {
+  reasoning: ['reasoning','intelligence','general intelligence','logical'],
+  quant:     ['quant','quantitative','math','maths','mathematics','numerical'],
+  gk:        ['gk','general awareness','awareness','general knowledge','gs'],
+  english:   ['english','comprehension','language','grammar','vocabulary'],
+};
+function detectSectionKey(subject) {
+  const s = (subject||'').toLowerCase().trim();
+  for (const [key, kws] of Object.entries(SECTION_KEYWORDS)) {
+    if (kws.some(k => s.includes(k))) return key;
+  }
+  return null;
+}
+function buildSections() {
+  const isFullTest = currentCategory === 'full_test';
+  if (!isFullTest) { sections = []; return; }
+
+  const map = {};
+  questions.forEach((q, i) => {
+    const key = detectSectionKey(q.subject) || 'gk';
+    if (!map[key]) map[key] = [];
+    map[key].push(i);
+  });
+
+  sections = Object.entries(SSC_SECTION_MAP)
+    .filter(([k]) => map[k] && map[k].length > 0)
+    .map(([k, v]) => ({ key: k, label: v.label, indices: map[k] }));
+
+  const wrap = document.getElementById('sectionTabsWrap');
+  if (!wrap) return;
+  if (sections.length <= 1) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  currentSection = 0;
+  renderSectionTabs();
+}
+
+function renderSectionTabs() {
+  const el = document.getElementById('sectionTabs');
+  if (!el) return;
+  el.innerHTML = sections.map((sec, si) => {
+    const ans = sec.indices.filter(i => qStatus[i]==='answered'||qStatus[i]==='ans_marked').length;
+    const isActive = si === currentSection;
+    return `<button onclick="switchSection(${si})" style="padding:11px 14px;border:none;background:transparent;color:${isActive?'#3d6ef5':'#64748b'};font-size:0.75rem;font-weight:${isActive?'700':'600'};cursor:pointer;font-family:inherit;border-bottom:3px solid ${isActive?'#3d6ef5':'transparent'};white-space:nowrap;transition:all 0.15s;">
+      ${sec.label}
+      <span style="font-size:0.6rem;font-weight:800;padding:2px 6px;border-radius:50px;margin-left:5px;vertical-align:middle;background:${ans>0?'#dcfce7':'#e2e8f0'};color:${ans>0?'#15803d':'#475569'};">${ans}/${sec.indices.length}</span>
+    </button>`;
+  }).join('');
+}
+
+function switchSection(si) {
+  currentSection = si;
+  renderSectionTabs();
+  const firstIdx = sections[si]?.indices[0];
+  if (firstIdx !== undefined) showQuestion(firstIdx);
+  renderQNavDots();
+}
 let isOnline = navigator.onLine;
 let lockedAnswers = new Set();
 let pendingAnswer = null;
@@ -264,7 +329,37 @@ function detectHindi() {
 function renderQuestionContent(idx) {
   const q = questions[idx];
   const total = questions.length;
-  document.getElementById('qNumber').textContent = `Question ${idx+1} of ${total}`;
+
+  // Section-aware question number
+  if (sections.length > 1) {
+    // Auto-switch active section tab
+    const secIdx = sections.findIndex(s => s.indices.includes(idx));
+    if (secIdx !== -1 && secIdx !== currentSection) currentSection = secIdx;
+
+    const sec = sections[currentSection];
+    const posInSec = (sec?.indices.indexOf(idx) ?? 0) + 1;
+    const secTotal = sec?.indices.length ?? total;
+    document.getElementById('qNumber').textContent = `${sec?.label||''} — Q${posInSec} of ${secTotal}`;
+    document.getElementById('quizProgressText').textContent = `${posInSec}/${secTotal}`;
+    document.getElementById('quizProgressFill').style.width = (posInSec/secTotal*100) + '%';
+
+    // Prev/Next/Submit section-aware
+    const pos = sec?.indices.indexOf(idx) ?? 0;
+    const isFirstOverall = currentSection === 0 && pos === 0;
+    const isLastInSec = sec && pos === sec.indices.length - 1;
+    const isLastSec = currentSection === sections.length - 1;
+    document.getElementById('btnPrev').style.display   = isFirstOverall ? 'none' : 'inline-block';
+    document.getElementById('btnNext').style.display   = (isLastInSec && isLastSec) ? 'none' : 'inline-block';
+    document.getElementById('btnSubmit').style.display = (isLastInSec && isLastSec) ? 'inline-block' : 'none';
+  } else {
+    document.getElementById('qNumber').textContent = `Question ${idx+1} of ${total}`;
+    document.getElementById('quizProgressText').textContent = `${idx+1}/${total}`;
+    document.getElementById('quizProgressFill').style.width = ((idx+1)/total*100) + '%';
+    document.getElementById('btnPrev').style.display   = idx===0 ? 'none':'inline-block';
+    document.getElementById('btnNext').style.display   = idx===total-1 ? 'none':'inline-block';
+    document.getElementById('btnSubmit').style.display = idx===total-1 ? 'inline-block':'none';
+  }
+
   document.getElementById('qText').innerHTML = getLangText(q.question_text);
   const imgWrap = document.getElementById('qImageWrap');
   const imgEl   = document.getElementById('qImage');
@@ -275,8 +370,6 @@ function renderQuestionContent(idx) {
     imgEl.src = '';
     imgWrap.style.display = 'none';
   }
-  document.getElementById('quizProgressText').textContent = `${idx+1}/${total}`;
-  document.getElementById('quizProgressFill').style.width = ((idx+1)/total*100) + '%';
   const selected = answers[idx];
   const opts = [
     {k:'A', txt: getLangText(q.option_a), img: q.option_a_image},
@@ -306,9 +399,6 @@ function renderQuestionContent(idx) {
     }).join('');
   }
   document.getElementById('explanationBox').classList.remove('show');
-  document.getElementById('btnPrev').style.display   = idx===0 ? 'none':'inline-block';
-  document.getElementById('btnNext').style.display   = idx===total-1 ? 'none':'inline-block';
-  document.getElementById('btnSubmit').style.display = idx===total-1 ? 'inline-block':'none';
   updateBookmarkBtn();
   renderQNavDots();
 }
@@ -867,11 +957,15 @@ async function launchQuiz(selectedLang) {
   document.getElementById('langEN').classList.toggle('active', currentLang === 'en');
   document.getElementById('langHI').classList.toggle('active', currentLang === 'hi');
   detectHindi();
+  buildSections();
   document.querySelector('.nta-body').style.display = 'flex';
   renderQNavDots(); showQuestion(currentQ); startTimer();
   document.getElementById('quizOverlay').classList.add('show');
   // FIX Bug #18: quiz-header show karo
   document.getElementById('quizHeader').style.display = 'flex';
+  // Mobile timer
+  const mobBar = document.getElementById('mobileTimerBar');
+  if (mobBar) mobBar.style.display = window.innerWidth <= 600 ? 'flex' : 'none';
   document.body.style.overflow = 'hidden';
 }
 
@@ -907,28 +1001,84 @@ function selectOption(opt) {
   renderQNavDots();
 }
 
-function prevQ() { if (currentQ>0) showQuestion(currentQ-1); }
-function nextQ() { if (currentQ<questions.length-1) showQuestion(currentQ+1); }
+function prevQ() {
+  if (!sections.length) { if (currentQ>0) showQuestion(currentQ-1); return; }
+  const sec = sections[currentSection];
+  const pos = sec.indices.indexOf(currentQ);
+  if (pos > 0) { showQuestion(sec.indices[pos-1]); }
+  else if (currentSection > 0) {
+    const prevSec = sections[currentSection-1];
+    switchSection(currentSection-1);
+    showQuestion(prevSec.indices[prevSec.indices.length-1]);
+  }
+}
+function nextQ() {
+  if (!sections.length) { if (currentQ<questions.length-1) showQuestion(currentQ+1); return; }
+  const sec = sections[currentSection];
+  const pos = sec.indices.indexOf(currentQ);
+  if (pos < sec.indices.length-1) { showQuestion(sec.indices[pos+1]); }
+  else if (currentSection < sections.length-1) { switchSection(currentSection+1); }
+}
 
 function renderQNavDots() {
   let counts = {answered:0, not_answered:0, not_visited:0, marked:0, ans_marked:0};
-  document.getElementById('qNavDots').innerHTML = questions.map((q,i) => {
+  // Count all
+  questions.forEach((_,i) => {
     const s = qStatus[i] || 'not_visited';
-    counts[s] = (counts[s]||0) + 1;
-    let cls = 'q-dot';
-    if (s==='answered') cls += ' answered';
-    else if (s==='marked') cls += ' marked';
-    else if (s==='ans_marked') cls += ' ans-marked';
-    else if (s==='not_answered') cls += ' not-answered';
-    if (i===currentQ) cls += ' current';
-    return `<div class="${cls}" onclick="showQuestion(${i})">${i+1}</div>`;
-  }).join('');
+    counts[s] = (counts[s]||0)+1;
+  });
   const set = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
   set('cntAnswered',    counts.answered||0);
   set('cntNotAnswered', counts.not_answered||0);
   set('cntNotVisited',  counts.not_visited||0);
   set('cntMarked',      counts.marked||0);
   set('cntAnsMarked',   counts.ans_marked||0);
+
+  // Update answered bar
+  const totalAns = (counts.answered||0)+(counts.ans_marked||0);
+  const secAnsEl = document.getElementById('secAnsCount');
+  if (secAnsEl) secAnsEl.textContent = totalAns;
+  const mobAnsEl = document.getElementById('mobAnsweredTxt');
+  if (mobAnsEl) mobAnsEl.textContent = `Answered: ${totalAns}/${questions.length}`;
+
+  if (!sections.length) {
+    // Simple flat dots
+    document.getElementById('qNavDots').innerHTML = questions.map((q,i) => {
+      const s = qStatus[i] || 'not_visited';
+      let cls = 'q-dot';
+      if (s==='answered') cls += ' answered';
+      else if (s==='marked') cls += ' marked';
+      else if (s==='ans_marked') cls += ' ans-marked';
+      else if (s==='not_answered') cls += ' not-answered';
+      if (i===currentQ) cls += ' current';
+      return `<div class="${cls}" onclick="showQuestion(${i})">${i+1}</div>`;
+    }).join('');
+    return;
+  }
+
+  // Section-wise dots
+  document.getElementById('qNavDots').innerHTML = sections.map((sec, si) => {
+    const secAns = sec.indices.filter(i => qStatus[i]==='answered'||qStatus[i]==='ans_marked').length;
+    const dots = sec.indices.map(i => {
+      const s = qStatus[i] || 'not_visited';
+      let cls = 'q-dot';
+      if (s==='answered') cls += ' answered';
+      else if (s==='marked') cls += ' marked';
+      else if (s==='ans_marked') cls += ' ans-marked';
+      else if (s==='not_answered') cls += ' not-answered';
+      if (i===currentQ) cls += ' current';
+      const dispNum = sec.indices.indexOf(i)+1;
+      return `<div class="${cls}" onclick="showQuestion(${i})" title="Q${i+1}">${dispNum}</div>`;
+    }).join('');
+    return `<div style="font-size:0.65rem;font-weight:800;color:#fff;background:#3d6ef5;padding:4px 10px;margin-top:4px;display:flex;align-items:center;justify-content:space-between;">
+      <span>${sec.label}</span>
+      <span style="font-size:0.6rem;background:rgba(255,255,255,0.25);padding:1px 6px;border-radius:50px;">${secAns}/${sec.indices.length}</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;padding:8px;">${dots}</div>`;
+  }).join('');
+
+  // Re-render tabs badges
+  renderSectionTabs();
 }
 
 // ============ TIMER ============
@@ -946,21 +1096,36 @@ function startTimer() {
 function updateTimerDisplay() {
   const m = Math.floor(timeLeft/60).toString().padStart(2,'0');
   const s = (timeLeft%60).toString().padStart(2,'0');
+  const timeStr = m + ':' + s;
+
+  // Desktop timer
   const el = document.getElementById('quizTimer');
-  if (!el) return;
-  el.textContent = m + ':' + s;
-  if (timeLeft<=120)      { el.classList.add('danger'); el.style.color='#ff2222'; }
-  else if (timeLeft<=300) { el.classList.remove('danger'); el.style.color='#ff8800'; }
-  else                    { el.classList.remove('danger'); el.style.color='#ffcc02'; }
-  if (timeLeft===300 && !window._warned5min) {
-    window._warned5min = true;
-    el.style.transform = 'scale(1.3)';
-    setTimeout(() => el.style.transform='', 400);
+  if (el) {
+    el.textContent = timeStr;
+    if (timeLeft<=120)      { el.classList.add('danger'); el.style.color='#ff2222'; }
+    else if (timeLeft<=300) { el.classList.remove('danger'); el.style.color='#ff8800'; }
+    else                    { el.classList.remove('danger'); el.style.color='#ffcc02'; }
+    if (timeLeft===300 && !window._warned5min) {
+      window._warned5min = true;
+      el.style.transform = 'scale(1.3)';
+      setTimeout(() => el.style.transform='', 400);
+    }
+    if (timeLeft===120 && !window._warned2min) {
+      window._warned2min = true;
+      alert('⚠️ Sirf 2 minute bache! Jaldi karo!');
+    }
   }
-  if (timeLeft===120 && !window._warned2min) {
-    window._warned2min = true;
-    alert('⚠️ Sirf 2 minute bache! Jaldi karo!');
+
+  // Mobile timer
+  const mobEl = document.getElementById('mobTimer');
+  if (mobEl) {
+    mobEl.textContent = timeStr;
+    mobEl.style.background = timeLeft<=120 ? '#ff2222' : timeLeft<=300 ? '#ff8800' : '#e63946';
   }
+
+  // Last 60 mins warning bar
+  const warnEl = document.getElementById('secTimeWarn');
+  if (warnEl) warnEl.style.display = timeLeft <= 3600 ? '' : 'none';
 }
 
 // ── LEADERBOARD DATA HELPER (FIX Bug #19: function define kiya) ──
@@ -1281,6 +1446,11 @@ function exitQuiz() {
   window.removeEventListener('online', handleOnline);
   window.removeEventListener('offline', handleOffline);
   isPaused = false;
+  sections = []; currentSection = 0;
+  const wrap = document.getElementById('sectionTabsWrap');
+  if (wrap) wrap.style.display = 'none';
+  const mobBar = document.getElementById('mobileTimerBar');
+  if (mobBar) mobBar.style.display = 'none';
   document.getElementById('quizOverlay').classList.remove('show');
   document.body.style.overflow = '';
   document.getElementById('resultScreen').classList.remove('show');
