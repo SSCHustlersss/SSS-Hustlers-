@@ -90,6 +90,9 @@ textarea{resize:vertical;min-height:70px;}
 .q-edit-num{background:#0ea5e9;color:#fff;font-size:0.72rem;font-weight:800;padding:2px 9px;border-radius:50px;flex-shrink:0;}
 .q-edit-text{flex:1;font-size:0.82rem;font-weight:600;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .q-edit-ans{font-size:0.72rem;font-weight:700;color:#16a34a;flex-shrink:0;}
+.ans-quick-select{border:1.5px solid #bae6fd;border-radius:7px;padding:4px 8px;font-size:0.78rem;font-weight:700;color:#0284c7;background:#f0f9ff;cursor:pointer;font-family:inherit;flex-shrink:0;transition:all 0.2s;}
+.ans-quick-select:hover{border-color:#0ea5e9;background:#e0f2fe;}
+.ans-quick-select:focus{outline:none;border-color:#0ea5e9;}
 .q-edit-img-badge{font-size:0.68rem;background:#fef3c7;color:#b45309;padding:2px 7px;border-radius:50px;flex-shrink:0;}
 .q-edit-actions{display:flex;gap:6px;flex-shrink:0;}
 
@@ -227,7 +230,10 @@ textarea{resize:vertical;min-height:70px;}
     </div>
     <div id="monitorSection" style="display:none;">
       <div class="card">
-        <div class="section-title" id="monitorTitle">📡 Live Monitor</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <div class="section-title" style="margin-bottom:0;" id="monitorTitle">📡 Live Monitor</div>
+          <button class="btn-sm btn-green" id="btnDownloadResults" onclick="downloadResultsExcel()" style="display:none;">⬇️ Results Download</button>
+        </div>
         <div class="monitor-stats">
           <div class="m-stat"><div class="m-stat-val" id="mTotal">0</div><div class="m-stat-lbl">Participants</div></div>
           <div class="m-stat"><div class="m-stat-val" id="mSubmitted">0</div><div class="m-stat-lbl">Submitted</div></div>
@@ -252,9 +258,12 @@ textarea{resize:vertical;min-height:70px;}
 
     <div id="editQuestionsSection" style="display:none;">
       <div class="card" style="padding:16px 20px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
           <div class="section-title" style="margin-bottom:0;" id="editSectionTitle">Questions</div>
-          <button class="btn-sm btn-purple" onclick="openAddModal()">➕ Add New Question</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-sm btn-green" onclick="downloadQuestionsExcel()">⬇️ Excel Download</button>
+            <button class="btn-sm btn-purple" onclick="openAddModal()">➕ Add Question</button>
+          </div>
         </div>
         <div id="editQList"></div>
       </div>
@@ -522,8 +531,11 @@ async function deleteTest(id) {
 }
 
 async function monitorTest(id, name) {
+  currentMonitorTestId   = id;
+  currentMonitorTestName = name;
   document.getElementById('monitorSection').style.display='block';
   document.getElementById('monitorTitle').textContent=`📡 Monitor: ${name}`;
+  document.getElementById('btnDownloadResults').style.display='inline-flex';
   document.getElementById('monitorSection').scrollIntoView({behavior:'smooth'});
   if (monitorInterval) clearInterval(monitorInterval);
   await refreshMonitor(id);
@@ -588,9 +600,11 @@ async function loadEditQuestions() {
     <div class="q-edit-item" id="qitem_${q.id}">
       <div class="q-edit-header">
         <span class="q-edit-num">${q.q_order}</span>
-        <span class="q-edit-text" title="${q.question_text}">${q.question_text.substring(0,70)}${q.question_text.length>70?'...':''}</span>
+        <span class="q-edit-text" title="${q.question_text}">${q.question_text.substring(0,60)}${q.question_text.length>60?'...':''}</span>
         ${q.image_url ? `<span class="q-edit-img-badge">🖼 Image</span>` : ''}
-        <span class="q-edit-ans">Ans: ${q.correct_answer}</span>
+        <select class="ans-quick-select" data-qid="${q.id}" onchange="quickUpdateAnswer('${q.id}', this.value)" title="Answer badlo — auto save">
+          ${['A','B','C','D'].map(opt=>`<option value="${opt}"${q.correct_answer===opt?' selected':''}>${opt}</option>`).join('')}
+        </select>
         <div class="q-edit-actions">
           <button class="btn-sm btn-orange" onclick="openEditModal('${q.id}')">✏️ Edit</button>
         </div>
@@ -734,79 +748,14 @@ async function saveQuestion() {
       showToast('✅ Question add ho gaya!','success');
     } else {
       const qId = document.getElementById('modalQId').value;
-      // Check if correct_answer changed
-      const oldQ = editQuestions.find(x => x.id === qId);
-      const answerChanged = oldQ && oldQ.correct_answer !== correct;
-
       const {error} = await sb.from('live_test_questions').update(payload).eq('id',qId);
       if (error) throw error;
-
-      if (answerChanged) {
-        showToast('⏳ Answer changed — scores recalculate ho rahe hain...','');
-        await recalculateAllScores(currentEditTestId);
-        showToast('✅ Question save + scores recalculated!','success');
-      } else {
-        showToast('✅ Question save ho gaya!','success');
-      }
+      showToast('✅ Question save ho gaya!','success');
     }
     closeModal();
     await loadEditQuestions();
   } catch(err) {
     showToast('Save error: '+err.message,'error');
-  }
-}
-
-// ══════════════════════════════════════════
-// AUTO RECALCULATE SCORES
-// ══════════════════════════════════════════
-async function recalculateAllScores(testId) {
-  try {
-    // Load latest questions
-    const {data: qs, error: qErr} = await sb
-      .from('live_test_questions')
-      .select('q_order, correct_answer')
-      .eq('live_test_id', testId)
-      .order('q_order', {ascending: true});
-    if (qErr || !qs) return;
-
-    // Build correctMap — key = q_order - 1 (0-indexed)
-    const correctMap = {};
-    for (const q of qs) {
-      correctMap[String(q.q_order - 1)] = q.correct_answer.toUpperCase().trim();
-    }
-    const totalQ = qs.length;
-
-    // Load all attempts
-    const {data: attempts, error: aErr} = await sb
-      .from('live_test_attempts')
-      .select('id, answers')
-      .eq('live_test_id', testId);
-    if (aErr || !attempts) return;
-
-    // Recalculate each attempt
-    for (const attempt of attempts) {
-      let ans = attempt.answers;
-      if (typeof ans === 'string') { try { ans = JSON.parse(ans); } catch(e) { ans = {}; } }
-      if (!ans || typeof ans !== 'object' || Array.isArray(ans)) ans = {};
-
-      let correct = 0, wrong = 0, score = 0;
-      for (let i = 0; i < totalQ; i++) {
-        const key = String(i);
-        const studentAns = (ans[key] || '').toUpperCase().trim();
-        const correctAns = correctMap[key] || '';
-        if (!studentAns) continue;
-        if (studentAns === correctAns) { correct++; score += 2; }
-        else { wrong++; score -= 0.5; }
-      }
-      const skipped = totalQ - correct - wrong;
-      score = Math.round(score * 10) / 10;
-
-      await sb.from('live_test_attempts')
-        .update({ score, correct, wrong, skipped })
-        .eq('id', attempt.id);
-    }
-  } catch(e) {
-    console.error('Recalculate error:', e);
   }
 }
 
@@ -826,8 +775,116 @@ async function deleteQuestion() {
 }
 
 // ══════════════════════════════════════════
-// TOAST
+// DOWNLOAD QUESTIONS AS EXCEL
 // ══════════════════════════════════════════
+async function downloadQuestionsExcel() {
+  if (!currentEditTestId) { showToast('Pehle test select karo!','error'); return; }
+  showToast('Excel ban raha hai...','');
+
+  const {data, error} = await sb.from('live_test_questions')
+    .select('*').eq('live_test_id', currentEditTestId).order('q_order',{ascending:true});
+  if (error || !data || data.length===0) { showToast('Koi questions nahi mila!','error'); return; }
+
+  const testName = document.getElementById('editTestSelect').options[document.getElementById('editTestSelect').selectedIndex].text;
+
+  const rows = data.map(q => ({
+    q_order:        q.q_order,
+    question_text:  q.question_text,
+    option_a:       q.option_a,
+    option_b:       q.option_b,
+    option_c:       q.option_c,
+    option_d:       q.option_d,
+    correct_answer: q.correct_answer,
+    explanation:    q.explanation || '',
+    image_url:      q.image_url  || ''
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  // Column widths
+  ws['!cols'] = [
+    {wch:6},{wch:60},{wch:25},{wch:25},{wch:25},{wch:25},{wch:10},{wch:50},{wch:40}
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Questions');
+  const safeName = testName.replace(/[^a-zA-Z0-9_\- ]/g,'').substring(0,40) || 'LiveTest';
+  XLSX.writeFile(wb, `${safeName}_Questions.xlsx`);
+  showToast('✅ Questions Excel download ho gaya!','success');
+}
+
+// ══════════════════════════════════════════
+// DOWNLOAD RESULTS / LEADERBOARD AS EXCEL
+// ══════════════════════════════════════════
+let currentMonitorTestId   = null;
+let currentMonitorTestName = '';
+
+async function downloadResultsExcel() {
+  if (!currentMonitorTestId) { showToast('Pehle koi test monitor karo!','error'); return; }
+  showToast('Results Excel ban raha hai...','');
+
+  const {data, error} = await sb.from('live_test_attempts')
+    .select('participant_name,score,correct,wrong,skipped,submitted_at')
+    .eq('live_test_id', currentMonitorTestId)
+    .order('score',{ascending:false});
+
+  if (error || !data || data.length===0) { showToast('Koi results nahi mila!','error'); return; }
+
+  const submitted = data.filter(d => d.submitted_at);
+  const rows = submitted.map((s, i) => ({
+    Rank:             i + 1,
+    Name:             s.participant_name,
+    Score:            s.score,
+    Correct:          s.correct,
+    Wrong:            s.wrong,
+    Skipped:          s.skipped,
+    'Submit Time':    s.submitted_at ? new Date(s.submitted_at).toLocaleString('en-IN') : '-'
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:6},{wch:28},{wch:8},{wch:9},{wch:8},{wch:9},{wch:20}];
+
+  // Bold header style
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let C = range.s.c; C <= range.e.c; C++) {
+    const cell = ws[XLSX.utils.encode_cell({r:0, c:C})];
+    if (cell) cell.s = { font: { bold: true }, fill: { fgColor: { rgb: '0EA5E9' } } };
+  }
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Leaderboard');
+  const safeName = currentMonitorTestName.replace(/[^a-zA-Z0-9_\- ]/g,'').substring(0,40) || 'Results';
+  XLSX.writeFile(wb, `${safeName}_Results.xlsx`);
+  showToast('✅ Results Excel download ho gaya!','success');
+}
+
+// ══════════════════════════════════════════
+// QUICK ANSWER UPDATE — auto save on change
+// ══════════════════════════════════════════
+async function quickUpdateAnswer(qId, newAnswer) {
+  const sel = document.querySelector(`select[data-qid="${qId}"]`);
+  if (sel) { sel.disabled = true; sel.style.opacity='0.5'; }
+
+  const {error} = await sb.from('live_test_questions').update({correct_answer: newAnswer}).eq('id', qId);
+
+  if (sel) { sel.disabled = false; sel.style.opacity='1'; }
+
+  if (error) {
+    showToast('❌ Save failed: ' + error.message, 'error');
+    const q = editQuestions.find(x => x.id === qId);
+    if (q && sel) sel.value = q.correct_answer;
+  } else {
+    const q = editQuestions.find(x => x.id === qId);
+    if (q) q.correct_answer = newAnswer;
+    const item = document.getElementById(`qitem_${qId}`);
+    if (item) {
+      item.style.borderColor = '#16a34a';
+      item.style.background  = '#f0fdf4';
+      setTimeout(() => { item.style.borderColor=''; item.style.background=''; }, 1200);
+    }
+    const qNum = editQuestions.find(x=>x.id===qId)?.q_order || '';
+    showToast(`✅ Q${qNum} → Answer: ${newAnswer} saved!`, 'success');
+  }
+}
+
 function showToast(msg, type='') {
   const t=document.getElementById('toast');
   t.textContent=msg; t.className=`toast ${type} show`;
