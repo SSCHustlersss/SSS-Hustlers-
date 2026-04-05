@@ -1060,16 +1060,18 @@ function renderQNavDots() {
 
   if (!sections.length) {
     // Simple flat dots
-    document.getElementById('qNavDots').innerHTML = questions.map((q,i) => {
-      const s = qStatus[i] || 'not_visited';
-      let cls = 'q-dot';
-      if (s==='answered') cls += ' answered';
-      else if (s==='marked') cls += ' marked';
-      else if (s==='ans_marked') cls += ' ans-marked';
-      else if (s==='not_answered') cls += ' not-answered';
-      if (i===currentQ) cls += ' current';
-      return `<div class="${cls}" onclick="showQuestion(${i})">${i+1}</div>`;
-    }).join('');
+    document.getElementById('qNavDots').innerHTML =
+      `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:8px;">` +
+      questions.map((q,i) => {
+        const s = qStatus[i] || 'not_visited';
+        let cls = 'q-dot';
+        if (s==='answered') cls += ' answered';
+        else if (s==='marked') cls += ' marked';
+        else if (s==='ans_marked') cls += ' ans-marked';
+        else if (s==='not_answered') cls += ' not-answered';
+        if (i===currentQ) cls += ' current';
+        return `<div class="${cls}" onclick="showQuestion(${i})">${i+1}</div>`;
+      }).join('') + `</div>`;
     return;
   }
 
