@@ -915,6 +915,8 @@ async function launchQuiz(selectedLang) {
   timeLeft = (questions[0].test_duration || 30) * 60;
 
   document.getElementById('quizTitle').innerHTML = `${EXAM_LABELS[currentExam] || currentExam} — <span>${activeTestName}</span>`;
+  const unEl = document.getElementById('quizUserName');
+  if (unEl) unEl.textContent = currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || '';
   document.getElementById('mPos').textContent = posMarking;
   document.getElementById('mNeg').textContent = negMarking;
   document.getElementById('mPosInfo').textContent = '+' + posMarking;
@@ -980,9 +982,9 @@ async function launchQuiz(selectedLang) {
   document.getElementById('quizOverlay').classList.add('show');
   // FIX Bug #18: quiz-header show karo
   document.getElementById('quizHeader').style.display = 'flex';
-  // Mobile timer
+  // Mobile timer bar — hamesha show karo (live test style)
   const mobBar = document.getElementById('mobileTimerBar');
-  if (mobBar) mobBar.style.display = window.innerWidth <= 600 ? 'flex' : 'none';
+  if (mobBar) mobBar.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
 
@@ -1075,25 +1077,33 @@ function renderQNavDots() {
     return;
   }
 
-  // Section-wise dots
+  // Section-wise dots — Live Test style
   document.getElementById('qNavDots').innerHTML = sections.map((sec, si) => {
     const secAns = sec.indices.filter(i => qStatus[i]==='answered'||qStatus[i]==='ans_marked').length;
     const dots = sec.indices.map(i => {
       const s = qStatus[i] || 'not_visited';
-      let cls = 'q-dot';
-      if (s==='answered') cls += ' answered';
-      else if (s==='marked') cls += ' marked';
-      else if (s==='ans_marked') cls += ' ans-marked';
-      else if (s==='not_answered') cls += ' not-answered';
-      if (i===currentQ) cls += ' current';
+      let bg = '#e8edf5'; let color = '#333'; let border = '#ccd4e0';
+      if (s==='answered')     { bg='#00c853'; color='#fff'; border='#00c853'; }
+      else if (s==='not_answered') { bg='#e63946'; color='#fff'; border='#e63946'; }
+      else if (s==='marked')       { bg='#7b1fa2'; color='#fff'; border='#7b1fa2'; }
+      else if (s==='ans_marked')   { bg='#7b1fa2'; color='#fff'; border='#2e7d32'; }
       const dispNum = sec.indices.indexOf(i)+1;
-      return `<div class="${cls}" onclick="showQuestion(${i})" title="Q${i+1}">${dispNum}</div>`;
+      const isActive = i===currentQ;
+      return `<div onclick="showQuestion(${i})" title="Q${i+1}" style="
+        height:32px;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;
+        background:${bg};color:${color};border:2px solid ${border};
+        display:flex;align-items:center;justify-content:center;
+        ${isActive ? 'outline:2px solid #ff6d00;outline-offset:1px;' : ''}
+        transition:all 0.12s;">${dispNum}</div>`;
     }).join('');
-    return `<div style="font-size:0.65rem;font-weight:800;color:#fff;background:#3d6ef5;padding:4px 10px;margin-top:4px;display:flex;align-items:center;justify-content:space-between;">
-      <span>${sec.label}</span>
-      <span style="font-size:0.6rem;background:rgba(255,255,255,0.25);padding:1px 6px;border-radius:50px;">${secAns}/${sec.indices.length}</span>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:6px 8px;">${dots}</div>`;
+    return `<div style="
+        background:#1565c0;padding:8px 10px;margin-top:2px;
+        display:flex;align-items:center;justify-content:space-between;gap:4px;">
+        <span style="font-size:0.68rem;font-weight:800;color:#fff;line-height:1.3;">${sec.label}</span>
+        <span style="font-size:0.65rem;font-weight:800;color:#fff;background:rgba(255,255,255,0.2);
+          padding:2px 8px;border-radius:50px;white-space:nowrap;">${secAns}/${sec.indices.length}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:8px 10px;">${dots}</div>`; 
   }).join('');
 
   // Re-render tabs badges
