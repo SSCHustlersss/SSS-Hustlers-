@@ -220,10 +220,11 @@ function renderSectionTabs() {
   if (!el) return;
   el.innerHTML = sections.map((sec, si) => {
     const ans = sec.indices.filter(i => qStatus[i]==='answered'||qStatus[i]==='ans_marked').length;
+    const total = sec.indices.length;
     const isActive = si === currentSection;
-    return `<button onclick="switchSection(${si})" style="padding:11px 14px;border:none;background:transparent;color:${isActive?'#3d6ef5':'#64748b'};font-size:0.75rem;font-weight:${isActive?'700':'600'};cursor:pointer;font-family:inherit;border-bottom:3px solid ${isActive?'#3d6ef5':'transparent'};white-space:nowrap;transition:all 0.15s;">
+    return `<button class="sec-tab ${isActive ? 'active' : ''}" onclick="switchSection(${si})">
       ${sec.label}
-      <span style="font-size:0.6rem;font-weight:800;padding:2px 6px;border-radius:50px;margin-left:5px;vertical-align:middle;background:${ans>0?'#dcfce7':'#e2e8f0'};color:${ans>0?'#15803d':'#475569'};">${ans}/${sec.indices.length}</span>
+      <span class="sec-tab-badge ${ans > 0 ? 'sec-tab-ans' : ''}">${ans}/${total}</span>
     </button>`;
   }).join('');
 }
