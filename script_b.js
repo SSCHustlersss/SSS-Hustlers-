@@ -113,11 +113,15 @@ function toggleTheme() {
 }
 
 function loadTheme() {
-  const saved = localStorage.getItem('ssc_theme');
+  const saved = localStorage.getItem('ssc_theme') || 'light'; // DEFAULT = LIGHT
   if (saved === 'dark') {
     document.body.classList.add('dark');
     const btn = document.getElementById('themeToggle');
     if (btn) { btn.textContent = '☀️'; btn.title = 'Switch to Light Mode'; }
+  } else {
+    document.body.classList.remove('dark');
+    const btn = document.getElementById('themeToggle');
+    if (btn) { btn.textContent = '🌙'; btn.title = 'Switch to Dark Mode'; }
   }
 }
 
