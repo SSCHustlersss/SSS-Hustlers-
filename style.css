@@ -607,7 +607,7 @@ body.dark .btn-theme-toggle { border-color:#252932; color:#9ca3af; }
 
 /* Dark Mode - Quiz */
 body.dark .quiz-modal { background:#13161e; }
-body.dark .quiz-header { background:#0a0c10; }
+body.dark .quiz-header { background:#1565c0; }
 body.dark .quiz-progress-bar { background:#1a1e28; }
 body.dark .q-nav-dots { background:#13161e; }
 body.dark .q-dot { background:#1a1e28; border-color:#2a2e3a; color:#9ca3af; }
