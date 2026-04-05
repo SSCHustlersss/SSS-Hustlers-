@@ -404,7 +404,7 @@ body.dark .aq-opt-img { background:#1a1e28; border-color:#2a2e3a; }
 .ld-purgreen{ background:#7b1fa2; border:2px solid #2e7d32; }
 .nta-sec-hdr { background:#e3f2fd; padding:5px 10px; font-size:0.72rem; font-weight:700; color:#1565c0; flex-shrink:0; }
 .nta-choose { padding:5px 10px; font-size:0.7rem; color:#888; flex-shrink:0; }
-.q-nav-dots { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; padding:8px; overflow-y:auto; flex:1; align-content:start; }
+.q-nav-dots { display:flex; flex-direction:column; overflow-y:auto; flex:1; }
 .q-dot { height:34px; border-radius:4px; font-size:0.75rem; font-weight:700; cursor:pointer; border:1.5px solid #ccc; background:#e0e0e0; color:#555; display:flex; align-items:center; justify-content:center; transition:all 0.12s; }
 .q-dot.answered     { background:#2e7d32; border-color:#2e7d32; color:#fff; }
 .q-dot.not-answered { background:#c62828; border-color:#c62828; color:#fff; }
