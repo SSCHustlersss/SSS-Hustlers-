@@ -1093,7 +1093,7 @@ function renderQNavDots() {
       <span>${sec.label}</span>
       <span style="font-size:0.6rem;background:rgba(255,255,255,0.25);padding:1px 6px;border-radius:50px;">${secAns}/${sec.indices.length}</span>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:5px;padding:8px;">${dots}</div>`;
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:8px;">${dots}</div>`;
   }).join('');
 
   // Re-render tabs badges
