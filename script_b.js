@@ -113,9 +113,8 @@ function toggleTheme() {
 }
 
 function loadTheme() {
-  // v2: Default LIGHT — purana dark preference reset karo
-  const themeVer = localStorage.getItem('ssc_theme_ver');
-  if (themeVer !== 'v2') {
+  // v2: force light by default — reset old dark preference
+  if (!localStorage.getItem('ssc_theme_ver')) {
     localStorage.setItem('ssc_theme', 'light');
     localStorage.setItem('ssc_theme_ver', 'v2');
   }
