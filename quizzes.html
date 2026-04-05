@@ -182,21 +182,28 @@
     <!-- TOP BAR -->
     <!-- FIX Bug #18: quiz-header display restored correctly on exit via JS -->
     <div class="quiz-header" id="quizHeader">
-      <div class="quiz-title" id="quizTitle">Quiz</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button onclick="exitQuiz()" style="display:flex;flex-direction:column;align-items:center;padding:5px 10px;line-height:1.2;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.4);border-radius:8px;color:#fff;cursor:pointer;font-family:inherit;">
+          <span style="font-size:0.9rem;">✕</span>
+          <span style="font-size:0.65rem;font-weight:700;">Exit</span>
+        </button>
+        <div>
+          <div class="quiz-title" id="quizTitle">Quiz</div>
+          <div style="font-size:0.65rem;color:rgba(255,255,255,0.75);margin-top:1px;">👤 <span id="quizUserName"></span></div>
+        </div>
+      </div>
       <div class="quiz-meta-row">
-        <span style="font-size:0.7rem;color:rgba(255,255,255,0.5)">Time Left</span>
-        <div class="quiz-timer" id="quizTimer">--:--</div>
-        <div class="quiz-progress-text" id="quizProgressText">0/0</div>
         <div class="lang-toggle" id="langToggle" style="display:none;">
           <button class="lang-btn active" id="langEN" onclick="setLang('en')">EN</button>
           <button class="lang-btn" id="langHI" onclick="setLang('hi')">हि</button>
         </div>
         <button class="btn-toggle-panel" onclick="togglePanel()" id="btnTogglePanel">📋 Panel</button>
         <button class="btn-pause" id="btnPause" onclick="pauseQuiz()">⏸ Pause</button>
-        <button class="btn-exit" onclick="exitQuiz()">✕ Exit</button>
       </div>
     </div>
     <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quizProgressFill"></div></div>
+    <!-- Hidden timer elements for JS compatibility -->
+    <div style="display:none;"><div id="quizTimer">--:--</div><div id="quizProgressText">0/0</div></div>
 
     <!-- SECTION TABS (TestBook Style - Full Test only) -->
     <div id="sectionTabsWrap" style="display:none;background:#fff;flex-shrink:0;overflow-x:auto;scrollbar-width:none;border-bottom:1.5px solid #e0e0e0;">
@@ -207,13 +214,13 @@
       </div>
     </div>
 
-    <!-- MOBILE TIMER BAR -->
+    <!-- MOBILE TIMER BAR — always visible during quiz -->
     <div id="mobileTimerBar" style="display:none;background:#1a1a2e;padding:8px 14px;flex-shrink:0;align-items:center;justify-content:space-between;">
       <div>
-        <div style="color:rgba(255,255,255,0.55);font-size:0.65rem;font-weight:600;text-transform:uppercase;">⏱ Time Left</div>
-        <div id="mobAnsweredTxt" style="color:rgba(255,255,255,0.75);font-size:0.72rem;font-weight:600;margin-top:1px;">Answered: 0</div>
+        <div style="color:rgba(255,255,255,0.55);font-size:0.65rem;font-weight:600;text-transform:uppercase;">⏱ TIME LEFT</div>
+        <div id="mobAnsweredTxt" style="color:rgba(255,255,255,0.75);font-size:0.72rem;font-weight:600;margin-top:1px;">Answered: 0/100</div>
       </div>
-      <div id="mobTimer" style="color:#fff;font-size:1rem;font-weight:800;font-variant-numeric:tabular-nums;background:#e63946;padding:5px 14px;border-radius:8px;">--:--</div>
+      <div id="mobTimer" style="color:#fff;font-size:1.1rem;font-weight:900;font-variant-numeric:tabular-nums;background:#e63946;padding:6px 16px;border-radius:8px;letter-spacing:1px;">--:--</div>
     </div>
 
     <!-- RESULT SCREEN -->
@@ -481,4 +488,4 @@
 <script src="script_a.js"></script>
 <script src="script_b.js"></script>
 </body>
-</html>
+</html></html>
