@@ -194,39 +194,29 @@ function detectSectionKey(subject) {
 }
 function buildSections() {
   const wrap = document.getElementById('sectionTabsWrap');
-
-  // Fixed section ranges:
-  // Q1-25   = Reasoning
-  // Q26-50  = General Awareness
-  // Q51-75  = Quantitative Aptitude
-  // Q76-100 = English
-
   const total = questions.length;
 
-  // Sirf 100 question wale full test mein sections dikhao
+  // Sirf 50+ questions pe sections dikhao
   if (total < 50) {
     sections = [];
     if (wrap) wrap.style.display = 'none';
     return;
   }
 
-  // Fixed 4 sections by index range
-  const FIXED_SECTIONS = [
-    { key: 'reasoning', label: 'General Intelligence & Reasoning', from: 0,  to: 24  },
-    { key: 'gk',        label: 'General Awareness',                from: 25, to: 49  },
-    { key: 'quant',     label: 'Quantitative Aptitude',            from: 50, to: 74  },
-    { key: 'english',   label: 'English Comprehension',            from: 75, to: 99  },
+  // Fixed ranges: Q1-25 Reasoning, Q26-50 GK, Q51-75 Maths, Q76-100 English
+  const FIXED = [
+    { key:'reasoning', label:'General Intelligence & Reasoning', from:0,  to:24  },
+    { key:'gk',        label:'General Awareness',                from:25, to:49  },
+    { key:'quant',     label:'Quantitative Aptitude',            from:50, to:74  },
+    { key:'english',   label:'English Comprehension',            from:75, to:99  },
   ];
 
-  sections = FIXED_SECTIONS
+  sections = FIXED
     .filter(s => s.from < total)
     .map(s => ({
       key:     s.key,
       label:   s.label,
-      indices: Array.from(
-        { length: Math.min(s.to, total - 1) - s.from + 1 },
-        (_, i) => s.from + i
-      )
+      indices: Array.from({ length: Math.min(s.to, total-1) - s.from + 1 }, (_, i) => s.from + i)
     }));
 
   if (!wrap) return;
@@ -243,9 +233,9 @@ function renderSectionTabs() {
     const ans = sec.indices.filter(i => qStatus[i]==='answered'||qStatus[i]==='ans_marked').length;
     const total = sec.indices.length;
     const isActive = si === currentSection;
-    return `<button class="sec-tab ${isActive ? 'active' : ''}" onclick="switchSection(${si})">
+    return `<button class="sec-tab ${isActive?'active':''}" onclick="switchSection(${si})">
       ${sec.label}
-      <span class="sec-tab-badge ${ans > 0 ? 'sec-tab-ans' : ''}">${ans}/${total}</span>
+      <span class="sec-tab-badge ${ans>0?'sec-tab-ans':''}">${ans}/${total}</span>
     </button>`;
   }).join('');
 }
@@ -490,18 +480,6 @@ function startTypingWithCat(cat) {
 
 // ============ INIT ============
 async function init() {
-  // Apply saved theme — default is LIGHT
-  const savedTheme = localStorage.getItem('ssch_theme') || 'light';
-  if (savedTheme === 'dark') {
-    document.body.classList.add('dark');
-    const btn = document.getElementById('themeToggle');
-    if (btn) btn.textContent = '☀️';
-  } else {
-    document.body.classList.remove('dark');
-    const btn = document.getElementById('themeToggle');
-    if (btn) btn.textContent = '🌙';
-  }
-
   const { data:{ session } } = await sb.auth.getSession();
   if (!session) { window.location.href = 'index.html'; return; }
   currentUser = session.user;
@@ -510,13 +488,6 @@ async function init() {
   renderSubjects();
   updateBreadcrumb();
   loadNavAvatar();
-}
-
-function toggleTheme() {
-  const isDark = document.body.classList.toggle('dark');
-  localStorage.setItem('ssch_theme', isDark ? 'dark' : 'light');
-  const btn = document.getElementById('themeToggle');
-  if (btn) btn.textContent = isDark ? '☀️' : '🌙';
 }
 
 // ============ EXAM TAB ============
@@ -567,7 +538,6 @@ async function loadCounts() {
       let q = sb.from('quizzes')
         .select('*', { count:'exact', head:true })
         .eq('exam_type', currentExam);
-      // full_test subject ke liye topic filter lagao
       if (s.key === 'full_test') {
         q = q.eq('topic', 'full_test');
       } else {
@@ -704,7 +674,7 @@ async function loadTestsForSubject(subjectKey, label, icon, topicKey, inTopics) 
       .eq('user_id', currentUser.id)
       .eq('exam_type', currentExam)
       .in('test_name', testNames)
-      .order('q_order', { ascending: true, nullsFirst: false });
+      .order('created_at', { ascending: true });
     if (attData) {
       attData.forEach(row => {
         if (!attemptsMap[row.test_name]) attemptsMap[row.test_name] = [];
@@ -858,14 +828,14 @@ async function startQuiz(testName) {
 
   let quizQuery = sb.from('quizzes').select('*')
     .eq('exam_type', currentExam).eq('subject', currentSubject.key)
-    .eq('test_name', testName).order('q_order', { ascending: true, nullsFirst: false });
+    .eq('test_name', testName).order('created_at', { ascending: true });
   if (currentTopic) quizQuery = quizQuery.eq('topic', currentTopic.key);
   let { data, error } = await quizQuery;
 
   if ((!data || data.length === 0) && currentTopic) {
     const fb = await sb.from('quizzes').select('*')
       .eq('exam_type', currentExam).eq('subject', currentTopic.key)
-      .eq('test_name', testName).order('q_order', { ascending: true, nullsFirst: false });
+      .eq('test_name', testName).order('created_at', { ascending: true });
     if (!fb.error && fb.data && fb.data.length > 0) { data = fb.data; error = null; }
   }
 
@@ -888,14 +858,14 @@ async function reattemptQuiz(testName) {
 
   let quizQuery = sb.from('quizzes').select('*')
     .eq('exam_type', currentExam).eq('subject', currentSubject.key)
-    .eq('test_name', testName).order('q_order', { ascending: true, nullsFirst: false });
+    .eq('test_name', testName).order('created_at', { ascending: true });
   if (currentTopic) quizQuery = quizQuery.eq('topic', currentTopic.key);
   let { data, error } = await quizQuery;
 
   if ((!data || data.length === 0) && currentTopic) {
     const fb = await sb.from('quizzes').select('*')
       .eq('exam_type', currentExam).eq('subject', currentTopic.key)
-      .eq('test_name', testName).order('q_order', { ascending: true, nullsFirst: false });
+      .eq('test_name', testName).order('created_at', { ascending: true });
     if (!fb.error && fb.data && fb.data.length > 0) { data = fb.data; error = null; }
   }
 
@@ -1389,7 +1359,7 @@ async function viewResult(testName) {
 
   let vq = sb.from('quizzes').select('*')
     .eq('exam_type', currentExam).eq('subject', currentSubject.key)
-    .eq('test_name', testName).order('q_order', { ascending: true, nullsFirst: false });
+    .eq('test_name', testName).order('created_at', { ascending: true });
   if (currentTopic) vq = vq.eq('topic', currentTopic.key);
   const { data, error } = await vq;
   if (error || !data || data.length === 0) { alert('⚠️ Questions load nahi hue!'); return; }
