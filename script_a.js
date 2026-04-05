@@ -1152,14 +1152,9 @@ function updateTimerDisplay() {
     mobEl.style.background = timeLeft<=120 ? '#ff2222' : timeLeft<=300 ? '#ff8800' : '#e63946';
   }
 
-  // Timer — secTimeWarn mein countdown dikhaoo
-  const totalDuration = (questions[0]?.test_duration || 60) * 60;
+  // secTimeWarn - hidden rakhein, timer header mein hai
   const warnEl = document.getElementById('secTimeWarn');
-  if (warnEl) {
-    warnEl.style.display = '';
-    warnEl.textContent = timeStr;
-    warnEl.style.background = timeLeft<=120 ? '#ff2222' : timeLeft<=300 ? '#ff8800' : '#e63946';
-  }
+  if (warnEl) warnEl.style.display = 'none';
 }
 
 // ── LEADERBOARD DATA HELPER (FIX Bug #19: function define kiya) ──
