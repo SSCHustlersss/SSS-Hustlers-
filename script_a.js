@@ -1061,7 +1061,7 @@ function renderQNavDots() {
   if (!sections.length) {
     // Simple flat dots
     document.getElementById('qNavDots').innerHTML =
-      `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:8px;">` +
+      `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:6px 8px;">` +
       questions.map((q,i) => {
         const s = qStatus[i] || 'not_visited';
         let cls = 'q-dot';
@@ -1093,7 +1093,7 @@ function renderQNavDots() {
       <span>${sec.label}</span>
       <span style="font-size:0.6rem;background:rgba(255,255,255,0.25);padding:1px 6px;border-radius:50px;">${secAns}/${sec.indices.length}</span>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:8px;">${dots}</div>`;
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:6px 8px;">${dots}</div>`;
   }).join('');
 
   // Re-render tabs badges
