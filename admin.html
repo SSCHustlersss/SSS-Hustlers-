@@ -2443,7 +2443,7 @@ async function startBulkUpload() {
       const testName = prefix + ' - Set ' + (startNum + s);
       const tMarks   = overrideTotalMarks ? parseInt(overrideTotalMarks) : (setRows.length * (parseFloat(overridePosMarking) || 1));
 
-      const records = setRows.map(row => ({
+      const records = setRows.map((row, ri) => ({
         question_text:   row.question_text,
         option_a:        row.option_a,
         option_b:        row.option_b,
@@ -2462,6 +2462,7 @@ async function startBulkUpload() {
         test_duration:   overrideDuration ? parseInt(overrideDuration) : (parseInt(row.test_duration) || null),
         total_marks:     tMarks || null,
         unlock_at:       overrideUnlockAt || null,
+        q_order:         ri + 1,
       }));
 
       const pct = Math.round(((s + 1) / totalSets) * 100);
@@ -2487,7 +2488,7 @@ async function startBulkUpload() {
 
     const BATCH = 100;
     for (let i = 0; i < validRows.length; i += BATCH) {
-      const batch = validRows.slice(i, i + BATCH).map(row => ({
+      const batch = validRows.slice(i, i + BATCH).map((row, bi) => ({
         question_text:   row.question_text,
         option_a:        row.option_a,
         option_b:        row.option_b,
@@ -2508,6 +2509,7 @@ async function startBulkUpload() {
         total_marks:     overrideTotalMarks ? parseInt(overrideTotalMarks) : (parseInt(row.total_marks) || null),
         test_open_time:  row.test_open_time || null,
         test_end_time:   row.test_end_time  || null,
+        q_order:         i + bi + 1,
       }));
 
       const { error } = await sb.from('quizzes').insert(batch);
@@ -4617,7 +4619,7 @@ closeEditModal = function() {
     sb.from('quizzes')
       .select('id, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation, subject, exam_type, difficulty, language, topic, test_name, positive_marking, negative_marking, test_duration')
       .eq('test_name', _tqTestName)
-      .order('created_at', { ascending: true })
+      .order('q_order', { ascending: true })
       .then(({ data }) => {
         if (data) {
           _tqAllQuestions = data;
