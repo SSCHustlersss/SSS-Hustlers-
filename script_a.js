@@ -564,10 +564,16 @@ async function loadCounts() {
   const subjects = getSubjects();
   for (const s of subjects) {
     try {
-      const { count } = await sb.from('quizzes')
+      let q = sb.from('quizzes')
         .select('*', { count:'exact', head:true })
-        .eq('exam_type', currentExam)
-        .eq('subject', s.key);
+        .eq('exam_type', currentExam);
+      // full_test subject ke liye topic filter lagao
+      if (s.key === 'full_test') {
+        q = q.eq('topic', 'full_test');
+      } else {
+        q = q.eq('subject', s.key);
+      }
+      const { count } = await q;
       const el = document.getElementById('cnt-' + s.key);
       if (el) el.textContent = count > 0 ? count + ' Qs' : 'Coming Soon';
     } catch(e) {
@@ -656,7 +662,7 @@ async function loadTestsForSubject(subjectKey, label, icon, topicKey, inTopics) 
     .select('test_name, positive_marking, negative_marking, test_duration, total_marks, difficulty, unlock_at, created_at')
     .eq('exam_type', currentExam)
     .not('test_name', 'is', null)
-    .order('q_order', { ascending: true, nullsFirst: false });
+    .order('created_at', { ascending: true });
   // FIX: subject='full_test' ka matlab exam-level full test — topic se filter karo
   if (subjectKey === 'full_test') {
     query = query.eq('topic', 'full_test');
@@ -671,7 +677,7 @@ async function loadTestsForSubject(subjectKey, label, icon, topicKey, inTopics) 
     const fallbackQuery = sb.from('quizzes')
       .select('test_name, positive_marking, negative_marking, test_duration, total_marks, difficulty, unlock_at, created_at')
       .eq('exam_type', currentExam).eq('subject', topicKey)
-      .not('test_name', 'is', null).order('q_order', { ascending: true, nullsFirst: false });
+      .not('test_name', 'is', null).order('created_at', { ascending: true });
     const { data: fallbackData, error: fallbackError } = await fallbackQuery;
     if (!fallbackError && fallbackData && fallbackData.length > 0) { data = fallbackData; error = null; }
   }
