@@ -113,7 +113,13 @@ function toggleTheme() {
 }
 
 function loadTheme() {
-  const saved = localStorage.getItem('ssc_theme') || 'light'; // DEFAULT = LIGHT
+  // v2: Default LIGHT — purana dark preference reset karo
+  const themeVer = localStorage.getItem('ssc_theme_ver');
+  if (themeVer !== 'v2') {
+    localStorage.setItem('ssc_theme', 'light');
+    localStorage.setItem('ssc_theme_ver', 'v2');
+  }
+  const saved = localStorage.getItem('ssc_theme') || 'light';
   if (saved === 'dark') {
     document.body.classList.add('dark');
     const btn = document.getElementById('themeToggle');
