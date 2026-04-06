@@ -212,6 +212,27 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
 #offlineBar{display:none;background:#dc2626;color:#fff;text-align:center;font-size:0.78rem;font-weight:600;padding:8px;}
 #offlineBar.show{display:block;}
 
+/* Save to Account */
+.btn-save-account{width:100%;padding:13px;border-radius:11px;border:none;background:#7c3aed;color:#fff;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn-save-account:hover{background:#6d28d9;}
+.btn-save-account.saved{background:#16a34a;cursor:default;}
+
+/* Save Modal */
+.modal-overlay-save{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:600;align-items:flex-end;justify-content:center;}
+.modal-overlay-save.show{display:flex;}
+.save-modal-box{background:#fff;border-radius:20px 20px 0 0;padding:28px 24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;position:relative;}
+.save-modal-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:1.2rem;cursor:pointer;color:#64748b;}
+.save-tab{flex:1;padding:10px;border:none;background:none;font-family:inherit;font-size:0.85rem;font-weight:600;cursor:pointer;color:#64748b;border-bottom:2px solid transparent;}
+.save-tab.active{color:#0ea5e9;border-bottom-color:#0ea5e9;}
+.save-input-group{margin-bottom:12px;}
+.save-input-group label{font-size:0.75rem;font-weight:700;color:#475569;display:block;margin-bottom:4px;}
+.save-input{width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid #bae6fd;font-size:0.88rem;font-family:inherit;outline:none;}
+.save-input:focus{border-color:#0ea5e9;}
+.save-btn-primary{width:100%;padding:13px;border-radius:10px;border:none;background:#0ea5e9;color:#fff;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px;}
+.save-btn-primary:hover{background:#0284c7;}
+.save-btn-primary:disabled{background:#bae6fd;cursor:not-allowed;}
+.save-error{font-size:0.75rem;color:#dc2626;font-weight:600;margin-bottom:8px;min-height:18px;}
+
 /* ── SECTION TABS (TestBook Style) ── */
 .section-tabs-wrap{background:#fff;flex-shrink:0;overflow-x:auto;scrollbar-width:none;border-bottom:1.5px solid #e0f2fe;}
 .section-tabs-wrap::-webkit-scrollbar{display:none;}
@@ -450,6 +471,69 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
   <div class="result-btns">
     <button class="btn-share" onclick="shareResult()">📤 Share</button>
     <button class="btn-back-result" onclick="window.location.href='index.html'">← Home</button>
+  </div>
+  <div style="padding:0 16px 20px;">
+    <button class="btn-save-account" id="btnSaveAccount" onclick="openSaveModal()">💾 Save to My Account</button>
+  </div>
+</div>
+
+<!-- SAVE TO ACCOUNT MODAL -->
+<div class="modal-overlay-save" id="saveModal">
+  <div class="save-modal-box">
+    <div class="save-modal-close" onclick="closeSaveModal()">✕</div>
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:2.5rem;margin-bottom:8px;">💾</div>
+      <div style="font-size:1rem;font-weight:800;color:#111827;">Result Save Karo</div>
+      <div style="font-size:0.8rem;color:#64748b;margin-top:4px;">Apne account mein login karo ya naya account banao</div>
+    </div>
+
+    <div id="saveModalContent">
+      <!-- Login/Signup tabs -->
+      <div style="display:flex;border-bottom:1.5px solid #e0f2fe;margin-bottom:16px;">
+        <button class="save-tab active" id="saveTabLogin" onclick="switchSaveTab('login')">Login</button>
+        <button class="save-tab" id="saveTabSignup" onclick="switchSaveTab('signup')">Sign Up</button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="saveLoginForm">
+        <div class="save-input-group">
+          <label>Email</label>
+          <input type="email" id="saveEmail" placeholder="apna email daalo" class="save-input">
+        </div>
+        <div class="save-input-group">
+          <label>Password</label>
+          <input type="password" id="savePassword" placeholder="password daalo" class="save-input">
+        </div>
+        <div class="save-error" id="saveError"></div>
+        <button class="save-btn-primary" id="saveBtnLogin" onclick="doLogin()">🔑 Login & Save</button>
+      </div>
+
+      <!-- Signup Form -->
+      <div id="saveSignupForm" style="display:none;">
+        <div class="save-input-group">
+          <label>Full Name</label>
+          <input type="text" id="signupName" placeholder="apna naam daalo" class="save-input">
+        </div>
+        <div class="save-input-group">
+          <label>Email</label>
+          <input type="email" id="signupEmail" placeholder="apna email daalo" class="save-input">
+        </div>
+        <div class="save-input-group">
+          <label>Password</label>
+          <input type="password" id="signupPassword" placeholder="password banao (min 6 chars)" class="save-input">
+        </div>
+        <div class="save-error" id="signupError"></div>
+        <button class="save-btn-primary" id="saveBtnSignup" onclick="doSignup()">✅ Sign Up & Save</button>
+      </div>
+    </div>
+
+    <!-- Success state -->
+    <div id="saveSuccessContent" style="display:none;text-align:center;padding:20px 0;">
+      <div style="font-size:3rem;margin-bottom:12px;">🎉</div>
+      <div style="font-size:1rem;font-weight:800;color:#111827;margin-bottom:6px;">Saved!</div>
+      <div style="font-size:0.82rem;color:#64748b;" id="saveSuccessMsg">Result aapke account mein save ho gaya.</div>
+      <button class="save-btn-primary" style="margin-top:16px;background:#16a34a;" onclick="window.location.href='dashboard.html'">Dashboard dekho →</button>
+    </div>
   </div>
 </div>
 
@@ -956,6 +1040,13 @@ function detectSectionKey(subject) {
 }
 
 function buildSections() {
+  // Sections sirf 100 questions ke test mein — chhote tests mein nahi
+  if (questions.length < 100) {
+    sections = [{ name: 'all', label: 'All Questions', indices: questions.map((_,i)=>i) }];
+    document.getElementById('sectionTabsWrap').style.display = 'none';
+    return;
+  }
+
   const hasSubject = questions.some(q => q.subject && q.subject.trim());
 
   if (hasSubject) {
@@ -1344,6 +1435,100 @@ function copyToClipboard(text) {
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('show'));
   if (id) document.getElementById(id)?.classList.add('show');
+}
+
+// ══════════════════════════════════════════
+// SAVE TO MY ACCOUNT
+// ══════════════════════════════════════════
+function openSaveModal() {
+  // Agar already saved hai
+  const btn = document.getElementById('btnSaveAccount');
+  if (btn.classList.contains('saved')) return;
+  document.getElementById('saveModal').classList.add('show');
+}
+
+function closeSaveModal() {
+  document.getElementById('saveModal').classList.remove('show');
+}
+
+function switchSaveTab(tab) {
+  document.getElementById('saveLoginForm').style.display   = tab === 'login'  ? 'block' : 'none';
+  document.getElementById('saveSignupForm').style.display  = tab === 'signup' ? 'block' : 'none';
+  document.getElementById('saveTabLogin').classList.toggle('active',  tab === 'login');
+  document.getElementById('saveTabSignup').classList.toggle('active', tab === 'signup');
+  document.getElementById('saveError').textContent   = '';
+  document.getElementById('signupError').textContent = '';
+}
+
+async function doLogin() {
+  const email    = document.getElementById('saveEmail').value.trim();
+  const password = document.getElementById('savePassword').value;
+  const errEl    = document.getElementById('saveError');
+  const btn      = document.getElementById('saveBtnLogin');
+
+  if (!email || !password) { errEl.textContent = 'Email aur password daalo!'; return; }
+  btn.disabled = true; btn.textContent = 'Logging in...';
+  errEl.textContent = '';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    errEl.textContent = 'Login failed: ' + error.message;
+    btn.disabled = false; btn.textContent = '🔑 Login & Save';
+    return;
+  }
+  await linkAttemptToUser(data.user.id, data.user.email);
+}
+
+async function doSignup() {
+  const name     = document.getElementById('signupName').value.trim();
+  const email    = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  const errEl    = document.getElementById('signupError');
+  const btn      = document.getElementById('saveBtnSignup');
+
+  if (!name || !email || !password) { errEl.textContent = 'Sab fields bharo!'; return; }
+  if (password.length < 6) { errEl.textContent = 'Password kam se kam 6 characters ka hona chahiye!'; return; }
+  btn.disabled = true; btn.textContent = 'Creating account...';
+  errEl.textContent = '';
+
+  const { data, error } = await sb.auth.signUp({ email, password, options: { data: { full_name: name } } });
+  if (error) {
+    errEl.textContent = 'Signup failed: ' + error.message;
+    btn.disabled = false; btn.textContent = '✅ Sign Up & Save';
+    return;
+  }
+
+  // Profile insert
+  await sb.from('profiles').upsert({ id: data.user.id, full_name: name, email });
+  await linkAttemptToUser(data.user.id, email);
+}
+
+async function linkAttemptToUser(userId, email) {
+  if (!attemptId) {
+    showSaveSuccess('Result save ho gaya! Dashboard pe dekho.');
+    return;
+  }
+
+  const { error } = await sb.from('live_test_attempts')
+    .update({ user_id: userId, is_registered: true })
+    .eq('id', attemptId);
+
+  if (error) {
+    document.getElementById('saveError').textContent = 'Save failed: ' + error.message;
+    document.getElementById('saveBtnLogin').disabled = false;
+    document.getElementById('saveBtnLogin').textContent = '🔑 Login & Save';
+    return;
+  }
+
+  showSaveSuccess(`✅ Saved! ${email} ke account mein result link ho gaya.`);
+  document.getElementById('btnSaveAccount').textContent = '✅ Saved to Account';
+  document.getElementById('btnSaveAccount').classList.add('saved');
+}
+
+function showSaveSuccess(msg) {
+  document.getElementById('saveModalContent').style.display  = 'none';
+  document.getElementById('saveSuccessContent').style.display = 'block';
+  document.getElementById('saveSuccessMsg').textContent = msg;
 }
 
 init();
