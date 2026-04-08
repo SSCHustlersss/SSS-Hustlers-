@@ -674,7 +674,7 @@ async function loadTestsForSubject(subjectKey, label, icon, topicKey, inTopics) 
       .eq('user_id', currentUser.id)
       .eq('exam_type', currentExam)
       .in('test_name', testNames)
-      .order('q_order', { ascending: true });
+      .order('created_at', { ascending: false });
     if (attData) {
       attData.forEach(row => {
         if (!attemptsMap[row.test_name]) attemptsMap[row.test_name] = [];
