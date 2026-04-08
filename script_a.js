@@ -728,18 +728,21 @@ async function loadTestsForSubject(subjectKey, label, icon, topicKey, inTopics) 
           actionBtn = `<button class="btn-start-test" onclick="event.stopPropagation();startQuiz('${esc(name)}')">Start →</button>`;
         }
       } else if (attemptCount === 1) {
-        // FIX Bug #15: Same score pe rank sahi ho — score/total accurate dikhao
         const pct = lastAttempt.total_marks ? Math.round((lastAttempt.score / lastAttempt.total_marks) * 100) : 0;
-        statusTag = `<span class="ttag ${pct>=70?'green':pct>=40?'blue':'red'}">${lastAttempt.score}/${lastAttempt.total_marks} (${pct}%)</span>`;
+        const attemptedOn = lastAttempt.created_at ? new Date(lastAttempt.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric', timeZone:'Asia/Kolkata' }) : '';
+        statusTag = `<span class="ttag ${pct>=70?'green':pct>=40?'blue':'red'}">${lastAttempt.score}/${lastAttempt.total_marks} · ${pct}%</span>`;
         actionBtn = `<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-          <button class="btn-start-test" onclick="event.stopPropagation();viewResult('${esc(name)}')">📊 Result</button>
-          <button class="btn-start-test" style="background:#fff3e0;color:#e65100;border-color:#e65100;font-size:0.72rem;padding:5px 10px;" onclick="event.stopPropagation();reattemptQuiz('${esc(name)}')">🔁 Reattempt</button>
+          <button class="btn-start-test" onclick="event.stopPropagation();viewResult('${esc(name)}')">View Results</button>
+          <button class="btn-start-test" style="background:#fff3e0;color:#e65100;border-color:#e65100;font-size:0.72rem;padding:5px 10px;" onclick="event.stopPropagation();reattemptQuiz('${esc(name)}')">Reattempt →</button>
         </div>`;
+        statusTag += attemptedOn ? `<span class="ttag" style="background:#f0f4ff;color:#1a237e;">📅 ${attemptedOn}</span>` : '';
       } else {
         const pct = lastAttempt.total_marks ? Math.round((lastAttempt.score / lastAttempt.total_marks) * 100) : 0;
-        statusTag = `<span class="ttag ${pct>=70?'green':pct>=40?'blue':'red'}">${lastAttempt.score}/${lastAttempt.total_marks} (${pct}%)</span>`;
+        const attemptedOn = lastAttempt.created_at ? new Date(lastAttempt.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric', timeZone:'Asia/Kolkata' }) : '';
+        statusTag = `<span class="ttag ${pct>=70?'green':pct>=40?'blue':'red'}">${lastAttempt.score}/${lastAttempt.total_marks} · ${pct}%</span>`;
+        statusTag += attemptedOn ? `<span class="ttag" style="background:#f0f4ff;color:#1a237e;">📅 ${attemptedOn}</span>` : '';
         actionBtn = `<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-          <button class="btn-start-test" onclick="event.stopPropagation();viewResult('${esc(name)}')">📊 Result</button>
+          <button class="btn-start-test" onclick="event.stopPropagation();viewResult('${esc(name)}')">View Results</button>
           <span style="font-size:0.65rem;color:#aaa;text-align:center;">Max attempts done</span>
         </div>`;
       }
