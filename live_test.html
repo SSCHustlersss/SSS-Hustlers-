@@ -903,6 +903,21 @@ function showQuestion(idx) {
   }
   document.getElementById('qText').textContent = getLangText(q.question_text);
 
+  // Question Image
+  let qImgEl = document.getElementById('qImage');
+  if (!qImgEl) {
+    qImgEl = document.createElement('img');
+    qImgEl.id = 'qImage';
+    qImgEl.style.cssText = 'max-width:100%;border-radius:10px;margin:10px 0 6px;border:1.5px solid #e0f2fe;display:block;';
+    document.getElementById('qText').insertAdjacentElement('afterend', qImgEl);
+  }
+  if (q.image_url) {
+    qImgEl.src = q.image_url;
+    qImgEl.style.display = 'block';
+  } else {
+    qImgEl.style.display = 'none';
+  }
+
   // Progress
   if (sections.length <= 1) {
     const pct = ((idx + 1) / questions.length) * 100;
@@ -1169,6 +1184,17 @@ function togglePanel() {
   if (window.innerWidth <= 600) sb.classList.toggle('mob-open');
   else sb.classList.toggle('collapsed');
 }
+
+// Mobile pe panel ke bahar click karo toh close ho jaye
+document.addEventListener('click', function(e) {
+  if (window.innerWidth > 600) return;
+  const sb = document.getElementById('ntaSidebar');
+  if (!sb || !sb.classList.contains('mob-open')) return;
+  // Agar click panel ke andar hai ya toggle button pe hai toh ignore
+  const toggleBtn = document.querySelector('.btn-toggle-panel');
+  if (sb.contains(e.target) || (toggleBtn && toggleBtn.contains(e.target))) return;
+  sb.classList.remove('mob-open');
+});
 
 function confirmExit() {
   if (confirm('Test chod dena chahte ho? Progress save nahi hogi.')) {
