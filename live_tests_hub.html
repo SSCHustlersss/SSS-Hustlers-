@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Tests | SSC Hustlers</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --red: #e63946;
+  --red2: #ff6b6b;
+  --dark: #0d0f1a;
+  --accent: #f7b731;
+  --green: #00e676;
+  --blue: #4fc3f7;
+  --purple: #b388ff;
+  --text: #f0f4ff;
+  --text2: #8892b0;
+  --border: rgba(255,255,255,0.07);
+  --card: rgba(255,255,255,0.04);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--dark);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* BG */
+.bg-grid {
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(230,57,70,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(230,57,70,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none; z-index: 0;
+}
+.bg-glow1 {
+  position: fixed; top: -200px; left: -200px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(230,57,70,0.07) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+  animation: driftA 12s ease-in-out infinite alternate;
+}
+@keyframes driftA { from { transform: translate(0,0); } to { transform: translate(80px,60px); } }
+
+/* HEADER */
+.header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(13,15,26,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex; align-items: center; gap: 12px;
+}
+.back-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.back-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+.header-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text);
+  flex: 1;
+}
+.live-dot {
+  width: 8px; height: 8px;
+  background: var(--red);
+  border-radius: 50%;
+  animation: pulse 1.4s infinite;
+  display: inline-block;
+  margin-right: 6px;
+}
+@keyframes pulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50% { opacity:0.5; transform:scale(1.3); }
+}
+.user-chip {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  color: var(--text2);
+  display: flex; align-items: center; gap: 6px;
+}
+.user-chip span { color: var(--text); font-weight: 600; }
+
+/* TABS */
+.tabs-wrap {
+  position: relative; z-index: 1;
+  padding: 20px 16px 0;
+  max-width: 700px;
+  margin: 0 auto;
+}
+.tabs {
+  display: flex; gap: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px;
+}
+.tab-btn {
+  flex: 1;
+  padding: 10px 6px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text2);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.tab-btn.active {
+  background: var(--red);
+  color: #fff;
+}
+.tab-btn:hover:not(.active) { color: var(--text); }
+
+/* MAIN CONTENT */
+.main {
+  position: relative; z-index: 1;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 20px 16px 60px;
+}
+
+/* SECTION */
+.section { display: none; }
+.section.show { display: block; }
+
+/* CARDS */
+.test-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 14px;
+  transition: border-color 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.test-card:hover { border-color: rgba(230,57,70,0.4); transform: translateY(-1px); }
+.test-card.past { cursor: default; }
+.test-card.past:hover { transform: none; border-color: var(--border); }
+
+.card-top { display: flex; align-items: flex-start; gap: 12px; }
+.card-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+.card-icon.live-icon { background: rgba(230,57,70,0.15); }
+.card-icon.past-icon { background: rgba(79,195,247,0.12); }
+.card-info { flex: 1; min-width: 0; }
+.card-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.card-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1px solid;
+}
+.pill.red { background: rgba(230,57,70,0.1); border-color: rgba(230,57,70,0.3); color: #ff8a8a; }
+.pill.blue { background: rgba(79,195,247,0.1); border-color: rgba(79,195,247,0.3); color: var(--blue); }
+.pill.green { background: rgba(0,230,118,0.1); border-color: rgba(0,230,118,0.3); color: var(--green); }
+.pill.yellow { background: rgba(247,183,49,0.1); border-color: rgba(247,183,49,0.3); color: var(--accent); }
+.pill.grey { background: rgba(255,255,255,0.05); border-color: var(--border); color: var(--text2); }
+
+/* LIVE STATUS */
+.live-status {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--red);
+  margin-top: 8px;
+}
+.upcoming-status {
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--accent);
+  margin-top: 8px;
+}
+.ended-status {
+  font-size: 0.72rem; font-weight: 600;
+  color: var(--text2);
+  margin-top: 8px;
+}
+
+/* ATTEMPT BADGE */
+.attempt-badge {
+  background: rgba(0,230,118,0.12);
+  border: 1px solid rgba(0,230,118,0.25);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px;
+}
+.attempt-score {
+  font-size: 1rem; font-weight: 800;
+  color: var(--green);
+  font-family: 'Syne', sans-serif;
+}
+.attempt-meta { font-size: 0.72rem; color: var(--text2); }
+
+/* CTA BUTTON */
+.attempt-btn {
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: 14px;
+  width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background 0.2s;
+}
+.attempt-btn:hover { background: #c1121f; }
+.attempt-btn.disabled {
+  background: rgba(255,255,255,0.08);
+  color: var(--text2);
+  cursor: not-allowed;
+}
+
+/* LEADERBOARD */
+.lb-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-top: 14px;
+}
+.lb-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text2);
+  display: flex; align-items: center; gap: 8px;
+}
+.lb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  transition: background 0.15s;
+}
+.lb-row:last-child { border-bottom: none; }
+.lb-row.me { background: rgba(230,57,70,0.07); }
+.lb-rank {
+  width: 26px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--text2);
+  text-align: center;
+  flex-shrink: 0;
+}
+.lb-rank.gold { color: #ffd700; }
+.lb-rank.silver { color: #c0c0c0; }
+.lb-rank.bronze { color: #cd7f32; }
+.lb-name { flex: 1; font-size: 0.85rem; font-weight: 600; color: var(--text); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-name-sub { font-size: 0.7rem; color: var(--text2); font-weight: 400; }
+.lb-score { font-size: 0.9rem; font-weight: 800; color: var(--green); font-family: 'Syne', sans-serif; }
+.lb-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(230,57,70,0.2);
+  color: var(--red2);
+  flex-shrink: 0;
+}
+
+/* MY STATS SECTION */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.stat-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+}
+.stat-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-val.green { color: var(--green); }
+.stat-val.blue { color: var(--blue); }
+.stat-val.yellow { color: var(--accent); }
+.stat-val.red { color: var(--red2); }
+.stat-lbl { font-size: 0.72rem; color: var(--text2); font-weight: 500; }
+
+/* BADGES */
+.badges-row {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.badge-chip {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex; align-items: center; gap: 8px;
+  flex: 1; min-width: 120px;
+}
+.badge-chip.earned { border-color: rgba(247,183,49,0.35); background: rgba(247,183,49,0.07); }
+.badge-chip.earned.silver-b { border-color: rgba(192,192,192,0.35); background: rgba(192,192,192,0.05); }
+.badge-chip.earned.bronze-b { border-color: rgba(205,127,50,0.35); background: rgba(205,127,50,0.07); }
+.badge-icon { font-size: 1.4rem; }
+.badge-info .badge-name { font-size: 0.78rem; font-weight: 700; color: var(--text); }
+.badge-info .badge-desc { font-size: 0.68rem; color: var(--text2); }
+
+/* ATTEMPT HISTORY */
+.hist-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 14px;
+}
+.hist-score-box {
+  background: rgba(0,230,118,0.1);
+  border: 1px solid rgba(0,230,118,0.2);
+  border-radius: 10px;
+  padding: 8px 12px;
+  text-align: center;
+  flex-shrink: 0;
+  min-width: 60px;
+}
+.hist-score-val { font-size: 1.1rem; font-weight: 800; color: var(--green); font-family: 'Syne', sans-serif; }
+.hist-score-lbl { font-size: 0.62rem; color: var(--text2); }
+.hist-info { flex: 1; min-width: 0; }
+.hist-name { font-size: 0.85rem; font-weight: 700; color: var(--text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-meta { font-size: 0.72rem; color: var(--text2); }
+.hist-rank { font-size: 0.78rem; font-weight: 700; color: var(--accent); }
+
+/* WEAK AREAS */
+.weak-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 12px;
+}
+.weak-subject { font-size: 0.85rem; font-weight: 600; color: var(--text); flex: 1; }
+.weak-bar-wrap { width: 100px; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+.weak-bar { height: 100%; border-radius: 3px; }
+.weak-pct { font-size: 0.75rem; font-weight: 700; width: 36px; text-align: right; flex-shrink: 0; }
+
+/* STREAK */
+.streak-card {
+  background: linear-gradient(135deg, rgba(247,183,49,0.12), rgba(230,57,70,0.08));
+  border: 1px solid rgba(247,183,49,0.2);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 16px;
+}
+.streak-fire { font-size: 2.5rem; }
+.streak-val { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: var(--accent); }
+.streak-lbl { font-size: 0.78rem; color: var(--text2); }
+
+/* EMPTY */
+.empty {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--text2);
+}
+.empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+.empty-msg { font-size: 0.88rem; line-height: 1.6; }
+
+/* SECTION TITLE */
+.sec-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  margin-top: 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.sec-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* LOADING */
+.loading-wrap {
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 16px; gap: 12px; color: var(--text2);
+}
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--red);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* PERSONAL BEST */
+.pb-card {
+  background: linear-gradient(135deg, rgba(79,195,247,0.1), rgba(179,136,255,0.08));
+  border: 1px solid rgba(79,195,247,0.2);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 14px;
+}
+.pb-icon { font-size: 2rem; }
+.pb-val { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; color: var(--blue); }
+.pb-lbl { font-size: 0.72rem; color: var(--text2); }
+.pb-test { font-size: 0.78rem; color: var(--text); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow1"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <a href="dashboard.html" class="back-btn">← Back</a>
+  <div class="header-title"><span class="live-dot"></span>Live Tests</div>
+  <div class="user-chip" id="userChip">Loading...</div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('live')">🔴 Active</button>
+    <button class="tab-btn" onclick="switchTab('past')">📋 Past Tests</button>
+    <button class="tab-btn" onclick="switchTab('stats')">📊 My Stats</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LIVE TAB -->
+  <div class="section show" id="tab-live">
+    <div class="loading-wrap" id="liveLoading"><div class="spinner"></div> Loading tests...</div>
+    <div id="liveList"></div>
+  </div>
+
+  <!-- PAST TAB -->
+  <div class="section" id="tab-past">
+    <div class="loading-wrap" id="pastLoading"><div class="spinner"></div> Loading...</div>
+    <div id="pastList"></div>
+  </div>
+
+  <!-- STATS TAB -->
+  <div class="section" id="tab-stats">
+    <div class="loading-wrap" id="statsLoading"><div class="spinner"></div> Loading stats...</div>
+    <div id="statsList" style="display:none"></div>
+    <div class="empty" id="statsEmpty" style="display:none">
+      <div class="empty-icon">📊</div>
+      <div class="empty-msg">Koi live test attempt nahi kiya abhi tak.<br>Active test do aur stats yahan dikhenge!</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SUPABASE_URL = 'https://wwfhoyxqlversdkdqcgd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3ZmhveXhxbHZlcnNka2RxY2dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDAwMTMsImV4cCI6MjA4ODQ3NjAxM30.qaQp8LJXGxN6EfOoNPOgdhdNqY7M0nC2aR8fBSYejrw';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let myAttempts = [];
+let allTests = [];
+
+// ── INIT ──
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    window.location.href = 'dashboard.html';
+    return;
+  }
+  currentUser = session.user;
+  const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
+  document.getElementById('userChip').innerHTML = `👤 <span>${name}</span>`;
+
+  await Promise.all([loadLiveTests(), loadMyAttempts()]);
+}
+
+// ── LOAD ALL LIVE TESTS ──
+async function loadLiveTests() {
+  const now = new Date().toISOString();
+  const { data, error } = await sb.from('live_tests')
+    .select('id, name, total_questions, duration_minutes, start_time, end_time, code')
+    .order('start_time', { ascending: false });
+
+  document.getElementById('liveLoading').style.display = 'none';
+
+  if (error || !data || data.length === 0) {
+    document.getElementById('liveList').innerHTML = `
+      <div class="empty"><div class="empty-icon">🔴</div>
+      <div class="empty-msg">Abhi koi live test available nahi hai.<br>Jaldi aa raha hai — tuned raho!</div></div>`;
+    return;
+  }
+
+  allTests = data;
+  const live = data.filter(t => new Date(t.start_time) <= new Date() && new Date(t.end_time) >= new Date());
+  const upcoming = data.filter(t => new Date(t.start_time) > new Date());
+  const ended = data.filter(t => new Date(t.end_time) < new Date());
+
+  let html = '';
+
+  if (live.length > 0) {
+    html += `<div class="sec-title">🔴 Abhi Live</div>`;
+    live.forEach(t => { html += buildLiveCard(t, 'live'); });
+  }
+  if (upcoming.length > 0) {
+    html += `<div class="sec-title">🕐 Upcoming</div>`;
+    upcoming.forEach(t => { html += buildLiveCard(t, 'upcoming'); });
+  }
+  if (ended.length > 0) {
+    html += `<div class="sec-title">✅ Ended</div>`;
+    ended.forEach(t => { html += buildLiveCard(t, 'ended'); });
+  }
+
+  document.getElementById('liveList').innerHTML = html;
+}
+
+function buildLiveCard(t, status) {
+  const startFmt = new Date(t.start_time).toLocaleString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+  const endFmt   = new Date(t.end_time).toLocaleString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+
+  let statusHtml = '';
+  let btnHtml = '';
+  let iconClass = '';
+
+  if (status === 'live') {
+    statusHtml = `<div class="live-status"><span class="live-dot"></span> LIVE NOW</div>`;
+    btnHtml = `<button class="attempt-btn" onclick="goToTest('${t.id}')">🚀 Test Do Abhi →</button>`;
+    iconClass = 'live-icon';
+  } else if (status === 'upcoming') {
+    statusHtml = `<div class="upcoming-status">⏰ Starts: ${startFmt}</div>`;
+    btnHtml = `<button class="attempt-btn disabled" disabled>🔒 Jaldi Aayega</button>`;
+    iconClass = 'live-icon';
+  } else {
+    statusHtml = `<div class="ended-status">Ended: ${endFmt}</div>`;
+    btnHtml = `<button class="attempt-btn disabled" disabled>Test Khatam Ho Gaya</button>`;
+    iconClass = 'past-icon';
+  }
+
+  return `
+    <div class="test-card ${status === 'ended' ? 'past' : ''}">
+      <div class="card-top">
+        <div class="card-icon ${iconClass}">${status === 'live' ? '🔴' : status === 'upcoming' ? '📅' : '✅'}</div>
+        <div class="card-info">
+          <div class="card-name">${t.name}</div>
+          <div class="card-meta">
+            <span class="pill blue">❓ ${t.total_questions} Qs</span>
+            <span class="pill yellow">⏱ ${t.duration_minutes} min</span>
+          </div>
+          ${statusHtml}
+        </div>
+      </div>
+      ${btnHtml}
+    </div>`;
+}
+
+// ── LOAD MY ATTEMPTS (for leaderboard + stats) ──
+async function loadMyAttempts() {
+  const { data } = await sb.from('live_test_attempts')
+    .select('id, score, correct, wrong, skipped, submitted_at, live_test_id, participant_name, user_id, is_registered')
+    .not('submitted_at', 'is', null)
+    .order('submitted_at', { ascending: false });
+
+  myAttempts = data || [];
+  renderPastTests();
+  renderStats();
+}
+
+// ── PAST TESTS TAB ──
+async function renderPastTests() {
+  document.getElementById('pastLoading').style.display = 'none';
+
+  // My attempts (either by user_id or guest)
+  const mine = myAttempts.filter(a =>
+    (currentUser && a.user_id === currentUser.id)
+  );
+
+  if (!mine || mine.length === 0) {
+    document.getElementById('pastList').innerHTML = `
+      <div class="empty"><div class="empty-icon">📋</div>
+      <div class="empty-msg">Abhi tak koi test attempt nahi kiya.<br>Live test do aur result yahan aayega!</div></div>`;
+    return;
+  }
+
+  // Get test names
+  const testIds = [...new Set(mine.map(a => a.live_test_id))];
+  const { data: tests } = await sb.from('live_tests').select('id, name').in('id', testIds);
+  const testMap = {};
+  (tests || []).forEach(t => testMap[t.id] = t);
+
+  let html = `<div class="sec-title">📋 Mere Attempts</div>`;
+
+  for (const a of mine) {
+    const test = testMap[a.live_test_id] || {};
+    const dateFmt = new Date(a.submitted_at).toLocaleString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+    // Get rank for this test
+    const sameTest = myAttempts.filter(x => x.live_test_id === a.live_test_id && x.submitted_at);
+    sameTest.sort((x, y) => (y.score || 0) - (x.score || 0));
+    const rank = sameTest.findIndex(x => x.id === a.id) + 1;
+    const total = sameTest.length;
+
+    // Build leaderboard for this test
+    const lb = sameTest.slice(0, 5);
+    let lbHtml = `<div class="lb-card"><div class="lb-header">🏆 Leaderboard</div>`;
+    lb.forEach((entry, i) => {
+      const isMe = entry.id === a.id;
+      const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+      const rankEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+      const nameDisplay = entry.participant_name || (entry.is_registered ? 'Student' : 'Guest');
+      const tagLabel = entry.is_registered ? '' : `<span class="lb-badge">Guest</span>`;
+      lbHtml += `
+        <div class="lb-row ${isMe ? 'me' : ''}">
+          <div class="lb-rank ${rankClass}">${rankEmoji}</div>
+          <div class="lb-name">${nameDisplay} ${isMe ? '<span style="color:var(--red2);font-size:0.68rem;">(You)</span>' : ''}</div>
+          ${tagLabel}
+          <div class="lb-score">${(entry.score || 0).toFixed(2)}</div>
+        </div>`;
+    });
+    lbHtml += `</div>`;
+
+    html += `
+      <div class="test-card past">
+        <div class="card-top">
+          <div class="card-icon past-icon">📝</div>
+          <div class="card-info">
+            <div class="card-name">${test.name || 'Live Test'}</div>
+            <div class="card-meta">
+              <span class="pill green">✅ ${a.correct || 0} Correct</span>
+              <span class="pill red">❌ ${a.wrong || 0} Wrong</span>
+              <span class="pill grey">⏭ ${a.skipped || 0} Skip</span>
+            </div>
+          </div>
+        </div>
+        <div class="attempt-badge">
+          <div>
+            <div class="attempt-score">${(a.score || 0).toFixed(2)} pts</div>
+            <div class="attempt-meta">${dateFmt}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="hist-rank">Rank #${rank} / ${total}</div>
+            <div class="attempt-meta">Total participants</div>
+          </div>
+        </div>
+        ${lbHtml}
+      </div>`;
+  }
+
+  document.getElementById('pastList').innerHTML = html;
+}
+
+// ── STATS TAB ──
+async function renderStats() {
+  document.getElementById('statsLoading').style.display = 'none';
+
+  const mine = myAttempts.filter(a => currentUser && a.user_id === currentUser.id);
+
+  if (!mine || mine.length === 0) {
+    document.getElementById('statsEmpty').style.display = 'block';
+    return;
+  }
+
+  const totalTests = mine.length;
+  const totalCorrect = mine.reduce((s, a) => s + (a.correct || 0), 0);
+  const totalWrong = mine.reduce((s, a) => s + (a.wrong || 0), 0);
+  const totalSkipped = mine.reduce((s, a) => s + (a.skipped || 0), 0);
+  const totalQ = totalCorrect + totalWrong + totalSkipped || 1;
+  const accuracy = Math.round((totalCorrect / totalQ) * 100);
+  const bestScore = Math.max(...mine.map(a => a.score || 0));
+  const bestAttempt = mine.find(a => (a.score || 0) === bestScore);
+
+  // Streak calculation
+  const dates = mine.map(a => new Date(a.submitted_at).toDateString());
+  const uniqueDates = [...new Set(dates)].sort((a,b) => new Date(b) - new Date(a));
+  let streak = 0;
+  const today = new Date();
+  for (let i = 0; i < uniqueDates.length; i++) {
+    const d = new Date(uniqueDates[i]);
+    const diff = Math.floor((today - d) / (1000*60*60*24));
+    if (diff === i || diff === i + 1) streak++;
+    else break;
+  }
+
+  // Get best test name
+  const { data: bestTestData } = bestAttempt
+    ? await sb.from('live_tests').select('name').eq('id', bestAttempt.live_test_id).single()
+    : { data: null };
+
+  // Badge logic
+  const gold = totalTests >= 5 && accuracy >= 80;
+  const silver = totalTests >= 3 && accuracy >= 60;
+  const bronze = totalTests >= 1;
+
+  // Weak area from wrong/total ratio per test (simplified)
+  const subjects = [
+    { name: 'Reasoning', wrong: Math.round(totalWrong * 0.3), total: Math.round(totalQ * 0.25) },
+    { name: 'Maths', wrong: Math.round(totalWrong * 0.35), total: Math.round(totalQ * 0.25) },
+    { name: 'English', wrong: Math.round(totalWrong * 0.2), total: Math.round(totalQ * 0.25) },
+    { name: 'GK/GS', wrong: Math.round(totalWrong * 0.15), total: Math.round(totalQ * 0.25) },
+  ].map(s => ({ ...s, pct: s.total ? Math.round((s.wrong / s.total) * 100) : 0 }))
+   .sort((a,b) => b.pct - a.pct);
+
+  const el = document.getElementById('statsList');
+  el.style.display = 'block';
+
+  el.innerHTML = `
+    <!-- STREAK -->
+    <div class="streak-card">
+      <div class="streak-fire">🔥</div>
+      <div>
+        <div class="streak-val">${streak}</div>
+        <div class="streak-lbl">Day Streak</div>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <div style="font-size:0.78rem;color:var(--text2)">Tests attempted</div>
+        <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:var(--text)">${totalTests}</div>
+      </div>
+    </div>
+
+    <!-- PERSONAL BEST -->
+    <div class="pb-card">
+      <div class="pb-icon">🏆</div>
+      <div>
+        <div class="pb-val">${bestScore.toFixed(2)}</div>
+        <div class="pb-lbl">Personal Best Score</div>
+        <div class="pb-test">${bestTestData?.name || 'Live Test'}</div>
+      </div>
+    </div>
+
+    <!-- STATS GRID -->
+    <div class="sec-title">📈 Overall Performance</div>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-val green">${accuracy}%</div>
+        <div class="stat-lbl">Accuracy</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val blue">${totalCorrect}</div>
+        <div class="stat-lbl">Total Correct</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val red">${totalWrong}</div>
+        <div class="stat-lbl">Total Wrong</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val yellow">${totalSkipped}</div>
+        <div class="stat-lbl">Total Skipped</div>
+      </div>
+    </div>
+
+    <!-- BADGES -->
+    <div class="sec-title">🏅 Badges</div>
+    <div class="badges-row">
+      <div class="badge-chip ${gold ? 'earned' : ''}">
+        <div class="badge-icon">${gold ? '🥇' : '🔒'}</div>
+        <div class="badge-info">
+          <div class="badge-name">Gold</div>
+          <div class="badge-desc">5+ tests, 80%+ acc</div>
+        </div>
+      </div>
+      <div class="badge-chip ${silver && !gold ? 'earned silver-b' : silver ? 'earned silver-b' : ''}">
+        <div class="badge-icon">${silver ? '🥈' : '🔒'}</div>
+        <div class="badge-info">
+          <div class="badge-name">Silver</div>
+          <div class="badge-desc">3+ tests, 60%+ acc</div>
+        </div>
+      </div>
+      <div class="badge-chip ${bronze ? 'earned bronze-b' : ''}">
+        <div class="badge-icon">${bronze ? '🥉' : '🔒'}</div>
+        <div class="badge-info">
+          <div class="badge-name">Bronze</div>
+          <div class="badge-desc">First test done</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEAK AREAS -->
+    <div class="sec-title">⚠️ Weak Areas</div>
+    ${subjects.map(s => {
+      const barColor = s.pct > 60 ? 'var(--red)' : s.pct > 40 ? 'var(--accent)' : 'var(--green)';
+      const textColor = s.pct > 60 ? 'var(--red2)' : s.pct > 40 ? 'var(--accent)' : 'var(--green)';
+      return `
+        <div class="weak-item">
+          <div class="weak-subject">${s.name}</div>
+          <div class="weak-bar-wrap"><div class="weak-bar" style="width:${s.pct}%;background:${barColor}"></div></div>
+          <div class="weak-pct" style="color:${textColor}">${s.pct}%</div>
+        </div>`;
+    }).join('')}
+    <div style="font-size:0.7rem;color:var(--text2);margin-top:8px;text-align:center;">* Subject-wise breakdown live tests mein add hone ke baad accurate ho jayega</div>
+
+    <!-- ATTEMPT HISTORY -->
+    <div class="sec-title" style="margin-top:20px">📅 Attempt History</div>
+    ${mine.slice(0, 10).map(a => {
+      const sameTest = myAttempts.filter(x => x.live_test_id === a.live_test_id && x.submitted_at);
+      sameTest.sort((x,y) => (y.score||0) - (x.score||0));
+      const rank = sameTest.findIndex(x => x.id === a.id) + 1;
+      const dateFmt = new Date(a.submitted_at).toLocaleString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+      const testName = allTests.find(t => t.id === a.live_test_id)?.name || 'Live Test';
+      return `
+        <div class="hist-item">
+          <div class="hist-score-box">
+            <div class="hist-score-val">${(a.score||0).toFixed(1)}</div>
+            <div class="hist-score-lbl">Score</div>
+          </div>
+          <div class="hist-info">
+            <div class="hist-name">${testName}</div>
+            <div class="hist-meta">${dateFmt} &nbsp;·&nbsp; ✅${a.correct||0} ❌${a.wrong||0} ⏭${a.skipped||0}</div>
+          </div>
+          <div class="hist-rank">#${rank}</div>
+        </div>`;
+    }).join('')}
+  `;
+}
+
+// ── NAVIGATE TO TEST ──
+function goToTest(testId) {
+  window.location.href = `live_test.html?id=${testId}`;
+}
+
+// ── TAB SWITCH ──
+function switchTab(tab) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('show'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('show');
+  event.target.classList.add('active');
+}
+
+// ── START ──
+init();
+</script>
+</body>
+</html>
