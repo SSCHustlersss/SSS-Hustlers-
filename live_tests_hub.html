@@ -968,37 +968,9 @@ async function openResultModal(attemptId) {
   const attempted = correct + wrong;
   const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
   const dateFmt = new Date(attempt.submitted_at).toLocaleString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  const studentAnswers = JSON.parse(attempt.answers || '{}');
 
-  // Get leaderboard for this test
-  const { data: lb } = await sb.from('live_test_attempts')
-    .select('participant_name, score, is_registered, user_id')
-    .eq('live_test_id', attempt.live_test_id)
-    .not('submitted_at', 'is', null)
-    .order('score', { ascending: false });
-
-  const lbData = lb || [];
-  const myRank = lbData.findIndex(a =>
-    (currentUser && a.user_id === currentUser.id) ||
-    a.participant_name === attempt.participant_name
-  ) + 1;
-  const total = lbData.length;
-  const percentile = myRank > 0 && total > 0 ? Math.round(((total - myRank) / total) * 100) : 0;
-
-  let lbHtml = '';
-  lbData.slice(0, 10).forEach((entry, i) => {
-    const isMe = (currentUser && entry.user_id === currentUser.id) || entry.participant_name === attempt.participant_name;
-    const rankEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`;
-    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-    const tag = entry.is_registered ? '' : `<span class="lb-badge">Guest</span>`;
-    lbHtml += `
-      <div class="lb-row ${isMe ? 'me' : ''}">
-        <div class="lb-rank ${rankClass}">${rankEmoji}</div>
-        <div class="lb-name">${entry.participant_name || 'Student'} ${isMe ? '<span style="color:var(--red2);font-size:0.68rem;">(You)</span>' : ''}</div>
-        ${tag}
-        <div class="lb-score">${(entry.score||0).toFixed(2)}</div>
-      </div>`;
-  });
-
+  // Show modal with loading state first
   const el = document.getElementById('resultModalContent');
   el.innerHTML = `
     <div class="modal-handle"></div>
@@ -1013,22 +985,209 @@ async function openResultModal(attemptId) {
       <div class="r-stat"><div class="r-stat-val" style="color:var(--text2)">${skipped}</div><div class="r-stat-lbl">Skipped</div></div>
       <div class="r-stat"><div class="r-stat-val" style="color:var(--blue)">${accuracy}%</div><div class="r-stat-lbl">Accuracy</div></div>
       <div class="r-stat"><div class="r-stat-val" style="color:var(--text)">${attempted}</div><div class="r-stat-lbl">Attempted</div></div>
-      <div class="r-stat"><div class="r-stat-val" style="color:var(--text)">${correct + wrong + skipped}</div><div class="r-stat-lbl">Total Qs</div></div>
+      <div class="r-stat"><div class="r-stat-val" style="color:var(--text)">${correct+wrong+skipped}</div><div class="r-stat-lbl">Total Qs</div></div>
     </div>
-    ${myRank > 0 ? `
-    <div class="r-rank-bar">
-      <div class="r-rank-item"><div class="r-rank-val">#${myRank}</div><div class="r-rank-lbl">Your Rank</div></div>
-      <div class="r-rank-item"><div class="r-rank-val">${total}</div><div class="r-rank-lbl">Total Students</div></div>
-      <div class="r-rank-item"><div class="r-rank-val">${percentile}%</div><div class="r-rank-lbl">Percentile</div></div>
-    </div>` : ''}
-    <div class="sec-title">🏆 Leaderboard</div>
-    <div class="lb-card">
-      <div class="lb-header">Top Scorers — Registered + Guest dono</div>
-      ${lbHtml || '<div style="padding:16px;text-align:center;color:var(--text2);">Koi data nahi</div>'}
+    <!-- RESULT TABS -->
+    <div class="tabs" style="margin-bottom:16px;">
+      <button class="tab-btn active" id="rtab-lb" onclick="switchResultTab('lb')">🏆 Leaderboard</button>
+      <button class="tab-btn" id="rtab-subject" onclick="switchResultTab('subject')">📊 Subject</button>
+      <button class="tab-btn" id="rtab-analysis" onclick="switchResultTab('analysis')">🔍 Analysis</button>
     </div>
+    <div id="rtab-content-lb"><div class="loading-wrap"><div class="spinner"></div> Loading...</div></div>
+    <div id="rtab-content-subject" style="display:none;"><div class="loading-wrap"><div class="spinner"></div> Loading...</div></div>
+    <div id="rtab-content-analysis" style="display:none;"><div class="loading-wrap"><div class="spinner"></div> Loading...</div></div>
   `;
-
   document.getElementById('resultModal').classList.add('show');
+
+  // Fetch leaderboard + questions in parallel
+  const [lbRes, qRes] = await Promise.all([
+    sb.from('live_test_attempts')
+      .select('participant_name, score, is_registered, user_id')
+      .eq('live_test_id', attempt.live_test_id)
+      .not('submitted_at', 'is', null)
+      .order('score', { ascending: false }),
+    sb.from('live_test_questions')
+      .select('id, q_order, question_text, option_a, option_b, option_c, option_d, correct_answer, explanation, subject')
+      .eq('live_test_id', attempt.live_test_id)
+      .order('q_order', { ascending: true })
+  ]);
+
+  const lbData = lbRes.data || [];
+  const questions = qRes.data || [];
+
+  const myRank = lbData.findIndex(a =>
+    (currentUser && a.user_id === currentUser.id) ||
+    a.participant_name === attempt.participant_name
+  ) + 1;
+  const total = lbData.length;
+  const percentile = myRank > 0 && total > 0 ? Math.round(((total - myRank) / total) * 100) : 0;
+
+  // ── LEADERBOARD TAB ──
+  let lbHtml = '';
+  if (myRank > 0) {
+    lbHtml += `
+    <div class="r-rank-bar" style="margin-bottom:14px;">
+      <div class="r-rank-item"><div class="r-rank-val">#${myRank}</div><div class="r-rank-lbl">Your Rank</div></div>
+      <div class="r-rank-item"><div class="r-rank-val">${total}</div><div class="r-rank-lbl">Students</div></div>
+      <div class="r-rank-item"><div class="r-rank-val">${percentile}%</div><div class="r-rank-lbl">Percentile</div></div>
+    </div>`;
+  }
+  lbHtml += `<div class="lb-card"><div class="lb-header">🏆 Top Scorers — Registered + Guest</div>`;
+  lbData.slice(0, 15).forEach((entry, i) => {
+    const isMe = (currentUser && entry.user_id === currentUser.id) || entry.participant_name === attempt.participant_name;
+    const rankEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`;
+    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    const tag = entry.is_registered ? '' : `<span class="lb-badge">Guest</span>`;
+    lbHtml += `
+      <div class="lb-row ${isMe ? 'me' : ''}">
+        <div class="lb-rank ${rankClass}">${rankEmoji}</div>
+        <div class="lb-name">${entry.participant_name || 'Student'} ${isMe ? '<span style="color:var(--red2);font-size:0.68rem;">(You)</span>' : ''}</div>
+        ${tag}
+        <div class="lb-score">${(entry.score||0).toFixed(2)}</div>
+      </div>`;
+  });
+  lbHtml += `</div>`;
+  document.getElementById('rtab-content-lb').innerHTML = lbHtml;
+
+  // ── SUBJECT BREAKDOWN TAB ──
+  const subjectMap = {};
+  questions.forEach((q, idx) => {
+    const subj = q.subject || 'Other';
+    if (!subjectMap[subj]) subjectMap[subj] = { correct:0, wrong:0, skipped:0, total:0 };
+    subjectMap[subj].total++;
+    const studentAns = studentAnswers[String(idx)] || studentAnswers[String(q.q_order)] || '';
+    if (!studentAns) {
+      subjectMap[subj].skipped++;
+    } else if (studentAns.toUpperCase() === q.correct_answer.toUpperCase()) {
+      subjectMap[subj].correct++;
+    } else {
+      subjectMap[subj].wrong++;
+    }
+  });
+
+  let subjHtml = '<div class="sec-title" style="margin-top:0">📊 Subject-wise Performance</div>';
+  Object.entries(subjectMap).forEach(([subj, s]) => {
+    const acc = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
+    const barColor = acc >= 70 ? 'var(--green)' : acc >= 40 ? 'var(--accent)' : 'var(--red)';
+    subjHtml += `
+      <div class="weak-item" style="flex-direction:column;align-items:stretch;gap:8px;padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:0.88rem;font-weight:700;color:var(--text);">${subj}</div>
+          <div style="font-size:0.82rem;font-weight:800;color:${barColor}">${acc}%</div>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <span style="font-size:0.72rem;color:var(--green)">✅ ${s.correct}</span>
+          <span style="font-size:0.72rem;color:var(--red2)">❌ ${s.wrong}</span>
+          <span style="font-size:0.72rem;color:var(--text2)">⏭ ${s.skipped}</span>
+          <span style="font-size:0.72rem;color:var(--text2)">Total: ${s.total}</span>
+        </div>
+        <div style="height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;">
+          <div style="height:100%;width:${acc}%;background:${barColor};border-radius:3px;transition:width 0.6s;"></div>
+        </div>
+      </div>`;
+  });
+  if (Object.keys(subjectMap).length === 0) {
+    subjHtml += `<div class="empty"><div class="empty-icon">📊</div><div class="empty-msg">Subject data available nahi hai.</div></div>`;
+  }
+  document.getElementById('rtab-content-subject').innerHTML = subjHtml;
+
+  // ── ANALYSIS TAB ──
+  const filters = ['all','correct','wrong','skipped'];
+  let activeFilter = 'all';
+
+  function renderAnalysis(filter) {
+    activeFilter = filter;
+    let html = `
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">
+        ${['all','correct','wrong','skipped'].map(f => `
+          <button onclick="renderAnalysis('${f}')" style="
+            padding:6px 12px;border-radius:8px;border:1px solid;
+            background:${f===filter ? 'var(--red)' : 'transparent'};
+            color:${f===filter ? '#fff' : 'var(--text2)'};
+            border-color:${f===filter ? 'var(--red)' : 'var(--border)'};
+            font-size:0.75rem;font-weight:700;font-family:inherit;cursor:pointer;">
+            ${f==='all'?'All':f==='correct'?'✅ Correct':f==='wrong'?'❌ Wrong':'⏭ Skipped'}
+          </button>`).join('')}
+      </div>`;
+
+    questions.forEach((q, idx) => {
+      const studentAns = (studentAnswers[String(idx)] || studentAnswers[String(q.q_order)] || '').toUpperCase();
+      const correctAns = (q.correct_answer || '').toUpperCase();
+      const isSkipped = !studentAns;
+      const isCorrect = !isSkipped && studentAns === correctAns;
+      const isWrong = !isSkipped && !isCorrect;
+
+      if (filter === 'correct' && !isCorrect) return;
+      if (filter === 'wrong' && !isWrong) return;
+      if (filter === 'skipped' && !isSkipped) return;
+
+      const statusColor = isCorrect ? 'var(--green)' : isWrong ? 'var(--red2)' : 'var(--text2)';
+      const statusLabel = isCorrect ? '✅ Correct' : isWrong ? '❌ Wrong' : '⏭ Skipped';
+      const options = ['A','B','C','D'];
+
+      html += `
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:0.72rem;font-weight:700;color:var(--text2);">Q${idx+1} ${q.subject ? '· '+q.subject : ''}</span>
+            <span style="font-size:0.72rem;font-weight:700;color:${statusColor};">${statusLabel}</span>
+          </div>
+          <div style="font-size:0.85rem;color:var(--text);line-height:1.5;margin-bottom:10px;">${q.question_text}</div>
+          <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
+            ${options.map(opt => {
+              const optText = q['option_'+opt.toLowerCase()] || '';
+              if (!optText) return '';
+              const isCorrectOpt = opt === correctAns;
+              const isStudentOpt = opt === studentAns;
+              let bg = 'rgba(255,255,255,0.03)';
+              let borderCol = 'var(--border)';
+              let textCol = 'var(--text2)';
+              let icon = '';
+              if (isCorrectOpt) { bg='rgba(0,230,118,0.1)'; borderCol='rgba(0,230,118,0.3)'; textCol='var(--green)'; icon='✅ '; }
+              if (isStudentOpt && !isCorrectOpt) { bg='rgba(230,57,70,0.1)'; borderCol='rgba(230,57,70,0.3)'; textCol='var(--red2)'; icon='❌ '; }
+              return `<div style="background:${bg};border:1px solid ${borderCol};border-radius:8px;padding:8px 10px;font-size:0.78rem;color:${textCol};">
+                ${icon}<strong>${opt}.</strong> ${optText}
+                ${isStudentOpt && !isCorrectOpt ? '<span style="font-size:0.65rem;margin-left:4px;">(Your answer)</span>' : ''}
+                ${isCorrectOpt ? '<span style="font-size:0.65rem;margin-left:4px;">(Correct)</span>' : ''}
+              </div>`;
+            }).join('')}
+          </div>
+          ${q.explanation ? `
+          <div style="background:rgba(79,195,247,0.08);border:1px solid rgba(79,195,247,0.2);border-radius:8px;padding:10px;font-size:0.78rem;color:var(--blue);line-height:1.5;">
+            💡 <strong>Explanation:</strong> ${q.explanation}
+          </div>` : ''}
+        </div>`;
+    });
+
+    const noResults = questions.filter((_,idx) => {
+      const sa = (studentAnswers[String(idx)] || studentAnswers[String(questions[idx]?.q_order)] || '').toUpperCase();
+      const ca = (questions[idx]?.correct_answer || '').toUpperCase();
+      if (filter==='correct') return !sa || sa===ca ? (sa && sa===ca) : false;
+      if (filter==='wrong') return sa && sa!==ca;
+      if (filter==='skipped') return !sa;
+      return true;
+    }).length === 0;
+
+    if (questions.length === 0) {
+      html += `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-msg">Questions load nahi ho paye.</div></div>`;
+    }
+
+    document.getElementById('rtab-content-analysis').innerHTML = html;
+  }
+
+  // make renderAnalysis globally accessible for this modal session
+  window.renderAnalysis = renderAnalysis;
+  renderAnalysis('all');
+
+  document.getElementById('rtab-content-subject').style.display = 'none';
+  document.getElementById('rtab-content-analysis').style.display = 'none';
+}
+
+function switchResultTab(tab) {
+  ['lb','subject','analysis'].forEach(t => {
+    document.getElementById('rtab-content-'+t).style.display = t===tab ? 'block' : 'none';
+    const btn = document.getElementById('rtab-'+t);
+    if (btn) btn.classList.toggle('active', t===tab);
+  });
 }
 
 function closeResultModal() {
