@@ -443,6 +443,80 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* RESULT MODAL */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.8);
+  z-index: 200;
+  align-items: flex-end;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.show { display: flex; }
+.result-modal {
+  background: #13162a;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 24px 24px 0 0;
+  padding: 20px 16px 40px;
+  width: 100%; max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from { transform: translateY(60px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+.modal-handle {
+  width: 40px; height: 4px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+  margin: 0 auto 16px;
+}
+.modal-close {
+  position: absolute; right: 16px; top: 16px;
+  background: rgba(255,255,255,0.08);
+  border: none; color: var(--text2);
+  width: 32px; height: 32px;
+  border-radius: 50%; cursor: pointer;
+  font-size: 1rem; font-family: inherit;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-wrap { position: relative; }
+.result-score-big {
+  font-family: 'Syne', sans-serif;
+  font-size: 3rem; font-weight: 800;
+  color: var(--green); text-align: center;
+  line-height: 1;
+}
+.result-score-lbl { text-align: center; font-size: 0.8rem; color: var(--text2); margin-bottom: 20px; }
+.result-test-name {
+  text-align: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem; font-weight: 700;
+  color: var(--text); margin-bottom: 4px;
+}
+.r-stats-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 8px; margin-bottom: 20px;
+}
+.r-stat {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 8px;
+  text-align: center;
+}
+.r-stat-val { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; }
+.r-stat-lbl { font-size: 0.68rem; color: var(--text2); margin-top: 2px; }
+.r-rank-bar {
+  background: rgba(247,183,49,0.1);
+  border: 1px solid rgba(247,183,49,0.25);
+  border-radius: 12px; padding: 14px 16px;
+  display: flex; justify-content: space-around;
+  margin-bottom: 16px;
+}
+.r-rank-item { text-align: center; }
+.r-rank-val { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--accent); }
+.r-rank-lbl { font-size: 0.68rem; color: var(--text2); }
+
 /* PERSONAL BEST */
 .pb-card {
   background: linear-gradient(135deg, rgba(79,195,247,0.1), rgba(179,136,255,0.08));
@@ -578,7 +652,7 @@ function buildLiveCard(t, status) {
 
   if (status === 'live') {
     statusHtml = `<div class="live-status"><span class="live-dot"></span> LIVE NOW</div>`;
-    btnHtml = `<button class="attempt-btn" onclick="goToTest('${t.id}')">🚀 Test Do Abhi →</button>`;
+    btnHtml = `<button class="attempt-btn" onclick="goToTest('${t.code}')">🚀 Test Do Abhi →</button>`;
     iconClass = 'live-icon';
   } else if (status === 'upcoming') {
     statusHtml = `<div class="upcoming-status">⏰ Starts: ${startFmt}</div>`;
@@ -695,6 +769,9 @@ async function renderPastTests() {
             <div class="attempt-meta">Total participants</div>
           </div>
         </div>
+        <button class="attempt-btn" style="margin-top:10px;background:rgba(79,195,247,0.15);color:var(--blue);border:1px solid rgba(79,195,247,0.3);" onclick="openResultModal('${a.id}')">
+          📊 Result & Leaderboard Dekho
+        </button>
         ${lbHtml}
       </div>`;
   }
@@ -866,8 +943,8 @@ async function renderStats() {
 }
 
 // ── NAVIGATE TO TEST ──
-function goToTest(testId) {
-  window.location.href = `live_test.html?id=${testId}`;
+function goToTest(code) {
+  window.location.href = `live_test.html?code=${code}`;
 }
 
 // ── TAB SWITCH ──
@@ -878,8 +955,93 @@ function switchTab(tab) {
   event.target.classList.add('active');
 }
 
+// ── RESULT MODAL ──
+async function openResultModal(attemptId) {
+  const attempt = myAttempts.find(a => a.id === attemptId);
+  if (!attempt) return;
+
+  const testName = allTests.find(t => t.id === attempt.live_test_id)?.name || 'Live Test';
+  const score = attempt.score || 0;
+  const correct = attempt.correct || 0;
+  const wrong = attempt.wrong || 0;
+  const skipped = attempt.skipped || 0;
+  const attempted = correct + wrong;
+  const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
+  const dateFmt = new Date(attempt.submitted_at).toLocaleString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+  // Get leaderboard for this test
+  const { data: lb } = await sb.from('live_test_attempts')
+    .select('participant_name, score, is_registered, user_id')
+    .eq('live_test_id', attempt.live_test_id)
+    .not('submitted_at', 'is', null)
+    .order('score', { ascending: false });
+
+  const lbData = lb || [];
+  const myRank = lbData.findIndex(a =>
+    (currentUser && a.user_id === currentUser.id) ||
+    a.participant_name === attempt.participant_name
+  ) + 1;
+  const total = lbData.length;
+  const percentile = myRank > 0 && total > 0 ? Math.round(((total - myRank) / total) * 100) : 0;
+
+  let lbHtml = '';
+  lbData.slice(0, 10).forEach((entry, i) => {
+    const isMe = (currentUser && entry.user_id === currentUser.id) || entry.participant_name === attempt.participant_name;
+    const rankEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`;
+    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    const tag = entry.is_registered ? '' : `<span class="lb-badge">Guest</span>`;
+    lbHtml += `
+      <div class="lb-row ${isMe ? 'me' : ''}">
+        <div class="lb-rank ${rankClass}">${rankEmoji}</div>
+        <div class="lb-name">${entry.participant_name || 'Student'} ${isMe ? '<span style="color:var(--red2);font-size:0.68rem;">(You)</span>' : ''}</div>
+        ${tag}
+        <div class="lb-score">${(entry.score||0).toFixed(2)}</div>
+      </div>`;
+  });
+
+  const el = document.getElementById('resultModalContent');
+  el.innerHTML = `
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeResultModal()">✕</button>
+    <div class="result-test-name">${testName}</div>
+    <div style="text-align:center;font-size:0.72rem;color:var(--text2);margin-bottom:16px;">${dateFmt}</div>
+    <div class="result-score-big">${score.toFixed(2)}</div>
+    <div class="result-score-lbl">Total Score</div>
+    <div class="r-stats-grid">
+      <div class="r-stat"><div class="r-stat-val" style="color:var(--green)">${correct}</div><div class="r-stat-lbl">Correct</div></div>
+      <div class="r-stat"><div class="r-stat-val" style="color:var(--red2)">${wrong}</div><div class="r-stat-lbl">Wrong</div></div>
+      <div class="r-stat"><div class="r-stat-val" style="color:var(--text2)">${skipped}</div><div class="r-stat-lbl">Skipped</div></div>
+      <div class="r-stat"><div class="r-stat-val" style="color:var(--blue)">${accuracy}%</div><div class="r-stat-lbl">Accuracy</div></div>
+      <div class="r-stat"><div class="r-stat-val" style="color:var(--text)">${attempted}</div><div class="r-stat-lbl">Attempted</div></div>
+      <div class="r-stat"><div class="r-stat-val" style="color:var(--text)">${correct + wrong + skipped}</div><div class="r-stat-lbl">Total Qs</div></div>
+    </div>
+    ${myRank > 0 ? `
+    <div class="r-rank-bar">
+      <div class="r-rank-item"><div class="r-rank-val">#${myRank}</div><div class="r-rank-lbl">Your Rank</div></div>
+      <div class="r-rank-item"><div class="r-rank-val">${total}</div><div class="r-rank-lbl">Total Students</div></div>
+      <div class="r-rank-item"><div class="r-rank-val">${percentile}%</div><div class="r-rank-lbl">Percentile</div></div>
+    </div>` : ''}
+    <div class="sec-title">🏆 Leaderboard</div>
+    <div class="lb-card">
+      <div class="lb-header">Top Scorers — Registered + Guest dono</div>
+      ${lbHtml || '<div style="padding:16px;text-align:center;color:var(--text2);">Koi data nahi</div>'}
+    </div>
+  `;
+
+  document.getElementById('resultModal').classList.add('show');
+}
+
+function closeResultModal() {
+  document.getElementById('resultModal').classList.remove('show');
+}
+
 // ── START ──
 init();
 </script>
+<!-- RESULT MODAL -->
+<div class="modal-overlay" id="resultModal" onclick="if(event.target===this)closeResultModal()">
+  <div class="result-modal modal-wrap" id="resultModalContent"></div>
+</div>
+
 </body>
 </html>
