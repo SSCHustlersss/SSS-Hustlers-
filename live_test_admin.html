@@ -16,7 +16,7 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
 .admin-logo span{color:#111827;}
 .admin-badge{background:#0ea5e9;color:#fff;font-size:0.65rem;font-weight:800;padding:3px 10px;border-radius:50px;}
 
-.admin-main{max-width:900px;margin:0 auto;padding:24px 16px;}
+.admin-main{max-width:960px;margin:0 auto;padding:24px 16px;}
 .section-title{font-size:1rem;font-weight:800;color:#111827;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
 
 .card{background:#fff;border-radius:16px;border:1.5px solid #e0f2fe;padding:24px;margin-bottom:24px;box-shadow:0 2px 8px rgba(14,165,233,0.06);}
@@ -26,7 +26,7 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
 .form-group{display:flex;flex-direction:column;gap:6px;}
 .form-group.full{grid-column:1/-1;}
 label{font-size:0.78rem;font-weight:700;color:#475569;}
-input[type=text],input[type=datetime-local],input[type=number],select,textarea{
+input[type=text],input[type=datetime-local],input[type=number],input[type=password],select,textarea{
   width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid #bae6fd;
   font-size:0.85rem;font-family:inherit;outline:none;background:#fff;color:#111827;transition:border 0.2s;
 }
@@ -51,61 +51,122 @@ textarea{resize:vertical;min-height:70px;}
 .btn-primary{background:#0ea5e9;color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:0.88rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background 0.2s;width:100%;}
 .btn-primary:hover{background:#0284c7;}
 .btn-primary:disabled{background:#bae6fd;cursor:not-allowed;}
-.btn-sm{padding:6px 12px;border-radius:7px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;border:none;white-space:nowrap;}
+.btn-sm{padding:6px 12px;border-radius:7px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;border:none;white-space:nowrap;transition:all 0.15s;}
 .btn-green{background:#dcfce7;color:#15803d;}
+.btn-green:hover{background:#bbf7d0;}
 .btn-blue{background:#e0f2fe;color:#0284c7;}
+.btn-blue:hover{background:#bae6fd;}
 .btn-orange{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;}
+.btn-orange:hover{background:#fed7aa;}
 .btn-red{background:#fee2e2;color:#dc2626;}
+.btn-red:hover{background:#fecaca;}
 .btn-purple{background:#ede9fe;color:#6d28d9;}
+.btn-purple:hover{background:#ddd6fe;}
+.btn-yellow{background:#fef3c7;color:#b45309;}
+.btn-yellow:hover{background:#fde68a;}
+.btn-gray{background:#f1f5f9;color:#475569;}
+.btn-gray:hover{background:#e2e8f0;}
+.btn-teal{background:#ccfbf1;color:#0f766e;}
+.btn-teal:hover{background:#99f6e4;}
 
-.live-test-item{background:#fff;border:1.5px solid #e0f2fe;border-radius:12px;padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;transition:all 0.2s;}
+/* Live Test Items */
+.live-test-item{background:#fff;border:1.5px solid #e0f2fe;border-radius:12px;padding:16px;margin-bottom:10px;transition:all 0.2s;}
 .live-test-item:hover{border-color:#0ea5e9;box-shadow:0 2px 12px rgba(14,165,233,0.1);}
-.lt-status{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.lt-top{display:flex;align-items:flex-start;gap:12px;}
+.lt-status{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px;}
 .lt-status.live{background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,0.2);animation:livePulse 1.5s infinite;}
 @keyframes livePulse{0%,100%{box-shadow:0 0 0 3px rgba(22,163,74,0.2);}50%{box-shadow:0 0 0 6px rgba(22,163,74,0.1);}}
 .lt-status.upcoming{background:#f59e0b;}
 .lt-status.ended{background:#94a3b8;}
+.lt-status.archived{background:#cbd5e1;}
 .lt-info{flex:1;min-width:0;}
-.lt-name{font-size:0.9rem;font-weight:700;color:#111827;margin-bottom:3px;}
-.lt-meta{font-size:0.72rem;color:#64748b;}
-.lt-actions{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;}
+.lt-name{font-size:0.9rem;font-weight:700;color:#111827;margin-bottom:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.lt-meta{font-size:0.72rem;color:#64748b;line-height:1.6;}
+.lt-actions{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;margin-top:8px;}
 .lt-badge{font-size:0.65rem;font-weight:700;padding:3px 8px;border-radius:50px;}
 .lt-badge.live{background:#dcfce7;color:#15803d;}
 .lt-badge.upcoming{background:#fef3c7;color:#b45309;}
 .lt-badge.ended{background:#f1f5f9;color:#64748b;}
+.lt-badge.archived{background:#e2e8f0;color:#94a3b8;}
+.lt-badge.locked{background:#fce7f3;color:#be185d;}
+.lt-badge.recurring{background:#ede9fe;color:#6d28d9;}
 
-.monitor-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+/* Monitor */
+.monitor-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+@media(max-width:500px){.monitor-stats{grid-template-columns:repeat(2,1fr);}}
 .m-stat{background:#f0f9ff;border-radius:10px;padding:14px;text-align:center;border:1px solid #e0f2fe;}
 .m-stat-val{font-size:1.4rem;font-weight:800;color:#0ea5e9;}
 .m-stat-lbl{font-size:0.68rem;color:#64748b;font-weight:600;margin-top:2px;}
+.monitor-timer{background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.monitor-timer-text{font-size:0.82rem;font-weight:700;color:#c2410c;}
+.monitor-timer-val{font-size:1.1rem;font-weight:800;color:#ea580c;font-variant-numeric:tabular-nums;}
+.live-attempts-list{max-height:280px;overflow-y:auto;}
 
-/* ── EDIT TAB ── */
+/* Edit Tab */
 .edit-test-select{display:flex;gap:10px;margin-bottom:20px;align-items:center;}
 .edit-test-select select{flex:1;}
-
-/* Question list in edit */
-.q-edit-item{background:#fff;border:1.5px solid #e0f2fe;border-radius:12px;padding:14px 16px;margin-bottom:10px;transition:all 0.2s;}
+.q-edit-item{background:#fff;border:1.5px solid #e0f2fe;border-radius:12px;padding:14px 16px;margin-bottom:10px;transition:all 0.2s;cursor:grab;}
 .q-edit-item:hover{border-color:#0ea5e9;}
-.q-edit-header{display:flex;align-items:center;gap:10px;margin-bottom:0;}
+.q-edit-item.dragging{opacity:0.4;border-color:#0ea5e9;border-style:dashed;}
+.q-edit-item.drag-over{border-color:#16a34a;background:#f0fdf4;}
+.q-edit-header{display:flex;align-items:center;gap:10px;}
 .q-edit-num{background:#0ea5e9;color:#fff;font-size:0.72rem;font-weight:800;padding:2px 9px;border-radius:50px;flex-shrink:0;}
+.q-drag-handle{color:#94a3b8;font-size:1rem;cursor:grab;flex-shrink:0;user-select:none;}
 .q-edit-text{flex:1;font-size:0.82rem;font-weight:600;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.q-edit-ans{font-size:0.72rem;font-weight:700;color:#16a34a;flex-shrink:0;}
+.q-edit-diff{font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:50px;flex-shrink:0;}
+.q-edit-diff.easy{background:#dcfce7;color:#15803d;}
+.q-edit-diff.medium{background:#fef3c7;color:#b45309;}
+.q-edit-diff.hard{background:#fee2e2;color:#dc2626;}
 .ans-quick-select{border:1.5px solid #bae6fd;border-radius:7px;padding:4px 8px;font-size:0.78rem;font-weight:700;color:#0284c7;background:#f0f9ff;cursor:pointer;font-family:inherit;flex-shrink:0;transition:all 0.2s;}
 .ans-quick-select:hover{border-color:#0ea5e9;background:#e0f2fe;}
 .ans-quick-select:focus{outline:none;border-color:#0ea5e9;}
 .q-edit-img-badge{font-size:0.68rem;background:#fef3c7;color:#b45309;padding:2px 7px;border-radius:50px;flex-shrink:0;}
 .q-edit-actions{display:flex;gap:6px;flex-shrink:0;}
 
-/* Edit Modal */
+/* Bulk actions */
+.bulk-bar{background:#fff;border:1.5px solid #bae6fd;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.bulk-bar label{font-size:0.78rem;font-weight:600;color:#0284c7;cursor:pointer;display:flex;align-items:center;gap:5px;}
+.bulk-actions{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;}
+
+/* Search */
+.search-bar{display:flex;gap:8px;margin-bottom:14px;align-items:center;}
+.search-bar input{flex:1;padding:8px 12px;border-radius:9px;border:1.5px solid #bae6fd;font-size:0.82rem;font-family:inherit;outline:none;}
+.search-bar input:focus{border-color:#0ea5e9;}
+
+/* Analytics Tab */
+.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+@media(max-width:600px){.analytics-grid{grid-template-columns:1fr;}}
+.analytics-card{background:#fff;border:1.5px solid #e0f2fe;border-radius:14px;padding:18px;}
+.analytics-card .ac-title{font-size:0.82rem;font-weight:700;color:#475569;margin-bottom:12px;}
+.q-accuracy-bar{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:0.75rem;}
+.q-acc-label{width:28px;font-weight:700;color:#0284c7;flex-shrink:0;}
+.q-acc-track{flex:1;height:8px;background:#e0f2fe;border-radius:4px;overflow:hidden;}
+.q-acc-fill{height:100%;border-radius:4px;transition:width 0.5s;}
+.q-acc-pct{font-weight:700;font-size:0.72rem;min-width:32px;text-align:right;}
+.perf-badge{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;font-size:0.78rem;font-weight:700;}
+
+/* Modals */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;align-items:center;justify-content:center;padding:16px;}
 .modal-overlay.show{display:flex;}
 .modal-box{background:#fff;border-radius:20px;padding:28px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.15);}
+.modal-box.narrow{max-width:420px;}
 .modal-title{font-size:1rem;font-weight:800;color:#111827;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
 .modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:#64748b;line-height:1;}
 .modal-form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
 .modal-form-group label{font-size:0.78rem;font-weight:700;color:#475569;}
 .opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 @media(max-width:480px){.opt-grid{grid-template-columns:1fr;}}
+
+/* Extend time buttons */
+.extend-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.extend-btn{padding:8px 14px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;border:1.5px solid #bae6fd;background:#f0f9ff;color:#0284c7;font-family:inherit;transition:all 0.2s;}
+.extend-btn:hover{background:#0ea5e9;color:#fff;border-color:#0ea5e9;}
+
+/* Notification templates */
+.notif-template{background:#f8fafc;border:1.5px solid #e0f2fe;border-radius:10px;padding:14px;margin-bottom:10px;position:relative;}
+.notif-template-title{font-size:0.78rem;font-weight:700;color:#0284c7;margin-bottom:6px;}
+.notif-template-text{font-size:0.8rem;color:#374151;line-height:1.5;white-space:pre-wrap;}
+.notif-copy-btn{position:absolute;top:10px;right:10px;}
 
 /* Image upload in modal */
 .img-upload-area{border:2px dashed #bae6fd;border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:all 0.2s;background:#f0f9ff;position:relative;}
@@ -116,22 +177,50 @@ textarea{resize:vertical;min-height:70px;}
 .img-remove-btn{position:absolute;top:-6px;right:-6px;background:#dc2626;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;}
 .img-uploading{font-size:0.78rem;color:#0284c7;font-weight:600;margin-top:6px;}
 
-/* Add Q button */
-.add-q-bar{display:flex;justify-content:flex-end;margin-bottom:12px;}
+/* Tabs */
+.tabs{display:flex;border-bottom:2px solid #e0f2fe;margin-bottom:20px;overflow-x:auto;gap:0;}
+.tab-btn{padding:10px 16px;border:none;background:none;font-family:inherit;font-size:0.8rem;font-weight:700;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.2s;white-space:nowrap;}
+.tab-btn.active{color:#0ea5e9;border-bottom-color:#0ea5e9;}
 
-.toast{position:fixed;bottom:24px;right:24px;background:#111827;color:#fff;padding:12px 20px;border-radius:10px;font-size:0.82rem;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:all 0.3s;pointer-events:none;}
+/* Tags / chips */
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:50px;}
+.tag-blue{background:#e0f2fe;color:#0284c7;}
+.tag-green{background:#dcfce7;color:#15803d;}
+.tag-red{background:#fee2e2;color:#dc2626;}
+.tag-purple{background:#ede9fe;color:#6d28d9;}
+
+/* Toggle switch */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f9ff;}
+.toggle-label{font-size:0.82rem;font-weight:600;color:#374151;}
+.toggle-desc{font-size:0.72rem;color:#94a3b8;margin-top:2px;}
+.toggle{position:relative;width:42px;height:24px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:24px;transition:0.3s;}
+.toggle-slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;}
+.toggle input:checked+.toggle-slider{background:#0ea5e9;}
+.toggle input:checked+.toggle-slider:before{transform:translateX(18px);}
+
+/* Progress bars */
+.progress-bar{height:6px;background:#e0f2fe;border-radius:3px;overflow:hidden;margin-top:4px;}
+.progress-fill{height:100%;background:#0ea5e9;border-radius:3px;transition:width 0.4s;}
+
+/* Recurring badge */
+.recurring-info{background:#ede9fe;border:1px solid #ddd6fe;border-radius:8px;padding:10px 14px;font-size:0.78rem;color:#6d28d9;font-weight:600;margin-top:10px;}
+
+.toast{position:fixed;bottom:24px;right:24px;background:#111827;color:#fff;padding:12px 20px;border-radius:10px;font-size:0.82rem;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:all 0.3s;pointer-events:none;max-width:320px;}
 .toast.show{opacity:1;transform:translateY(0);}
 .toast.success{background:#15803d;}
 .toast.error{background:#dc2626;}
-
-.tabs{display:flex;border-bottom:2px solid #e0f2fe;margin-bottom:20px;overflow-x:auto;}
-.tab-btn{padding:10px 18px;border:none;background:none;font-family:inherit;font-size:0.82rem;font-weight:700;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.2s;white-space:nowrap;}
-.tab-btn.active{color:#0ea5e9;border-bottom-color:#0ea5e9;}
 
 .empty-state{text-align:center;padding:40px;color:#94a3b8;font-size:0.85rem;}
 .empty-state div{font-size:2rem;margin-bottom:8px;}
 .spinner{display:inline-block;width:18px;height:18px;border:3px solid #e0f2fe;border-top-color:#0ea5e9;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px;}
 @keyframes spin{to{transform:rotate(360deg);}}
+
+.divider{height:1px;background:#e0f2fe;margin:16px 0;}
+.info-row{display:flex;gap:6px;align-items:center;font-size:0.78rem;color:#64748b;padding:6px 0;}
+.info-row strong{color:#111827;}
+.confirm-box{background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:14px;margin-bottom:14px;font-size:0.82rem;color:#c2410c;font-weight:600;}
 </style>
 </head>
 <body>
@@ -144,12 +233,16 @@ textarea{resize:vertical;min-height:70px;}
 <div class="admin-main">
 
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('schedule',this)">📅 Schedule New Test</button>
-    <button class="tab-btn" onclick="switchTab('manage',this)">📋 Manage Tests</button>
-    <button class="tab-btn" onclick="switchTab('edit',this)">✏️ Edit Questions</button>
+    <button class="tab-btn active" onclick="switchTab('schedule',this)">📅 Schedule</button>
+    <button class="tab-btn" onclick="switchTab('manage',this)">📋 Manage</button>
+    <button class="tab-btn" onclick="switchTab('edit',this)">✏️ Questions</button>
+    <button class="tab-btn" onclick="switchTab('analytics',this)">📈 Analytics</button>
+    <button class="tab-btn" onclick="switchTab('notify',this)">📢 Notifications</button>
   </div>
 
-  <!-- ══ TAB: SCHEDULE ══ -->
+  <!-- ══════════════════════════════════════════
+       TAB: SCHEDULE
+  ══════════════════════════════════════════ -->
   <div id="tabSchedule">
     <div class="card">
       <div class="section-title">📝 Test Details</div>
@@ -197,6 +290,59 @@ textarea{resize:vertical;min-height:70px;}
           <textarea id="ltInstructions" placeholder="Students ke liye koi instructions..."></textarea>
         </div>
       </div>
+
+      <!-- Advanced Options -->
+      <div class="divider"></div>
+      <div class="section-title" style="margin-bottom:12px;">⚙️ Advanced Options</div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">🔁 Recurring Test</div>
+          <div class="toggle-desc">Test automatically repeat hoga</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="ltRecurring" onchange="toggleRecurring()"><span class="toggle-slider"></span></label>
+      </div>
+      <div id="recurringOptions" style="display:none;margin-top:12px;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Repeat Every</label>
+            <select id="ltRecurFreq">
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="custom">Custom days</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Repeat Count (0 = infinite)</label>
+            <input type="number" id="ltRecurCount" value="0" min="0" max="100">
+          </div>
+        </div>
+        <div class="recurring-info">⚠️ Recurring test mein same questions use honge. Har occurrence ka alag attempt record hoga.</div>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">🔒 Attempt Limit</div>
+          <div class="toggle-desc">Ek student ek baar hi de sake</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="ltAttemptLimit" checked><span class="toggle-slider"></span></label>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">🏆 Show Leaderboard</div>
+          <div class="toggle-desc">Test ke baad rank dikhao students ko</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="ltShowLeaderboard" checked><span class="toggle-slider"></span></label>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">📊 Show Explanation</div>
+          <div class="toggle-desc">Submit ke baad correct answers dikhao</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="ltShowExplanation" checked><span class="toggle-slider"></span></label>
+      </div>
     </div>
 
     <div class="card">
@@ -204,15 +350,14 @@ textarea{resize:vertical;min-height:70px;}
       <div class="file-drop" id="fileDrop" onclick="document.getElementById('fileInput').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
         <div class="file-drop-icon">📂</div>
         <div class="file-drop-text">Click karo ya Excel file drag karo</div>
-        <div class="file-drop-sub">Columns: question_text, option_a, option_b, option_c, option_d, correct_answer, explanation — Serial order maintain hoga</div>
+        <div class="file-drop-sub">Columns: question_text, option_a, option_b, option_c, option_d, correct_answer, explanation, difficulty (easy/medium/hard)</div>
       </div>
       <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
-
       <div id="previewSection" style="display:none;margin-top:16px;">
         <div class="preview-count" id="previewCount"></div>
         <div class="preview-wrap">
           <table class="preview-table">
-            <thead><tr><th>#</th><th>Question</th><th>A</th><th>B</th><th>C</th><th>D</th><th>Answer</th></tr></thead>
+            <thead><tr><th>#</th><th>Question</th><th>A</th><th>B</th><th>C</th><th>D</th><th>Ans</th><th>Diff</th></tr></thead>
             <tbody id="previewBody"></tbody>
           </table>
         </div>
@@ -222,21 +367,52 @@ textarea{resize:vertical;min-height:70px;}
     <button class="btn-primary" id="btnSchedule" onclick="scheduleTest()">🚀 Schedule Live Test</button>
   </div>
 
-  <!-- ══ TAB: MANAGE ══ -->
+  <!-- ══════════════════════════════════════════
+       TAB: MANAGE
+  ══════════════════════════════════════════ -->
   <div id="tabManage" style="display:none;">
-    <div class="card">
-      <div class="section-title">📋 All Live Tests</div>
+
+    <!-- Filter bar -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+      <select id="filterStatus" onchange="loadLiveTests()" style="padding:8px 12px;border-radius:9px;border:1.5px solid #bae6fd;font-size:0.82rem;font-family:inherit;outline:none;">
+        <option value="all">All Tests</option>
+        <option value="live">🔴 Live</option>
+        <option value="upcoming">⏰ Upcoming</option>
+        <option value="ended">✅ Ended</option>
+        <option value="archived">📦 Archived</option>
+      </select>
+      <button class="btn-sm btn-blue" onclick="loadLiveTests()">🔄 Refresh</button>
+    </div>
+
+    <div class="card" style="padding:16px 20px;">
       <div id="liveTestsList"><div class="empty-state"><div>📭</div>Loading...</div></div>
     </div>
+
+    <!-- Monitor Section -->
     <div id="monitorSection" style="display:none;">
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
           <div class="section-title" style="margin-bottom:0;" id="monitorTitle">📡 Live Monitor</div>
-          <button class="btn-sm btn-green" id="btnDownloadResults" onclick="downloadResultsExcel()" style="display:none;">⬇️ Results Download</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn-sm btn-green" id="btnDownloadResults" onclick="downloadResultsExcel()" style="display:none;">⬇️ Results</button>
+            <button class="btn-sm btn-red" id="btnForceEnd" onclick="forceEndTest()" style="display:none;">⛔ Force End</button>
+            <button class="btn-sm btn-gray" onclick="document.getElementById('monitorSection').style.display='none'">✕ Close</button>
+          </div>
         </div>
+
+        <!-- Timer -->
+        <div class="monitor-timer" id="monitorTimerBar" style="display:none;">
+          <span class="monitor-timer-text">⏱ Test ends in:</span>
+          <span class="monitor-timer-val" id="monitorTimerVal">--:--</span>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-sm btn-orange" onclick="showExtendModal()">⏰ Extend Time</button>
+          </div>
+        </div>
+
         <div class="monitor-stats">
           <div class="m-stat"><div class="m-stat-val" id="mTotal">0</div><div class="m-stat-lbl">Participants</div></div>
           <div class="m-stat"><div class="m-stat-val" id="mSubmitted">0</div><div class="m-stat-lbl">Submitted</div></div>
+          <div class="m-stat"><div class="m-stat-val" id="mLive">0</div><div class="m-stat-lbl">Attempting</div></div>
           <div class="m-stat"><div class="m-stat-val" id="mAvgScore">-</div><div class="m-stat-lbl">Avg Score</div></div>
         </div>
         <div id="monitorLeaderboard"></div>
@@ -244,7 +420,9 @@ textarea{resize:vertical;min-height:70px;}
     </div>
   </div>
 
-  <!-- ══ TAB: EDIT ══ -->
+  <!-- ══════════════════════════════════════════
+       TAB: EDIT QUESTIONS
+  ══════════════════════════════════════════ -->
   <div id="tabEdit" style="display:none;">
     <div class="card">
       <div class="section-title">✏️ Test Choose Karo</div>
@@ -258,38 +436,121 @@ textarea{resize:vertical;min-height:70px;}
 
     <div id="editQuestionsSection" style="display:none;">
       <div class="card" style="padding:16px 20px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
           <div class="section-title" style="margin-bottom:0;" id="editSectionTitle">Questions</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="btn-sm btn-green" onclick="downloadQuestionsExcel()">⬇️ Excel Download</button>
-            <button class="btn-sm btn-purple" onclick="openAddModal()">➕ Add Question</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn-sm btn-green" onclick="downloadQuestionsExcel()">⬇️ Excel</button>
+            <button class="btn-sm btn-teal" onclick="downloadTestPDF()">📄 PDF</button>
+            <button class="btn-sm btn-purple" onclick="openAddModal()">➕ Add Q</button>
           </div>
         </div>
+
+        <!-- Search -->
+        <div class="search-bar">
+          <input type="text" id="qSearchInput" placeholder="🔍 Question search karo..." oninput="filterQuestions()">
+          <select id="qFilterDiff" onchange="filterQuestions()" style="padding:8px 10px;border-radius:9px;border:1.5px solid #bae6fd;font-size:0.8rem;font-family:inherit;outline:none;">
+            <option value="all">All Difficulty</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+
+        <!-- Bulk actions -->
+        <div class="bulk-bar" id="bulkBar" style="display:none;">
+          <label><input type="checkbox" id="bulkSelectAll" onchange="toggleSelectAll()"> Select All</label>
+          <span id="bulkCount" style="font-size:0.78rem;color:#64748b;font-weight:600;"></span>
+          <div class="bulk-actions">
+            <select id="bulkAnsSelect" style="padding:5px 8px;border-radius:7px;border:1.5px solid #bae6fd;font-size:0.78rem;font-family:inherit;outline:none;">
+              <option value="">-- Bulk Answer --</option>
+              <option value="A">Set all → A</option>
+              <option value="B">Set all → B</option>
+              <option value="C">Set all → C</option>
+              <option value="D">Set all → D</option>
+            </select>
+            <button class="btn-sm btn-orange" onclick="applyBulkAnswer()">✅ Apply</button>
+            <button class="btn-sm btn-red" onclick="bulkDeleteQuestions()">🗑 Delete</button>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <label style="font-size:0.75rem;color:#64748b;display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" id="enableBulk" onchange="document.getElementById('bulkBar').style.display=this.checked?'flex':'none'">
+            Bulk Mode
+          </label>
+          <label style="font-size:0.75rem;color:#64748b;display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" id="enableReorder" onchange="toggleReorderMode()">
+            🔀 Reorder Mode
+          </label>
+        </div>
+
         <div id="editQList"></div>
       </div>
     </div>
   </div>
 
-</div>
+  <!-- ══════════════════════════════════════════
+       TAB: ANALYTICS
+  ══════════════════════════════════════════ -->
+  <div id="tabAnalytics" style="display:none;">
+    <div class="card">
+      <div class="section-title">📈 Test Analytics</div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap;">
+        <select id="analyticsTestSelect" onchange="loadAnalytics()" style="flex:1;padding:10px 14px;border-radius:10px;border:1.5px solid #bae6fd;font-size:0.85rem;font-family:inherit;outline:none;">
+          <option value="">-- Test select karo --</option>
+        </select>
+        <button class="btn-sm btn-blue" onclick="loadAnalyticsTestList()">🔄 Refresh</button>
+      </div>
+      <div id="analyticsContent"><div class="empty-state"><div>📊</div>Pehle test select karo</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TAB: NOTIFICATIONS
+  ══════════════════════════════════════════ -->
+  <div id="tabNotify" style="display:none;">
+    <div class="card">
+      <div class="section-title">📢 Notification Templates</div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:0.78rem;font-weight:700;color:#475569;">Test Select Karo</label>
+        <select id="notifyTestSelect" onchange="loadNotifyTemplates()" style="width:100%;margin-top:6px;padding:10px 14px;border-radius:10px;border:1.5px solid #bae6fd;font-size:0.85rem;font-family:inherit;outline:none;">
+          <option value="">-- Test select karo --</option>
+        </select>
+      </div>
+      <div id="notifyTemplates"><div class="empty-state"><div>📭</div>Test select karo templates dekhne ke liye</div></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">🏆 Post-Test Message</div>
+      <div class="form-group">
+        <label>Custom Message (results ke saath bhejo)</label>
+        <textarea id="postTestMsg" rows="4" placeholder="Congratulations! SSC Hustlers Level 11 test ka result aa gaya hai... 🔥"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button class="btn-sm btn-blue" onclick="copyPostMsg()">📋 Copy Message</button>
+        <button class="btn-sm btn-green" onclick="generateResultsLink()">🔗 Results Link</button>
+      </div>
+      <div id="generatedResultLink" style="display:none;margin-top:10px;"></div>
+    </div>
+  </div>
+
+</div><!-- admin-main end -->
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- ══ EDIT MODAL ══ -->
+<!-- ══ EDIT QUESTION MODAL ══ -->
 <div class="modal-overlay" id="editModal">
   <div class="modal-box">
     <div class="modal-title">
       <span id="modalTitleText">Question Edit Karo</span>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-
     <input type="hidden" id="modalQId">
-
     <div class="modal-form-group">
       <label>Question Text *</label>
       <textarea id="modalQText" rows="4" placeholder="Question likho (Hindi + English dono likh sakte ho)..."></textarea>
     </div>
-
     <div class="opt-grid">
       <div class="modal-form-group">
         <label>Option A *</label>
@@ -308,25 +569,31 @@ textarea{resize:vertical;min-height:70px;}
         <input type="text" id="modalOptD" placeholder="Option D">
       </div>
     </div>
-
-    <div class="modal-form-group">
-      <label>Correct Answer *</label>
-      <select id="modalCorrect">
-        <option value="A">A</option>
-        <option value="B">B</option>
-        <option value="C">C</option>
-        <option value="D">D</option>
-      </select>
+    <div class="opt-grid">
+      <div class="modal-form-group">
+        <label>Correct Answer *</label>
+        <select id="modalCorrect">
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="D">D</option>
+        </select>
+      </div>
+      <div class="modal-form-group">
+        <label>Difficulty</label>
+        <select id="modalDifficulty">
+          <option value="medium">Medium</option>
+          <option value="easy">Easy</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
     </div>
-
     <div class="modal-form-group">
       <label>Explanation (optional)</label>
       <textarea id="modalExplanation" rows="2" placeholder="Solution explanation..."></textarea>
     </div>
-
-    <!-- IMAGE UPLOAD -->
     <div class="modal-form-group">
-      <label>Question Image (optional) — Reasoning diagrams, figures, etc.</label>
+      <label>Question Image (optional)</label>
       <div class="img-upload-area" id="imgUploadArea" onclick="document.getElementById('modalImgInput').click()">
         <div style="font-size:1.8rem;margin-bottom:6px;">🖼️</div>
         <div style="font-size:0.82rem;font-weight:600;color:#0284c7;">Click karo image upload karne ke liye</div>
@@ -342,11 +609,114 @@ textarea{resize:vertical;min-height:70px;}
       </div>
       <input type="hidden" id="modalImgUrl">
     </div>
-
     <div style="display:flex;gap:10px;margin-top:8px;">
       <button class="btn-primary" style="flex:1;" onclick="saveQuestion()">💾 Save Question</button>
       <button class="btn-sm btn-red" style="padding:12px 18px;font-size:0.85rem;" id="modalDeleteBtn" onclick="deleteQuestion()">🗑 Delete</button>
     </div>
+  </div>
+</div>
+
+<!-- ══ EXTEND TIME MODAL ══ -->
+<div class="modal-overlay" id="extendModal">
+  <div class="modal-box narrow">
+    <div class="modal-title">
+      <span>⏰ Test Time Extend Karo</span>
+      <button class="modal-close" onclick="closeExtendModal()">✕</button>
+    </div>
+    <div style="font-size:0.82rem;color:#64748b;margin-bottom:14px;" id="extendCurrentTime"></div>
+    <div class="modal-form-group">
+      <label>Quick Extend</label>
+      <div class="extend-btns">
+        <button class="extend-btn" onclick="extendTime(15)">+15 min</button>
+        <button class="extend-btn" onclick="extendTime(30)">+30 min</button>
+        <button class="extend-btn" onclick="extendTime(45)">+45 min</button>
+        <button class="extend-btn" onclick="extendTime(60)">+1 hour</button>
+        <button class="extend-btn" onclick="extendTime(120)">+2 hours</button>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="modal-form-group">
+      <label>Custom End Time Set Karo</label>
+      <input type="datetime-local" id="extendCustomTime">
+    </div>
+    <button class="btn-primary" onclick="extendTimeCustom()">✅ Custom Time Set Karo</button>
+  </div>
+</div>
+
+<!-- ══ EDIT TEST DETAILS MODAL ══ -->
+<div class="modal-overlay" id="editTestModal">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span>✏️ Test Details Edit Karo</span>
+      <button class="modal-close" onclick="document.getElementById('editTestModal').classList.remove('show')">✕</button>
+    </div>
+    <input type="hidden" id="editTestId">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Test Name *</label>
+        <input type="text" id="editTestName">
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <select id="editTestSubject">
+          <option value="maths">🔢 Maths</option>
+          <option value="english">📖 English</option>
+          <option value="reasoning">🧠 Reasoning</option>
+          <option value="ga">🌍 General Awareness</option>
+          <option value="full_test">📋 Full Mock Test</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Start Time</label>
+        <input type="datetime-local" id="editTestStart">
+      </div>
+      <div class="form-group">
+        <label>End Time</label>
+        <input type="datetime-local" id="editTestEnd">
+      </div>
+      <div class="form-group">
+        <label>Duration (min)</label>
+        <input type="number" id="editTestDuration" min="5" max="180">
+      </div>
+      <div class="form-group">
+        <label>Positive Marking</label>
+        <input type="number" id="editTestPos" step="0.5" min="0">
+      </div>
+      <div class="form-group">
+        <label>Negative Marking</label>
+        <input type="number" id="editTestNeg" step="0.5" min="0">
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:8px;">
+      <label>Instructions</label>
+      <textarea id="editTestInstructions" rows="3"></textarea>
+    </div>
+    <button class="btn-primary" style="margin-top:14px;" onclick="saveTestDetails()">💾 Save Changes</button>
+  </div>
+</div>
+
+<!-- ══ DUPLICATE TEST MODAL ══ -->
+<div class="modal-overlay" id="duplicateModal">
+  <div class="modal-box narrow">
+    <div class="modal-title">
+      <span>📋 Test Duplicate Karo</span>
+      <button class="modal-close" onclick="document.getElementById('duplicateModal').classList.remove('show')">✕</button>
+    </div>
+    <input type="hidden" id="dupSourceId">
+    <div class="modal-form-group">
+      <label>New Test Name *</label>
+      <input type="text" id="dupTestName" placeholder="e.g. Maths Live Test #2">
+    </div>
+    <div class="modal-form-group">
+      <label>New Start Time *</label>
+      <input type="datetime-local" id="dupStartTime">
+    </div>
+    <div class="modal-form-group">
+      <label>New End Time *</label>
+      <input type="datetime-local" id="dupEndTime">
+    </div>
+    <div class="confirm-box">⚠️ Same questions copy honge. Duplicate ke baad questions edit kar sakte ho.</div>
+    <button class="btn-primary" id="btnDuplicate" onclick="duplicateTest()">📋 Duplicate Karo</button>
   </div>
 </div>
 
@@ -357,11 +727,19 @@ const STORAGE_BUCKET = 'question-images';
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-let parsedQuestions = [];
+let parsedQuestions  = [];
 let monitorInterval  = null;
+let timerInterval    = null;
 let currentEditTestId = null;
 let editQuestions    = [];
+let filteredQuestions = [];
 let isAddingNew      = false;
+let currentMonitorTestId   = null;
+let currentMonitorTestName = '';
+let currentMonitorTest     = null;
+let reorderMode      = false;
+let dragSrcId        = null;
+let selectedQIds     = new Set();
 
 // ══════════════════════════════════════════
 // TABS
@@ -369,65 +747,71 @@ let isAddingNew      = false;
 function switchTab(tab, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('tabSchedule').style.display = tab === 'schedule' ? 'block' : 'none';
-  document.getElementById('tabManage').style.display   = tab === 'manage'   ? 'block' : 'none';
-  document.getElementById('tabEdit').style.display     = tab === 'edit'     ? 'block' : 'none';
-  if (tab === 'manage') loadLiveTests();
-  if (tab === 'edit')   loadEditTestList();
+  ['Schedule','Manage','Edit','Analytics','Notify'].forEach(t =>
+    document.getElementById('tab'+t).style.display = (tab===t.toLowerCase()) ? 'block' : 'none'
+  );
+  if (tab==='manage')    loadLiveTests();
+  if (tab==='edit')      loadEditTestList();
+  if (tab==='analytics') loadAnalyticsTestList();
+  if (tab==='notify')    loadNotifyTestList();
 }
 
 // ══════════════════════════════════════════
-// EXCEL PARSE — Serial order strict
+// EXCEL PARSE
 // ══════════════════════════════════════════
-function dragOver(e) { e.preventDefault(); document.getElementById('fileDrop').classList.add('drag'); }
-function dragLeave()  { document.getElementById('fileDrop').classList.remove('drag'); }
-function dropFile(e)  { e.preventDefault(); dragLeave(); handleFile(e.dataTransfer.files[0]); }
+function dragOver(e){ e.preventDefault(); document.getElementById('fileDrop').classList.add('drag'); }
+function dragLeave(){ document.getElementById('fileDrop').classList.remove('drag'); }
+function dropFile(e){ e.preventDefault(); dragLeave(); handleFile(e.dataTransfer.files[0]); }
 
 function handleFile(file) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
-      const wb = XLSX.read(e.target.result, { type: 'binary' });
+      const wb = XLSX.read(e.target.result, {type:'binary'});
       const ws = wb.Sheets[wb.SheetNames[0]];
-      // raw:true keeps row order, header:1 gives array — use sheet_to_json for named cols
-      const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
-
-      // q_order = 1,2,3... strictly from Excel row position
-      parsedQuestions = rows.map((r, i) => ({
-        question_text:  String(r['question_text'] || r['Question'] || '').trim(),
-        option_a:       String(r['option_a'] || r['A'] || r['Option A'] || '').trim(),
-        option_b:       String(r['option_b'] || r['B'] || r['Option B'] || '').trim(),
-        option_c:       String(r['option_c'] || r['C'] || r['Option C'] || '').trim(),
-        option_d:       String(r['option_d'] || r['D'] || r['Option D'] || '').trim(),
-        correct_answer: String(r['correct_answer'] || r['ans'] || r['Answer'] || r['Correct'] || r['answer'] || '').trim().toUpperCase(),
-        explanation:    String(r['explanation'] || r['Explanation'] || '').trim(),
+      const rows = XLSX.utils.sheet_to_json(ws, {defval:'',raw:false});
+      parsedQuestions = rows.map((r,i) => ({
+        question_text:  String(r['question_text']||r['Question']||'').trim(),
+        option_a:       String(r['option_a']||r['A']||r['Option A']||'').trim(),
+        option_b:       String(r['option_b']||r['B']||r['Option B']||'').trim(),
+        option_c:       String(r['option_c']||r['C']||r['Option C']||'').trim(),
+        option_d:       String(r['option_d']||r['D']||r['Option D']||'').trim(),
+        correct_answer: String(r['correct_answer']||r['ans']||r['Answer']||r['answer']||'').trim().toUpperCase(),
+        explanation:    String(r['explanation']||r['Explanation']||'').trim(),
+        difficulty:     String(r['difficulty']||r['Difficulty']||'medium').trim().toLowerCase(),
         image_url:      '',
-        q_order:        i + 1   // strict serial from Excel position
-      })).filter(q => q.question_text);
-
-      if (parsedQuestions.length === 0) { showToast('Koi valid question nahi mila!', 'error'); return; }
-
+        q_order:        i+1
+      })).filter(q=>q.question_text);
+      if (!parsedQuestions.length){showToast('Koi valid question nahi mila!','error');return;}
       const drop = document.getElementById('fileDrop');
       drop.classList.add('file-selected');
       drop.querySelector('.file-drop-text').textContent = `✅ ${file.name}`;
-      drop.querySelector('.file-drop-sub').textContent  = `${parsedQuestions.length} questions — serial order maintain hoga`;
-
+      drop.querySelector('.file-drop-sub').textContent  = `${parsedQuestions.length} questions loaded`;
       document.getElementById('previewCount').textContent = `${parsedQuestions.length} questions (first 5 preview):`;
-      document.getElementById('previewBody').innerHTML = parsedQuestions.slice(0,5).map((q,i) => `
+      document.getElementById('previewBody').innerHTML = parsedQuestions.slice(0,5).map(q=>`
         <tr>
           <td><strong>${q.q_order}</strong></td>
-          <td title="${q.question_text}">${q.question_text.substring(0,55)}${q.question_text.length>55?'...':''}</td>
-          <td>${q.option_a.substring(0,18)}</td>
-          <td>${q.option_b.substring(0,18)}</td>
-          <td>${q.option_c.substring(0,18)}</td>
-          <td>${q.option_d.substring(0,18)}</td>
+          <td title="${q.question_text}">${q.question_text.substring(0,45)}${q.question_text.length>45?'...':''}</td>
+          <td>${q.option_a.substring(0,15)}</td>
+          <td>${q.option_b.substring(0,15)}</td>
+          <td>${q.option_c.substring(0,15)}</td>
+          <td>${q.option_d.substring(0,15)}</td>
           <td><strong>${q.correct_answer}</strong></td>
+          <td><span class="tag tag-${q.difficulty==='easy'?'green':q.difficulty==='hard'?'red':'blue'}">${q.difficulty}</span></td>
         </tr>`).join('');
-      document.getElementById('previewSection').style.display = 'block';
-    } catch(err) { showToast('File read error: ' + err.message, 'error'); }
+      document.getElementById('previewSection').style.display='block';
+    } catch(err){showToast('File read error: '+err.message,'error');}
   };
   reader.readAsBinaryString(file);
+}
+
+// ══════════════════════════════════════════
+// TOGGLE RECURRING
+// ══════════════════════════════════════════
+function toggleRecurring() {
+  document.getElementById('recurringOptions').style.display =
+    document.getElementById('ltRecurring').checked ? 'block' : 'none';
 }
 
 // ══════════════════════════════════════════
@@ -438,91 +822,131 @@ async function scheduleTest() {
   const subj  = document.getElementById('ltSubject').value;
   const start = document.getElementById('ltStart').value;
   const end   = document.getElementById('ltEnd').value;
-  const dur   = parseInt(document.getElementById('ltDuration').value) || 20;
-  const pos   = parseFloat(document.getElementById('ltPos').value) || 2;
-  const neg   = parseFloat(document.getElementById('ltNeg').value) || 0.5;
+  const dur   = parseInt(document.getElementById('ltDuration').value)||20;
+  const pos   = parseFloat(document.getElementById('ltPos').value)||2;
+  const neg   = parseFloat(document.getElementById('ltNeg').value)||0.5;
   const inst  = document.getElementById('ltInstructions').value.trim();
+  const isRecurring = document.getElementById('ltRecurring').checked;
+  const recurFreq   = document.getElementById('ltRecurFreq').value;
+  const recurCount  = parseInt(document.getElementById('ltRecurCount').value)||0;
+  const attemptLimit   = document.getElementById('ltAttemptLimit').checked;
+  const showLeaderboard= document.getElementById('ltShowLeaderboard').checked;
+  const showExplanation= document.getElementById('ltShowExplanation').checked;
 
-  if (!name)  { showToast('Test name daalo!', 'error'); return; }
-  if (!start) { showToast('Start time daalo!', 'error'); return; }
-  if (!end)   { showToast('End time daalo!', 'error'); return; }
-  if (parsedQuestions.length === 0) { showToast('Excel file upload karo!', 'error'); return; }
-  if (new Date(end) <= new Date(start)) { showToast('End time start se baad hona chahiye!', 'error'); return; }
+  if (!name){showToast('Test name daalo!','error');return;}
+  if (!start){showToast('Start time daalo!','error');return;}
+  if (!end){showToast('End time daalo!','error');return;}
+  if (!parsedQuestions.length){showToast('Excel file upload karo!','error');return;}
+  if (new Date(end)<=new Date(start)){showToast('End time start se baad hona chahiye!','error');return;}
 
   const btn = document.getElementById('btnSchedule');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Scheduling...';
-
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Scheduling...';
   try {
-    const code = name.toLowerCase().replace(/[^a-z0-9]/g,'_') + '_' + Date.now();
-
-    const { data: lt, error: ltErr } = await sb.from('live_tests').insert({
-      name, subject: subj,
+    const code = name.toLowerCase().replace(/[^a-z0-9]/g,'_')+'_'+Date.now();
+    const {data:lt, error:ltErr} = await sb.from('live_tests').insert({
+      name, subject:subj,
       start_time: new Date(start).toISOString(),
       end_time:   new Date(end).toISOString(),
-      duration_minutes: dur, positive_marking: pos, negative_marking: neg,
-      instructions: inst, code, status: 'scheduled',
-      total_questions: parsedQuestions.length
+      duration_minutes:dur, positive_marking:pos, negative_marking:neg,
+      instructions:inst, code, status:'scheduled',
+      total_questions:parsedQuestions.length,
+      is_recurring:isRecurring, recur_freq:recurFreq, recur_count:recurCount,
+      attempt_limit:attemptLimit, show_leaderboard:showLeaderboard, show_explanation:showExplanation
     }).select('id').single();
     if (ltErr) throw ltErr;
 
-    // Insert questions with strict q_order from Excel
-    const chunkSize = 50;
-    const qRows = parsedQuestions.map(q => ({ ...q, live_test_id: lt.id }));
-    for (let i = 0; i < qRows.length; i += chunkSize) {
-      const { error: qErr } = await sb.from('live_test_questions').insert(qRows.slice(i, i+chunkSize));
+    const chunkSize=50;
+    const qRows = parsedQuestions.map(q=>({...q,live_test_id:lt.id}));
+    for (let i=0;i<qRows.length;i+=chunkSize){
+      const {error:qErr}=await sb.from('live_test_questions').insert(qRows.slice(i,i+chunkSize));
       if (qErr) throw qErr;
     }
-
     const link = `${window.location.href.replace('live_test_admin.html','')}live_test.html?code=${code}`;
-    document.getElementById('ltLink').value = link;
+    document.getElementById('ltLink').value=link;
     navigator.clipboard.writeText(link).catch(()=>{});
-    showToast('✅ Scheduled! Link copy ho gaya!', 'success');
-    btn.disabled = false; btn.innerHTML = '🚀 Schedule Live Test';
-  } catch(err) {
-    showToast('Error: ' + err.message, 'error');
-    btn.disabled = false; btn.innerHTML = '🚀 Schedule Live Test';
+    showToast('✅ Scheduled! Link copy ho gaya!','success');
+    btn.disabled=false; btn.innerHTML='🚀 Schedule Live Test';
+  } catch(err){
+    showToast('Error: '+err.message,'error');
+    btn.disabled=false; btn.innerHTML='🚀 Schedule Live Test';
   }
 }
 
 // ══════════════════════════════════════════
-// MANAGE TAB
+// LOAD LIVE TESTS (MANAGE TAB)
 // ══════════════════════════════════════════
 async function loadLiveTests() {
   const el = document.getElementById('liveTestsList');
-  el.innerHTML = '<div class="empty-state"><span class="spinner"></span> Loading...</div>';
+  el.innerHTML='<div class="empty-state"><span class="spinner"></span> Loading...</div>';
+  const filterVal = document.getElementById('filterStatus').value;
+  let query = sb.from('live_tests').select('*').order('start_time',{ascending:false}).limit(50);
+  if (filterVal==='archived') query=query.eq('is_archived',true);
+  else if (filterVal!=='all') query=query.eq('is_archived',false);
+  else query=query.eq('is_archived',false);
 
-  const { data, error } = await sb.from('live_tests').select('*').order('start_time',{ascending:false}).limit(30);
-  if (error || !data || data.length===0) { el.innerHTML='<div class="empty-state"><div>📭</div>Koi live test nahi hai.</div>'; return; }
+  const {data,error}=await query;
+  if (error||!data||!data.length){el.innerHTML='<div class="empty-state"><div>📭</div>Koi live test nahi hai.</div>';return;}
 
-  const now = new Date();
-  el.innerHTML = data.map(lt => {
-    const start = new Date(lt.start_time), end = new Date(lt.end_time);
-    const isLive = now>=start && now<=end, isUp = now<start;
-    const st = isLive?'live':isUp?'upcoming':'ended';
-    const sl = isLive?'🔴 LIVE':isUp?'⏰ Upcoming':'✅ Ended';
-    const link = `${window.location.href.replace('live_test_admin.html','')}live_test.html?code=${lt.code}`;
+  const now=new Date();
+  let filtered = data;
+  if (filterVal==='live') filtered=data.filter(lt=>now>=new Date(lt.start_time)&&now<=new Date(lt.end_time));
+  else if (filterVal==='upcoming') filtered=data.filter(lt=>now<new Date(lt.start_time));
+  else if (filterVal==='ended') filtered=data.filter(lt=>now>new Date(lt.end_time)&&!lt.is_archived);
+
+  if (!filtered.length){el.innerHTML='<div class="empty-state"><div>📭</div>Is category mein koi test nahi.</div>';return;}
+
+  el.innerHTML = filtered.map(lt=>{
+    const start=new Date(lt.start_time),end=new Date(lt.end_time);
+    const isLive=now>=start&&now<=end, isUp=now<start;
+    const st = lt.is_archived?'archived':isLive?'live':isUp?'upcoming':'ended';
+    const sl = lt.is_archived?'📦 Archived':isLive?'🔴 LIVE':isUp?'⏰ Upcoming':'✅ Ended';
+    const link=`${window.location.href.replace('live_test_admin.html','')}live_test.html?code=${lt.code}`;
     return `<div class="live-test-item">
-      <div class="lt-status ${st}"></div>
-      <div class="lt-info">
-        <div class="lt-name">${lt.name} <span class="lt-badge ${st}">${sl}</span></div>
-        <div class="lt-meta">📅 ${start.toLocaleDateString('en-IN')} ${start.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})} → ${end.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})} &nbsp;|&nbsp; ❓ ${lt.total_questions} Qs &nbsp;|&nbsp; ⏱ ${lt.duration_minutes} min</div>
+      <div class="lt-top">
+        <div class="lt-status ${st}" style="margin-top:5px;"></div>
+        <div class="lt-info">
+          <div class="lt-name">
+            ${lt.name}
+            <span class="lt-badge ${st}">${sl}</span>
+            ${lt.is_recurring?'<span class="lt-badge recurring">🔁 Recurring</span>':''}
+          </div>
+          <div class="lt-meta">
+            📅 ${start.toLocaleDateString('en-IN')} ${start.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})} → ${end.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}
+            &nbsp;|&nbsp; ❓ ${lt.total_questions} Qs &nbsp;|&nbsp; ⏱ ${lt.duration_minutes} min
+            &nbsp;|&nbsp; ✅ +${lt.positive_marking} / ❌ -${lt.negative_marking}
+          </div>
+        </div>
       </div>
       <div class="lt-actions">
         <button class="btn-sm btn-blue" onclick="copyLink('${link}')">🔗 Link</button>
         ${isLive||st==='ended'?`<button class="btn-sm btn-green" onclick="monitorTest('${lt.id}','${lt.name}')">📡 Monitor</button>`:''}
+        <button class="btn-sm btn-orange" onclick="openEditTestModal('${lt.id}')">✏️ Edit</button>
+        ${isLive?`<button class="btn-sm btn-yellow" onclick="showExtendModalFor('${lt.id}','${lt.end_time}')">⏰ Extend</button>`:''}
+        <button class="btn-sm btn-purple" onclick="openDuplicateModal('${lt.id}','${lt.name}')">📋 Duplicate</button>
+        ${!lt.is_archived?`<button class="btn-sm btn-gray" onclick="archiveTest('${lt.id}')">📦 Archive</button>`:`<button class="btn-sm btn-gray" onclick="restoreTest('${lt.id}')">♻️ Restore</button>`}
         <button class="btn-sm btn-red" onclick="deleteTest('${lt.id}')">🗑</button>
       </div>
     </div>`;
   }).join('');
 }
 
-function copyLink(link) {
+function copyLink(link){
   navigator.clipboard.writeText(link).then(()=>showToast('Link copied!','success')).catch(()=>prompt('Copy karo:',link));
 }
 
-async function deleteTest(id) {
-  if (!confirm('Ye test delete karna chahte ho? Saare questions aur attempts bhi delete honge.')) return;
+async function archiveTest(id){
+  if (!confirm('Ye test archive karna chahte ho? Manage tab se restore bhi kar sakte ho.')) return;
+  await sb.from('live_tests').update({is_archived:true}).eq('id',id);
+  showToast('Test archived!','success');
+  loadLiveTests();
+}
+async function restoreTest(id){
+  await sb.from('live_tests').update({is_archived:false}).eq('id',id);
+  showToast('Test restored!','success');
+  loadLiveTests();
+}
+async function deleteTest(id){
+  if (!confirm('Ye test permanently delete karna chahte ho? Saare questions aur attempts bhi delete honge.')) return;
   await sb.from('live_test_attempts').delete().eq('live_test_id',id);
   await sb.from('live_test_questions').delete().eq('live_test_id',id);
   await sb.from('live_tests').delete().eq('id',id);
@@ -530,137 +954,538 @@ async function deleteTest(id) {
   loadLiveTests();
 }
 
-async function monitorTest(id, name) {
-  currentMonitorTestId   = id;
-  currentMonitorTestName = name;
+// ══════════════════════════════════════════
+// EDIT TEST DETAILS MODAL
+// ══════════════════════════════════════════
+async function openEditTestModal(id){
+  const {data,error}=await sb.from('live_tests').select('*').eq('id',id).single();
+  if (error||!data){showToast('Load failed!','error');return;}
+  document.getElementById('editTestId').value=id;
+  document.getElementById('editTestName').value=data.name||'';
+  document.getElementById('editTestSubject').value=data.subject||'maths';
+  document.getElementById('editTestStart').value=data.start_time?new Date(data.start_time).toISOString().slice(0,16):'';
+  document.getElementById('editTestEnd').value=data.end_time?new Date(data.end_time).toISOString().slice(0,16):'';
+  document.getElementById('editTestDuration').value=data.duration_minutes||20;
+  document.getElementById('editTestPos').value=data.positive_marking||2;
+  document.getElementById('editTestNeg').value=data.negative_marking||0.5;
+  document.getElementById('editTestInstructions').value=data.instructions||'';
+  document.getElementById('editTestModal').classList.add('show');
+}
+
+async function saveTestDetails(){
+  const id=document.getElementById('editTestId').value;
+  const name=document.getElementById('editTestName').value.trim();
+  const start=document.getElementById('editTestStart').value;
+  const end=document.getElementById('editTestEnd').value;
+  if (!name){showToast('Name daalo!','error');return;}
+  const {error}=await sb.from('live_tests').update({
+    name,
+    subject: document.getElementById('editTestSubject').value,
+    start_time: start?new Date(start).toISOString():undefined,
+    end_time: end?new Date(end).toISOString():undefined,
+    duration_minutes: parseInt(document.getElementById('editTestDuration').value)||20,
+    positive_marking: parseFloat(document.getElementById('editTestPos').value)||2,
+    negative_marking: parseFloat(document.getElementById('editTestNeg').value)||0.5,
+    instructions: document.getElementById('editTestInstructions').value.trim()
+  }).eq('id',id);
+  if (error){showToast('Save failed: '+error.message,'error');return;}
+  showToast('✅ Test details save ho gaye!','success');
+  document.getElementById('editTestModal').classList.remove('show');
+  loadLiveTests();
+}
+
+// ══════════════════════════════════════════
+// DUPLICATE TEST
+// ══════════════════════════════════════════
+function openDuplicateModal(id, name){
+  document.getElementById('dupSourceId').value=id;
+  document.getElementById('dupTestName').value=name+' (Copy)';
+  const _now=new Date();_now.setMinutes(_now.getMinutes()+30);
+  document.getElementById('dupStartTime').value=_now.toISOString().slice(0,16);
+  _now.setMinutes(_now.getMinutes()+60);
+  document.getElementById('dupEndTime').value=_now.toISOString().slice(0,16);
+  document.getElementById('duplicateModal').classList.add('show');
+}
+
+async function duplicateTest(){
+  const srcId=document.getElementById('dupSourceId').value;
+  const name=document.getElementById('dupTestName').value.trim();
+  const start=document.getElementById('dupStartTime').value;
+  const end=document.getElementById('dupEndTime').value;
+  if (!name||!start||!end){showToast('Saari fields bharo!','error');return;}
+  if (new Date(end)<=new Date(start)){showToast('End time start se baad hona chahiye!','error');return;}
+
+  const btn=document.getElementById('btnDuplicate');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Copying...';
+
+  try {
+    // Get source test
+    const {data:src}=await sb.from('live_tests').select('*').eq('id',srcId).single();
+    if (!src) throw new Error('Source test nahi mila');
+    const code=name.toLowerCase().replace(/[^a-z0-9]/g,'_')+'_'+Date.now();
+    const {data:newTest,error:tErr}=await sb.from('live_tests').insert({
+      ...src, id:undefined, name, code,
+      start_time:new Date(start).toISOString(),
+      end_time:new Date(end).toISOString(),
+      status:'scheduled', created_at:undefined
+    }).select('id').single();
+    if (tErr) throw tErr;
+
+    // Copy questions
+    const {data:qs}=await sb.from('live_test_questions').select('*').eq('live_test_id',srcId).order('q_order');
+    if (qs&&qs.length){
+      const newQs=qs.map(q=>({...q,id:undefined,live_test_id:newTest.id,created_at:undefined}));
+      const chunkSize=50;
+      for (let i=0;i<newQs.length;i+=chunkSize){
+        await sb.from('live_test_questions').insert(newQs.slice(i,i+chunkSize));
+      }
+    }
+    showToast('✅ Test duplicate ho gaya!','success');
+    document.getElementById('duplicateModal').classList.remove('show');
+    loadLiveTests();
+  } catch(err){showToast('Duplicate failed: '+err.message,'error');}
+  btn.disabled=false;btn.innerHTML='📋 Duplicate Karo';
+}
+
+// ══════════════════════════════════════════
+// EXTEND TIME
+// ══════════════════════════════════════════
+let extendTargetId=null;
+let extendCurrentEndTime=null;
+
+function showExtendModal(){
+  if (!currentMonitorTest) return;
+  extendTargetId=currentMonitorTest.id;
+  extendCurrentEndTime=new Date(currentMonitorTest.end_time);
+  _showExtendModal();
+}
+function showExtendModalFor(id, endTime){
+  extendTargetId=id;
+  extendCurrentEndTime=new Date(endTime);
+  _showExtendModal();
+}
+function _showExtendModal(){
+  document.getElementById('extendCurrentTime').textContent=
+    `Current end time: ${extendCurrentEndTime.toLocaleDateString('en-IN')} ${extendCurrentEndTime.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}`;
+  const customInput=document.getElementById('extendCustomTime');
+  customInput.value=extendCurrentEndTime.toISOString().slice(0,16);
+  document.getElementById('extendModal').classList.add('show');
+}
+function closeExtendModal(){document.getElementById('extendModal').classList.remove('show');}
+
+async function extendTime(mins){
+  const newEnd=new Date(extendCurrentEndTime.getTime()+mins*60000);
+  await _applyExtend(newEnd);
+}
+async function extendTimeCustom(){
+  const val=document.getElementById('extendCustomTime').value;
+  if (!val){showToast('Time select karo!','error');return;}
+  const newEnd=new Date(val);
+  if (newEnd<=new Date()){showToast('Future time daalo!','error');return;}
+  await _applyExtend(newEnd);
+}
+async function _applyExtend(newEnd){
+  const {error}=await sb.from('live_tests').update({end_time:newEnd.toISOString()}).eq('id',extendTargetId);
+  if (error){showToast('Extend failed: '+error.message,'error');return;}
+  extendCurrentEndTime=newEnd;
+  if (currentMonitorTest&&currentMonitorTest.id===extendTargetId) currentMonitorTest.end_time=newEnd.toISOString();
+  showToast(`✅ Test ${Math.round((newEnd-new Date())/60000)} min extended!`,'success');
+  closeExtendModal();
+  loadLiveTests();
+}
+
+// ══════════════════════════════════════════
+// FORCE END TEST
+// ══════════════════════════════════════════
+async function forceEndTest(){
+  if (!currentMonitorTestId) return;
+  if (!confirm('Test abhi band karna chahte ho? Sab students ka time khatam ho jayega.')) return;
+  const now=new Date();
+  now.setSeconds(now.getSeconds()-1);
+  await sb.from('live_tests').update({end_time:now.toISOString()}).eq('id',currentMonitorTestId);
+  showToast('⛔ Test force ended!','success');
+  loadLiveTests();
+}
+
+// ══════════════════════════════════════════
+// MONITOR
+// ══════════════════════════════════════════
+async function monitorTest(id,name){
+  currentMonitorTestId=id;
+  currentMonitorTestName=name;
+  const {data}=await sb.from('live_tests').select('*').eq('id',id).single();
+  currentMonitorTest=data;
+
   document.getElementById('monitorSection').style.display='block';
   document.getElementById('monitorTitle').textContent=`📡 Monitor: ${name}`;
   document.getElementById('btnDownloadResults').style.display='inline-flex';
+
+  const now=new Date();
+  const isLive=data&&now>=new Date(data.start_time)&&now<=new Date(data.end_time);
+  document.getElementById('btnForceEnd').style.display=isLive?'inline-flex':'none';
+  document.getElementById('monitorTimerBar').style.display=isLive?'flex':'none';
+
   document.getElementById('monitorSection').scrollIntoView({behavior:'smooth'});
   if (monitorInterval) clearInterval(monitorInterval);
+  if (timerInterval) clearInterval(timerInterval);
   await refreshMonitor(id);
-  monitorInterval = setInterval(()=>refreshMonitor(id), 10000);
+  monitorInterval=setInterval(()=>refreshMonitor(id),10000);
+  if (isLive) startCountdownTimer();
 }
 
-async function refreshMonitor(id) {
-  const {data} = await sb.from('live_test_attempts').select('participant_name,score,submitted_at,correct,wrong,skipped').eq('live_test_id',id).order('score',{ascending:false});
+function startCountdownTimer(){
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    if (!currentMonitorTest) return;
+    const diff=new Date(currentMonitorTest.end_time)-new Date();
+    if (diff<=0){
+      document.getElementById('monitorTimerVal').textContent='00:00';
+      clearInterval(timerInterval);
+      document.getElementById('monitorTimerBar').style.display='none';
+      return;
+    }
+    const hrs=Math.floor(diff/3600000);
+    const mins=Math.floor((diff%3600000)/60000);
+    const secs=Math.floor((diff%60000)/1000);
+    document.getElementById('monitorTimerVal').textContent=
+      hrs>0?`${hrs}h ${String(mins).padStart(2,'0')}m`:`${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+  },1000);
+}
+
+async function refreshMonitor(id){
+  const {data}=await sb.from('live_test_attempts')
+    .select('participant_name,score,submitted_at,correct,wrong,skipped,created_at')
+    .eq('live_test_id',id).order('score',{ascending:false});
   if (!data) return;
-  const sub = data.filter(d=>d.submitted_at);
-  const avg = sub.length>0?(sub.reduce((a,b)=>a+b.score,0)/sub.length).toFixed(1):'-';
+  const sub=data.filter(d=>d.submitted_at);
+  const attempting=data.filter(d=>!d.submitted_at);
+  const avg=sub.length>0?(sub.reduce((a,b)=>a+b.score,0)/sub.length).toFixed(1):'-';
   document.getElementById('mTotal').textContent=data.length;
   document.getElementById('mSubmitted').textContent=sub.length;
+  document.getElementById('mLive').textContent=attempting.length;
   document.getElementById('mAvgScore').textContent=avg;
+
   const lb=document.getElementById('monitorLeaderboard');
-  if (sub.length===0){lb.innerHTML='<div style="text-align:center;padding:20px;color:#94a3b8;font-size:0.82rem;">Abhi kisi ne submit nahi kiya</div>';return;}
-  lb.innerHTML=`<table class="preview-table"><thead><tr><th>#</th><th>Name</th><th>Score</th><th>Correct</th><th>Wrong</th><th>Skipped</th><th>Time</th></tr></thead><tbody>${sub.map((s,i)=>`<tr><td>${i+1}</td><td><strong>${s.participant_name}</strong></td><td style="color:#0ea5e9;font-weight:800;">${s.score}</td><td style="color:#16a34a;">${s.correct}</td><td style="color:#dc2626;">${s.wrong}</td><td style="color:#64748b;">${s.skipped}</td><td>${s.submitted_at?new Date(s.submitted_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'-'}</td></tr>`).join('')}</tbody></table>`;
+  if (!sub.length){
+    lb.innerHTML='<div style="text-align:center;padding:20px;color:#94a3b8;font-size:0.82rem;">Abhi kisi ne submit nahi kiya</div>';
+    return;
+  }
+  lb.innerHTML=`<div class="preview-wrap"><table class="preview-table">
+    <thead><tr><th>#</th><th>Name</th><th>Score</th><th>✅</th><th>❌</th><th>⏭</th><th>Time</th></tr></thead>
+    <tbody>${sub.map((s,i)=>`<tr>
+      <td><strong>${i+1}</strong>${i===0?' 🥇':i===1?' 🥈':i===2?' 🥉':''}</td>
+      <td><strong>${s.participant_name}</strong></td>
+      <td style="color:#0ea5e9;font-weight:800;">${s.score}</td>
+      <td style="color:#16a34a;">${s.correct}</td>
+      <td style="color:#dc2626;">${s.wrong}</td>
+      <td style="color:#64748b;">${s.skipped}</td>
+      <td>${s.submitted_at?new Date(s.submitted_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'-'}</td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+// ══════════════════════════════════════════
+// DOWNLOAD RESULTS EXCEL
+// ══════════════════════════════════════════
+async function downloadResultsExcel(){
+  if (!currentMonitorTestId){showToast('Pehle koi test monitor karo!','error');return;}
+  showToast('Results Excel ban raha hai...','');
+  const {data,error}=await sb.from('live_test_attempts')
+    .select('participant_name,score,correct,wrong,skipped,submitted_at')
+    .eq('live_test_id',currentMonitorTestId).order('score',{ascending:false});
+  if (error||!data||!data.length){showToast('Koi results nahi mila!','error');return;}
+  const submitted=data.filter(d=>d.submitted_at);
+  const rows=submitted.map((s,i)=>({
+    Rank:i+1, Name:s.participant_name, Score:s.score,
+    Correct:s.correct, Wrong:s.wrong, Skipped:s.skipped,
+    'Submit Time':s.submitted_at?new Date(s.submitted_at).toLocaleString('en-IN'):'-'
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=[{wch:6},{wch:28},{wch:8},{wch:9},{wch:8},{wch:9},{wch:20}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Leaderboard');
+  const safeName=currentMonitorTestName.replace(/[^a-zA-Z0-9_\- ]/g,'').substring(0,40)||'Results';
+  XLSX.writeFile(wb,`${safeName}_Results.xlsx`);
+  showToast('✅ Results Excel download ho gaya!','success');
 }
 
 // ══════════════════════════════════════════
 // EDIT TAB — Load test list
 // ══════════════════════════════════════════
-async function loadEditTestList() {
-  const sel = document.getElementById('editTestSelect');
-  sel.innerHTML = '<option value="">Loading...</option>';
-  const {data} = await sb.from('live_tests').select('id,name').order('start_time',{ascending:false}).limit(30);
-  sel.innerHTML = '<option value="">-- Test select karo --</option>';
-  if (data) data.forEach(lt => {
-    const opt = document.createElement('option');
-    opt.value = lt.id; opt.textContent = lt.name;
+async function loadEditTestList(){
+  const sel=document.getElementById('editTestSelect');
+  sel.innerHTML='<option value="">Loading...</option>';
+  const {data}=await sb.from('live_tests').select('id,name').eq('is_archived',false).order('start_time',{ascending:false}).limit(50);
+  sel.innerHTML='<option value="">-- Test select karo --</option>';
+  if (data) data.forEach(lt=>{
+    const opt=document.createElement('option');
+    opt.value=lt.id; opt.textContent=lt.name;
     sel.appendChild(opt);
   });
   document.getElementById('editQuestionsSection').style.display='none';
 }
 
 // ══════════════════════════════════════════
-// LOAD QUESTIONS FOR EDITING — strict q_order
+// LOAD QUESTIONS FOR EDITING
 // ══════════════════════════════════════════
-async function loadEditQuestions() {
-  const testId = document.getElementById('editTestSelect').value;
-  if (!testId) { document.getElementById('editQuestionsSection').style.display='none'; return; }
-  currentEditTestId = testId;
-
-  const el = document.getElementById('editQList');
-  el.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Loading questions...</div>';
+async function loadEditQuestions(){
+  const testId=document.getElementById('editTestSelect').value;
+  if (!testId){document.getElementById('editQuestionsSection').style.display='none';return;}
+  currentEditTestId=testId;
+  const el=document.getElementById('editQList');
+  el.innerHTML='<div style="text-align:center;padding:20px;"><span class="spinner"></span> Loading questions...</div>';
   document.getElementById('editQuestionsSection').style.display='block';
-
-  // Always order by q_order ASC — strict serial
-  const {data, error} = await sb.from('live_test_questions')
-    .select('*').eq('live_test_id', testId).order('q_order', {ascending:true});
-
-  if (error||!data||data.length===0) {
+  const {data,error}=await sb.from('live_test_questions')
+    .select('*').eq('live_test_id',testId).order('q_order',{ascending:true});
+  if (error||!data||!data.length){
     el.innerHTML='<div class="empty-state"><div>📭</div>Koi question nahi hai is test mein.</div>';
     return;
   }
-  editQuestions = data;
+  editQuestions=[...data];
+  filteredQuestions=[...data];
+  const testName=document.getElementById('editTestSelect').options[document.getElementById('editTestSelect').selectedIndex].text;
+  document.getElementById('editSectionTitle').textContent=`Questions — ${testName} (${data.length} total)`;
+  renderEditQuestions();
+}
 
-  const testName = document.getElementById('editTestSelect').options[document.getElementById('editTestSelect').selectedIndex].text;
-  document.getElementById('editSectionTitle').textContent = `Questions — ${testName} (${data.length} total)`;
-
-  el.innerHTML = data.map((q,i) => `
-    <div class="q-edit-item" id="qitem_${q.id}">
+function renderEditQuestions(){
+  const el=document.getElementById('editQList');
+  const bulk=document.getElementById('enableBulk').checked;
+  if (!filteredQuestions.length){el.innerHTML='<div class="empty-state"><div>🔍</div>Koi match nahi mila</div>';return;}
+  el.innerHTML=filteredQuestions.map((q,i)=>`
+    <div class="q-edit-item" id="qitem_${q.id}"
+      ${reorderMode?`draggable="true" ondragstart="dragStart(event,'${q.id}')" ondragover="dragOver2(event,'${q.id}')" ondrop="drop2(event,'${q.id}')" ondragleave="dragLeave2(event,'${q.id}')"`:''}>
       <div class="q-edit-header">
+        ${reorderMode?`<span class="q-drag-handle">⠿</span>`:''}
+        ${bulk?`<input type="checkbox" data-qid="${q.id}" onchange="toggleQSelect('${q.id}',this.checked)" ${selectedQIds.has(q.id)?'checked':''}>`:''}
         <span class="q-edit-num">${q.q_order}</span>
-        <span class="q-edit-text" title="${q.question_text}">${q.question_text.substring(0,60)}${q.question_text.length>60?'...':''}</span>
-        ${q.image_url ? `<span class="q-edit-img-badge">🖼 Image</span>` : ''}
-        <select class="ans-quick-select" data-qid="${q.id}" onchange="quickUpdateAnswer('${q.id}', this.value)" title="Answer badlo — auto save">
+        <span class="q-edit-text" title="${q.question_text}">${q.question_text.substring(0,55)}${q.question_text.length>55?'...':''}</span>
+        ${q.difficulty?`<span class="q-edit-diff ${q.difficulty}">${q.difficulty}</span>`:''}
+        ${q.image_url?`<span class="q-edit-img-badge">🖼 Image</span>`:''}
+        <select class="ans-quick-select" data-qid="${q.id}" onchange="quickUpdateAnswer('${q.id}',this.value)" title="Answer badlo">
           ${['A','B','C','D'].map(opt=>`<option value="${opt}"${q.correct_answer===opt?' selected':''}>${opt}</option>`).join('')}
         </select>
         <div class="q-edit-actions">
-          <button class="btn-sm btn-orange" onclick="openEditModal('${q.id}')">✏️ Edit</button>
+          <button class="btn-sm btn-orange" onclick="openEditModal('${q.id}')">✏️</button>
         </div>
       </div>
     </div>`).join('');
+  updateBulkCount();
+}
+
+function filterQuestions(){
+  const search=document.getElementById('qSearchInput').value.toLowerCase();
+  const diff=document.getElementById('qFilterDiff').value;
+  filteredQuestions=editQuestions.filter(q=>{
+    const matchSearch=!search||q.question_text.toLowerCase().includes(search)||
+      q.option_a.toLowerCase().includes(search)||q.option_b.toLowerCase().includes(search);
+    const matchDiff=diff==='all'||q.difficulty===diff;
+    return matchSearch&&matchDiff;
+  });
+  renderEditQuestions();
 }
 
 // ══════════════════════════════════════════
-// OPEN EDIT MODAL
+// BULK MODE
 // ══════════════════════════════════════════
-function openEditModal(qId) {
-  isAddingNew = false;
-  const q = editQuestions.find(x => x.id === qId);
+function toggleQSelect(qId,checked){
+  if (checked) selectedQIds.add(qId);
+  else selectedQIds.delete(qId);
+  updateBulkCount();
+}
+function toggleSelectAll(){
+  const allCheck=document.getElementById('bulkSelectAll').checked;
+  filteredQuestions.forEach(q=>{
+    if (allCheck) selectedQIds.add(q.id);
+    else selectedQIds.delete(q.id);
+  });
+  renderEditQuestions();
+}
+function updateBulkCount(){
+  const el=document.getElementById('bulkCount');
+  if (el) el.textContent=selectedQIds.size>0?`${selectedQIds.size} selected`:'';
+}
+
+async function applyBulkAnswer(){
+  const ans=document.getElementById('bulkAnsSelect').value;
+  if (!ans){showToast('Answer select karo!','error');return;}
+  if (!selectedQIds.size){showToast('Questions select karo!','error');return;}
+  if (!confirm(`${selectedQIds.size} questions ka answer "${ans}" set karna hai?`)) return;
+  const ids=[...selectedQIds];
+  const {error}=await sb.from('live_test_questions').update({correct_answer:ans}).in('id',ids);
+  if (error){showToast('Bulk update failed!','error');return;}
+  showToast(`✅ ${ids.length} questions ka answer ${ans} set ho gaya!`,'success');
+  selectedQIds.clear();
+  await loadEditQuestions();
+}
+
+async function bulkDeleteQuestions(){
+  if (!selectedQIds.size){showToast('Questions select karo!','error');return;}
+  if (!confirm(`${selectedQIds.size} questions delete karne hain? Ye undo nahi hoga!`)) return;
+  const ids=[...selectedQIds];
+  const {error}=await sb.from('live_test_questions').delete().in('id',ids);
+  if (error){showToast('Delete failed!','error');return;}
+  showToast(`✅ ${ids.length} questions delete ho gaye!`,'success');
+  selectedQIds.clear();
+  await loadEditQuestions();
+}
+
+// ══════════════════════════════════════════
+// REORDER (DRAG & DROP)
+// ══════════════════════════════════════════
+function toggleReorderMode(){
+  reorderMode=document.getElementById('enableReorder').checked;
+  renderEditQuestions();
+  if (reorderMode) showToast('Drag karo questions reorder karne ke liye','');
+}
+function dragStart(e,id){dragSrcId=id;e.currentTarget.classList.add('dragging');}
+function dragOver2(e,id){e.preventDefault();if (dragSrcId!==id){document.getElementById('qitem_'+id)?.classList.add('drag-over');}}
+function dragLeave2(e,id){document.getElementById('qitem_'+id)?.classList.remove('drag-over');}
+async function drop2(e,targetId){
+  e.preventDefault();
+  document.getElementById('qitem_'+targetId)?.classList.remove('drag-over');
+  if (!dragSrcId||dragSrcId===targetId) return;
+  const srcIdx=filteredQuestions.findIndex(q=>q.id===dragSrcId);
+  const tgtIdx=filteredQuestions.findIndex(q=>q.id===targetId);
+  if (srcIdx<0||tgtIdx<0) return;
+  const moved=filteredQuestions.splice(srcIdx,1)[0];
+  filteredQuestions.splice(tgtIdx,0,moved);
+  // Update q_order
+  filteredQuestions.forEach((q,i)=>q.q_order=i+1);
+  renderEditQuestions();
+  // Save to DB
+  const updates=filteredQuestions.map(q=>sb.from('live_test_questions').update({q_order:q.q_order}).eq('id',q.id));
+  await Promise.all(updates);
+  showToast('✅ Order save ho gaya!','success');
+  dragSrcId=null;
+}
+
+// ══════════════════════════════════════════
+// QUICK ANSWER UPDATE
+// ══════════════════════════════════════════
+async function quickUpdateAnswer(qId,newAnswer){
+  const sel=document.querySelector(`select[data-qid="${qId}"]`);
+  if (sel){sel.disabled=true;sel.style.opacity='0.5';}
+  const {error}=await sb.from('live_test_questions').update({correct_answer:newAnswer}).eq('id',qId);
+  if (sel){sel.disabled=false;sel.style.opacity='1';}
+  if (error){showToast('❌ Save failed: '+error.message,'error');return;}
+  const q=editQuestions.find(x=>x.id===qId);
+  if (q) q.correct_answer=newAnswer;
+  const item=document.getElementById(`qitem_${qId}`);
+  if (item){
+    item.style.borderColor='#16a34a';item.style.background='#f0fdf4';
+    setTimeout(()=>{item.style.borderColor='';item.style.background='';},1200);
+  }
+  showToast(`✅ Q${q?.q_order} → Answer: ${newAnswer} saved!`,'success');
+}
+
+// ══════════════════════════════════════════
+// DOWNLOAD QUESTIONS EXCEL
+// ══════════════════════════════════════════
+async function downloadQuestionsExcel(){
+  if (!currentEditTestId){showToast('Pehle test select karo!','error');return;}
+  showToast('Excel ban raha hai...','');
+  const {data,error}=await sb.from('live_test_questions')
+    .select('*').eq('live_test_id',currentEditTestId).order('q_order',{ascending:true});
+  if (error||!data||!data.length){showToast('Koi questions nahi mila!','error');return;}
+  const testName=document.getElementById('editTestSelect').options[document.getElementById('editTestSelect').selectedIndex].text;
+  const rows=data.map(q=>({
+    q_order:q.q_order,question_text:q.question_text,
+    option_a:q.option_a,option_b:q.option_b,option_c:q.option_c,option_d:q.option_d,
+    correct_answer:q.correct_answer,difficulty:q.difficulty||'medium',
+    explanation:q.explanation||'',image_url:q.image_url||''
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=[{wch:6},{wch:60},{wch:25},{wch:25},{wch:25},{wch:25},{wch:10},{wch:10},{wch:50},{wch:40}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Questions');
+  const safeName=testName.replace(/[^a-zA-Z0-9_\- ]/g,'').substring(0,40)||'LiveTest';
+  XLSX.writeFile(wb,`${safeName}_Questions.xlsx`);
+  showToast('✅ Questions Excel download ho gaya!','success');
+}
+
+// ══════════════════════════════════════════
+// DOWNLOAD QUESTIONS AS PDF (printable)
+// ══════════════════════════════════════════
+async function downloadTestPDF(){
+  if (!currentEditTestId){showToast('Pehle test select karo!','error');return;}
+  const {data,error}=await sb.from('live_test_questions')
+    .select('*').eq('live_test_id',currentEditTestId).order('q_order',{ascending:true});
+  if (error||!data||!data.length){showToast('Koi questions nahi mila!','error');return;}
+  const testName=document.getElementById('editTestSelect').options[document.getElementById('editTestSelect').selectedIndex].text;
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>${testName}</title>
+  <style>
+    body{font-family:Arial,sans-serif;max-width:800px;margin:0 auto;padding:20px;font-size:13px;}
+    h1{text-align:center;font-size:18px;margin-bottom:6px;}
+    .sub{text-align:center;color:#666;font-size:12px;margin-bottom:24px;}
+    .q{margin-bottom:18px;padding:12px;border:1px solid #e0e0e0;border-radius:6px;page-break-inside:avoid;}
+    .q-num{font-weight:bold;color:#0ea5e9;}
+    .q-text{margin:6px 0 10px;line-height:1.5;}
+    .opts{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+    .opt{padding:4px 8px;border:1px solid #e0e0e0;border-radius:4px;}
+    .ans{margin-top:6px;font-size:11px;color:#15803d;font-weight:bold;}
+    @media print{body{margin:0;padding:10px;}}
+  </style></head><body>
+  <h1>${testName}</h1>
+  <div class="sub">SSC Hustlers | Total: ${data.length} Questions</div>
+  ${data.map(q=>`<div class="q">
+    <span class="q-num">Q${q.q_order}.</span>
+    <div class="q-text">${q.question_text}</div>
+    <div class="opts">
+      <div class="opt">(A) ${q.option_a}</div>
+      <div class="opt">(B) ${q.option_b}</div>
+      <div class="opt">(C) ${q.option_c}</div>
+      <div class="opt">(D) ${q.option_d}</div>
+    </div>
+    ${q.explanation?`<div class="ans">✅ Ans: ${q.correct_answer} | ${q.explanation}</div>`:`<div class="ans">✅ Ans: ${q.correct_answer}</div>`}
+  </div>`).join('')}
+  </body></html>`;
+  const w=window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(()=>w.print(),500);
+}
+
+// ══════════════════════════════════════════
+// EDIT / ADD QUESTION MODAL
+// ══════════════════════════════════════════
+function openEditModal(qId){
+  isAddingNew=false;
+  const q=editQuestions.find(x=>x.id===qId);
   if (!q) return;
-
-  document.getElementById('modalTitleText').textContent = `✏️ Edit — Q${q.q_order}`;
-  document.getElementById('modalQId').value       = q.id;
-  document.getElementById('modalQText').value     = q.question_text || '';
-  document.getElementById('modalOptA').value      = q.option_a || '';
-  document.getElementById('modalOptB').value      = q.option_b || '';
-  document.getElementById('modalOptC').value      = q.option_c || '';
-  document.getElementById('modalOptD').value      = q.option_d || '';
-  document.getElementById('modalCorrect').value   = q.correct_answer || 'A';
-  document.getElementById('modalExplanation').value = q.explanation || '';
-  document.getElementById('modalImgUrl').value    = q.image_url || '';
-  document.getElementById('modalDeleteBtn').style.display = '';
-
-  // Image preview
-  if (q.image_url) {
-    document.getElementById('imgPreview').src = q.image_url;
-    document.getElementById('imgPreviewWrap').style.display = 'block';
-    document.getElementById('imgUploadArea').style.display = 'none';
+  document.getElementById('modalTitleText').textContent=`✏️ Edit — Q${q.q_order}`;
+  document.getElementById('modalQId').value=q.id;
+  document.getElementById('modalQText').value=q.question_text||'';
+  document.getElementById('modalOptA').value=q.option_a||'';
+  document.getElementById('modalOptB').value=q.option_b||'';
+  document.getElementById('modalOptC').value=q.option_c||'';
+  document.getElementById('modalOptD').value=q.option_d||'';
+  document.getElementById('modalCorrect').value=q.correct_answer||'A';
+  document.getElementById('modalDifficulty').value=q.difficulty||'medium';
+  document.getElementById('modalExplanation').value=q.explanation||'';
+  document.getElementById('modalImgUrl').value=q.image_url||'';
+  document.getElementById('modalDeleteBtn').style.display='';
+  if (q.image_url){
+    document.getElementById('imgPreview').src=q.image_url;
+    document.getElementById('imgPreviewWrap').style.display='block';
+    document.getElementById('imgUploadArea').style.display='none';
   } else {
-    document.getElementById('imgPreviewWrap').style.display = 'none';
-    document.getElementById('imgUploadArea').style.display = 'block';
+    document.getElementById('imgPreviewWrap').style.display='none';
+    document.getElementById('imgUploadArea').style.display='block';
   }
   document.getElementById('imgUploading').style.display='none';
   document.getElementById('editModal').classList.add('show');
 }
 
-// ══════════════════════════════════════════
-// OPEN ADD NEW MODAL
-// ══════════════════════════════════════════
-function openAddModal() {
-  if (!currentEditTestId) { showToast('Pehle test select karo!','error'); return; }
-  isAddingNew = true;
-  document.getElementById('modalTitleText').textContent = '➕ Add New Question';
-  document.getElementById('modalQId').value = '';
-  document.getElementById('modalQText').value = '';
-  document.getElementById('modalOptA').value = '';
-  document.getElementById('modalOptB').value = '';
-  document.getElementById('modalOptC').value = '';
-  document.getElementById('modalOptD').value = '';
-  document.getElementById('modalCorrect').value = 'A';
-  document.getElementById('modalExplanation').value = '';
-  document.getElementById('modalImgUrl').value = '';
+function openAddModal(){
+  if (!currentEditTestId){showToast('Pehle test select karo!','error');return;}
+  isAddingNew=true;
+  document.getElementById('modalTitleText').textContent='➕ Add New Question';
+  ['modalQId','modalQText','modalOptA','modalOptB','modalOptC','modalOptD','modalExplanation','modalImgUrl'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modalCorrect').value='A';
+  document.getElementById('modalDifficulty').value='medium';
   document.getElementById('imgPreviewWrap').style.display='none';
   document.getElementById('imgUploadArea').style.display='block';
   document.getElementById('imgUploading').style.display='none';
@@ -668,236 +1493,282 @@ function openAddModal() {
   document.getElementById('editModal').classList.add('show');
 }
 
-function closeModal() {
-  document.getElementById('editModal').classList.remove('show');
-}
+function closeModal(){document.getElementById('editModal').classList.remove('show');}
 
-// ══════════════════════════════════════════
-// IMAGE UPLOAD — Supabase Storage
-// ══════════════════════════════════════════
-async function handleImageSelect(file) {
+async function handleImageSelect(file){
   if (!file) return;
-  if (file.size > 5 * 1024 * 1024) { showToast('Image 5MB se badi hai!','error'); return; }
-
+  if (file.size>5*1024*1024){showToast('Image 5MB se badi hai!','error');return;}
   document.getElementById('imgUploading').style.display='block';
   document.getElementById('imgUploadArea').style.display='none';
-
   try {
-    const ext = file.name.split('.').pop();
-    const fileName = `live_q_${Date.now()}_${Math.random().toString(36).substring(2,7)}.${ext}`;
-
-    const {data, error} = await sb.storage.from(STORAGE_BUCKET).upload(fileName, file, {
-      cacheControl: '3600', upsert: false, contentType: file.type
-    });
+    const ext=file.name.split('.').pop();
+    const fileName=`live_q_${Date.now()}_${Math.random().toString(36).substring(2,7)}.${ext}`;
+    const {error}=await sb.storage.from(STORAGE_BUCKET).upload(fileName,file,{cacheControl:'3600',upsert:false,contentType:file.type});
     if (error) throw error;
-
-    const {data: urlData} = sb.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
-    const publicUrl = urlData.publicUrl;
-
-    document.getElementById('modalImgUrl').value = publicUrl;
-    document.getElementById('imgPreview').src = publicUrl;
+    const {data:urlData}=sb.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
+    document.getElementById('modalImgUrl').value=urlData.publicUrl;
+    document.getElementById('imgPreview').src=urlData.publicUrl;
     document.getElementById('imgPreviewWrap').style.display='block';
     document.getElementById('imgUploading').style.display='none';
     showToast('✅ Image upload ho gayi!','success');
-  } catch(err) {
+  } catch(err){
     document.getElementById('imgUploading').style.display='none';
     document.getElementById('imgUploadArea').style.display='block';
-    showToast('Image upload failed: ' + err.message,'error');
+    showToast('Image upload failed: '+err.message,'error');
   }
 }
-
-function removeImage() {
+function removeImage(){
   document.getElementById('modalImgUrl').value='';
   document.getElementById('imgPreview').src='';
   document.getElementById('imgPreviewWrap').style.display='none';
   document.getElementById('imgUploadArea').style.display='block';
 }
 
-// ══════════════════════════════════════════
-// SAVE QUESTION (Edit or Add)
-// ══════════════════════════════════════════
-async function saveQuestion() {
-  const qText = document.getElementById('modalQText').value.trim();
-  const optA  = document.getElementById('modalOptA').value.trim();
-  const optB  = document.getElementById('modalOptB').value.trim();
-  const optC  = document.getElementById('modalOptC').value.trim();
-  const optD  = document.getElementById('modalOptD').value.trim();
-  const correct = document.getElementById('modalCorrect').value;
-  const expl  = document.getElementById('modalExplanation').value.trim();
-  const imgUrl= document.getElementById('modalImgUrl').value;
-
-  if (!qText)  { showToast('Question text daalo!','error'); return; }
-  if (!optA||!optB||!optC||!optD) { showToast('Saare options daalo!','error'); return; }
-
-  const payload = {
-    question_text: qText, option_a: optA, option_b: optB,
-    option_c: optC, option_d: optD, correct_answer: correct,
-    explanation: expl, image_url: imgUrl
-  };
-
+async function saveQuestion(){
+  const qText=document.getElementById('modalQText').value.trim();
+  const optA=document.getElementById('modalOptA').value.trim();
+  const optB=document.getElementById('modalOptB').value.trim();
+  const optC=document.getElementById('modalOptC').value.trim();
+  const optD=document.getElementById('modalOptD').value.trim();
+  const correct=document.getElementById('modalCorrect').value;
+  const difficulty=document.getElementById('modalDifficulty').value;
+  const expl=document.getElementById('modalExplanation').value.trim();
+  const imgUrl=document.getElementById('modalImgUrl').value;
+  if (!qText){showToast('Question text daalo!','error');return;}
+  if (!optA||!optB||!optC||!optD){showToast('Saare options daalo!','error');return;}
+  const payload={question_text:qText,option_a:optA,option_b:optB,option_c:optC,option_d:optD,correct_answer:correct,difficulty,explanation:expl,image_url:imgUrl};
   try {
-    if (isAddingNew) {
-      // New question — q_order = max + 1
-      const maxOrder = editQuestions.length > 0 ? Math.max(...editQuestions.map(q=>q.q_order)) : 0;
-      payload.live_test_id = currentEditTestId;
-      payload.q_order = maxOrder + 1;
-      const {error} = await sb.from('live_test_questions').insert(payload);
+    if (isAddingNew){
+      const maxOrder=editQuestions.length>0?Math.max(...editQuestions.map(q=>q.q_order)):0;
+      payload.live_test_id=currentEditTestId;
+      payload.q_order=maxOrder+1;
+      const {error}=await sb.from('live_test_questions').insert(payload);
       if (error) throw error;
-      // Update total_questions count
-      await sb.from('live_tests').update({total_questions: editQuestions.length+1}).eq('id',currentEditTestId);
+      await sb.from('live_tests').update({total_questions:editQuestions.length+1}).eq('id',currentEditTestId);
       showToast('✅ Question add ho gaya!','success');
     } else {
-      const qId = document.getElementById('modalQId').value;
-      const {error} = await sb.from('live_test_questions').update(payload).eq('id',qId);
+      const qId=document.getElementById('modalQId').value;
+      const {error}=await sb.from('live_test_questions').update(payload).eq('id',qId);
       if (error) throw error;
       showToast('✅ Question save ho gaya!','success');
     }
     closeModal();
     await loadEditQuestions();
-  } catch(err) {
-    showToast('Save error: '+err.message,'error');
-  }
+  } catch(err){showToast('Save error: '+err.message,'error');}
 }
 
-// ══════════════════════════════════════════
-// DELETE QUESTION
-// ══════════════════════════════════════════
-async function deleteQuestion() {
-  const qId = document.getElementById('modalQId').value;
-  if (!qId || !confirm('Ye question delete karna chahte ho?')) return;
-  const {error} = await sb.from('live_test_questions').delete().eq('id',qId);
-  if (error) { showToast('Delete failed: '+error.message,'error'); return; }
-  // Update count
-  await sb.from('live_tests').update({total_questions: Math.max(0, editQuestions.length-1)}).eq('id',currentEditTestId);
+async function deleteQuestion(){
+  const qId=document.getElementById('modalQId').value;
+  if (!qId||!confirm('Ye question delete karna chahte ho?')) return;
+  const {error}=await sb.from('live_test_questions').delete().eq('id',qId);
+  if (error){showToast('Delete failed: '+error.message,'error');return;}
+  await sb.from('live_tests').update({total_questions:Math.max(0,editQuestions.length-1)}).eq('id',currentEditTestId);
   showToast('Question deleted!','success');
   closeModal();
   await loadEditQuestions();
 }
 
 // ══════════════════════════════════════════
-// DOWNLOAD QUESTIONS AS EXCEL
+// ANALYTICS TAB
 // ══════════════════════════════════════════
-async function downloadQuestionsExcel() {
-  if (!currentEditTestId) { showToast('Pehle test select karo!','error'); return; }
-  showToast('Excel ban raha hai...','');
+async function loadAnalyticsTestList(){
+  const sel=document.getElementById('analyticsTestSelect');
+  sel.innerHTML='<option value="">Loading...</option>';
+  const {data}=await sb.from('live_tests').select('id,name').eq('is_archived',false).order('start_time',{ascending:false}).limit(50);
+  sel.innerHTML='<option value="">-- Test select karo --</option>';
+  if (data) data.forEach(lt=>{
+    const opt=document.createElement('option');
+    opt.value=lt.id;opt.textContent=lt.name;
+    sel.appendChild(opt);
+  });
+}
 
-  const {data, error} = await sb.from('live_test_questions')
-    .select('*').eq('live_test_id', currentEditTestId).order('q_order',{ascending:true});
-  if (error || !data || data.length===0) { showToast('Koi questions nahi mila!','error'); return; }
+async function loadAnalytics(){
+  const testId=document.getElementById('analyticsTestSelect').value;
+  const el=document.getElementById('analyticsContent');
+  if (!testId){el.innerHTML='<div class="empty-state"><div>📊</div>Test select karo</div>';return;}
+  el.innerHTML='<div class="empty-state"><span class="spinner"></span> Loading analytics...</div>';
+  const [{data:attempts},{data:questions}]=await Promise.all([
+    sb.from('live_test_attempts').select('*').eq('live_test_id',testId),
+    sb.from('live_test_questions').select('id,q_order,correct_answer,difficulty').eq('live_test_id',testId).order('q_order')
+  ]);
+  if (!attempts||!attempts.length){el.innerHTML='<div class="empty-state"><div>📊</div>Abhi koi attempts nahi hue is test mein.</div>';return;}
+  const submitted=attempts.filter(a=>a.submitted_at);
+  const avg=submitted.length>0?(submitted.reduce((s,a)=>s+a.score,0)/submitted.length).toFixed(1):0;
+  const maxScore=submitted.length>0?Math.max(...submitted.map(a=>a.score)):0;
+  const minScore=submitted.length>0?Math.min(...submitted.map(a=>a.score)):0;
+  const totalQ=questions?questions.length:0;
+  // Difficulty breakdown
+  const diffCounts={easy:0,medium:0,hard:0};
+  if (questions) questions.forEach(q=>{if (diffCounts[q.difficulty]!==undefined) diffCounts[q.difficulty]++;});
+  // Score distribution
+  const scoreBuckets=[0,0,0,0,0]; // 0-20%,20-40%,40-60%,60-80%,80-100%
+  submitted.forEach(a=>{
+    const pct=(a.score/(totalQ*2))*100;
+    const idx=Math.min(Math.floor(pct/20),4);
+    scoreBuckets[idx]++;
+  });
+  el.innerHTML=`
+  <div class="analytics-grid">
+    <div class="analytics-card">
+      <div class="ac-title">📊 Overview</div>
+      <div class="info-row">👥 Total Participants: <strong>${attempts.length}</strong></div>
+      <div class="info-row">✅ Submitted: <strong>${submitted.length}</strong></div>
+      <div class="info-row">⏳ Not Submitted: <strong>${attempts.length-submitted.length}</strong></div>
+      <div class="info-row">📈 Avg Score: <strong>${avg}</strong></div>
+      <div class="info-row">🏆 Highest Score: <strong>${maxScore}</strong></div>
+      <div class="info-row">📉 Lowest Score: <strong>${minScore}</strong></div>
+    </div>
+    <div class="analytics-card">
+      <div class="ac-title">📊 Score Distribution</div>
+      ${['0–20%','20–40%','40–60%','60–80%','80–100%'].map((lbl,i)=>{
+        const pct=submitted.length?Math.round(scoreBuckets[i]/submitted.length*100):0;
+        return `<div class="q-accuracy-bar">
+          <span class="q-acc-label" style="width:50px;font-size:0.68rem;">${lbl}</span>
+          <div class="q-acc-track"><div class="q-acc-fill" style="width:${pct}%;background:#0ea5e9;"></div></div>
+          <span class="q-acc-pct" style="color:#0ea5e9;">${scoreBuckets[i]}</span>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="analytics-card">
+      <div class="ac-title">🎯 Difficulty Breakdown</div>
+      ${Object.entries(diffCounts).map(([diff,cnt])=>{
+        const colors={easy:'#16a34a',medium:'#b45309',hard:'#dc2626'};
+        const pct=totalQ?Math.round(cnt/totalQ*100):0;
+        return `<div class="q-accuracy-bar">
+          <span class="q-acc-label" style="width:50px;font-size:0.7rem;color:${colors[diff]};text-transform:capitalize;">${diff}</span>
+          <div class="q-acc-track"><div class="q-acc-fill" style="width:${pct}%;background:${colors[diff]};"></div></div>
+          <span class="q-acc-pct" style="color:${colors[diff]};">${cnt}Q</span>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="analytics-card">
+      <div class="ac-title">🏆 Top 5 Performers</div>
+      ${submitted.sort((a,b)=>b.score-a.score).slice(0,5).map((s,i)=>`
+        <div class="info-row">${i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`} ${s.participant_name}: <strong>${s.score}</strong></div>`).join('')}
+    </div>
+  </div>
+  <div class="card" style="margin-top:0;">
+    <div class="section-title" style="margin-bottom:12px;">📥 Export</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-sm btn-green" onclick="exportAnalyticsExcel('${testId}')">⬇️ Full Analytics Excel</button>
+    </div>
+  </div>`;
+}
 
-  const testName = document.getElementById('editTestSelect').options[document.getElementById('editTestSelect').selectedIndex].text;
-
-  const rows = data.map(q => ({
-    q_order:        q.q_order,
-    question_text:  q.question_text,
-    option_a:       q.option_a,
-    option_b:       q.option_b,
-    option_c:       q.option_c,
-    option_d:       q.option_d,
-    correct_answer: q.correct_answer,
-    explanation:    q.explanation || '',
-    image_url:      q.image_url  || ''
+async function exportAnalyticsExcel(testId){
+  showToast('Analytics Excel ban raha hai...','');
+  const {data}=await sb.from('live_test_attempts').select('*').eq('live_test_id',testId).order('score',{ascending:false});
+  if (!data||!data.length){showToast('Koi data nahi!','error');return;}
+  const rows=data.map((a,i)=>({
+    Rank:i+1,Name:a.participant_name,Score:a.score,
+    Correct:a.correct,Wrong:a.wrong,Skipped:a.skipped,
+    Submitted:a.submitted_at?'Yes':'No',
+    'Submit Time':a.submitted_at?new Date(a.submitted_at).toLocaleString('en-IN'):'-'
   }));
-
-  const ws = XLSX.utils.json_to_sheet(rows);
-  // Column widths
-  ws['!cols'] = [
-    {wch:6},{wch:60},{wch:25},{wch:25},{wch:25},{wch:25},{wch:10},{wch:50},{wch:40}
-  ];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Questions');
-  const safeName = testName.replace(/[^a-zA-Z0-9_\- ]/g,'').substring(0,40) || 'LiveTest';
-  XLSX.writeFile(wb, `${safeName}_Questions.xlsx`);
-  showToast('✅ Questions Excel download ho gaya!','success');
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Analytics');
+  XLSX.writeFile(wb,'Test_Analytics.xlsx');
+  showToast('✅ Analytics Excel download ho gaya!','success');
 }
 
 // ══════════════════════════════════════════
-// DOWNLOAD RESULTS / LEADERBOARD AS EXCEL
+// NOTIFICATIONS TAB
 // ══════════════════════════════════════════
-let currentMonitorTestId   = null;
-let currentMonitorTestName = '';
-
-async function downloadResultsExcel() {
-  if (!currentMonitorTestId) { showToast('Pehle koi test monitor karo!','error'); return; }
-  showToast('Results Excel ban raha hai...','');
-
-  const {data, error} = await sb.from('live_test_attempts')
-    .select('participant_name,score,correct,wrong,skipped,submitted_at')
-    .eq('live_test_id', currentMonitorTestId)
-    .order('score',{ascending:false});
-
-  if (error || !data || data.length===0) { showToast('Koi results nahi mila!','error'); return; }
-
-  const submitted = data.filter(d => d.submitted_at);
-  const rows = submitted.map((s, i) => ({
-    Rank:             i + 1,
-    Name:             s.participant_name,
-    Score:            s.score,
-    Correct:          s.correct,
-    Wrong:            s.wrong,
-    Skipped:          s.skipped,
-    'Submit Time':    s.submitted_at ? new Date(s.submitted_at).toLocaleString('en-IN') : '-'
-  }));
-
-  const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = [{wch:6},{wch:28},{wch:8},{wch:9},{wch:8},{wch:9},{wch:20}];
-
-  // Bold header style
-  const range = XLSX.utils.decode_range(ws['!ref']);
-  for (let C = range.s.c; C <= range.e.c; C++) {
-    const cell = ws[XLSX.utils.encode_cell({r:0, c:C})];
-    if (cell) cell.s = { font: { bold: true }, fill: { fgColor: { rgb: '0EA5E9' } } };
-  }
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Leaderboard');
-  const safeName = currentMonitorTestName.replace(/[^a-zA-Z0-9_\- ]/g,'').substring(0,40) || 'Results';
-  XLSX.writeFile(wb, `${safeName}_Results.xlsx`);
-  showToast('✅ Results Excel download ho gaya!','success');
+async function loadNotifyTestList(){
+  const sel=document.getElementById('notifyTestSelect');
+  sel.innerHTML='<option value="">Loading...</option>';
+  const {data}=await sb.from('live_tests').select('id,name,start_time,end_time,code').eq('is_archived',false).order('start_time',{ascending:false}).limit(50);
+  sel.innerHTML='<option value="">-- Test select karo --</option>';
+  if (data) data.forEach(lt=>{
+    const opt=document.createElement('option');
+    opt.value=JSON.stringify({id:lt.id,name:lt.name,start:lt.start_time,end:lt.end_time,code:lt.code});
+    opt.textContent=lt.name;
+    sel.appendChild(opt);
+  });
 }
 
-// ══════════════════════════════════════════
-// QUICK ANSWER UPDATE — auto save on change
-// ══════════════════════════════════════════
-async function quickUpdateAnswer(qId, newAnswer) {
-  const sel = document.querySelector(`select[data-qid="${qId}"]`);
-  if (sel) { sel.disabled = true; sel.style.opacity='0.5'; }
+function loadNotifyTemplates(){
+  const val=document.getElementById('notifyTestSelect').value;
+  const el=document.getElementById('notifyTemplates');
+  if (!val){el.innerHTML='<div class="empty-state"><div>📭</div>Test select karo</div>';return;}
+  const t=JSON.parse(val);
+  const start=new Date(t.start);
+  const link=`${window.location.href.replace('live_test_admin.html','')}live_test.html?code=${t.code}`;
+  const startStr=start.toLocaleDateString('en-IN')+' '+start.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
 
-  const {error} = await sb.from('live_test_questions').update({correct_answer: newAnswer}).eq('id', qId);
-
-  if (sel) { sel.disabled = false; sel.style.opacity='1'; }
-
-  if (error) {
-    showToast('❌ Save failed: ' + error.message, 'error');
-    const q = editQuestions.find(x => x.id === qId);
-    if (q && sel) sel.value = q.correct_answer;
-  } else {
-    const q = editQuestions.find(x => x.id === qId);
-    if (q) q.correct_answer = newAnswer;
-    const item = document.getElementById(`qitem_${qId}`);
-    if (item) {
-      item.style.borderColor = '#16a34a';
-      item.style.background  = '#f0fdf4';
-      setTimeout(() => { item.style.borderColor=''; item.style.background=''; }, 1200);
+  const templates=[
+    {
+      title:'📢 Test Announcement (WhatsApp/Telegram)',
+      text:`🔥 *SSC Hustlers Live Test Alert!* 🔥\n\n📝 *${t.name}*\n📅 Date: ${startStr}\n\n🔗 Test Link:\n${link}\n\n⚡ Level 11 difficulty — prepare kar lo!\n\n#SSCHustlers #SSCCGL`
+    },
+    {
+      title:'⏰ 30 Min Reminder',
+      text:`⏰ *30 Minute Warning!*\n\n"${t.name}" sirf 30 minute mein shuru hoga!\n\n🔗 ${link}\n\nAbhi join karo — late mat ho! 🏃`
+    },
+    {
+      title:'🚀 Test Live Now!',
+      text:`🚀 *TEST LIVE HAI ABHI!*\n\n"${t.name}" SHURU HO GAYA!\n\n🔗 CLICK KARO:\n${link}\n\n⏱ Time waste mat karo — join karo!`
+    },
+    {
+      title:'✅ Test Ended - Results',
+      text:`✅ *${t.name} — Results Out!*\n\n🏆 Leaderboard dekho:\n${link}\n\n💪 Next test ke liye taiyaar raho!\n\n#SSCHustlers`
     }
-    const qNum = editQuestions.find(x=>x.id===qId)?.q_order || '';
-    showToast(`✅ Q${qNum} → Answer: ${newAnswer} saved!`, 'success');
-  }
+  ];
+  el.innerHTML=templates.map((tpl,i)=>`
+    <div class="notif-template">
+      <div class="notif-template-title">${tpl.title}</div>
+      <div class="notif-template-text">${tpl.text}</div>
+      <button class="btn-sm btn-blue notif-copy-btn" onclick="copyTemplate(${i})">📋 Copy</button>
+    </div>`).join('');
+  window._notifTemplates=templates;
 }
 
-function showToast(msg, type='') {
+function copyTemplate(i){
+  const text=window._notifTemplates[i].text;
+  navigator.clipboard.writeText(text).then(()=>showToast('✅ Template copied!','success')).catch(()=>{
+    prompt('Copy karo:',text);
+  });
+}
+
+function copyPostMsg(){
+  const msg=document.getElementById('postTestMsg').value;
+  if (!msg){showToast('Message likho pehle!','error');return;}
+  navigator.clipboard.writeText(msg).then(()=>showToast('✅ Message copied!','success'));
+}
+
+function generateResultsLink(){
+  const val=document.getElementById('notifyTestSelect').value;
+  if (!val){showToast('Pehle test select karo!','error');return;}
+  const t=JSON.parse(val);
+  const link=`${window.location.href.replace('live_test_admin.html','')}live_test.html?code=${t.code}`;
+  const el=document.getElementById('generatedResultLink');
+  el.style.display='block';
+  el.innerHTML=`<div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:8px;padding:10px 14px;font-size:0.8rem;word-break:break-all;">
+    <strong>Results Link:</strong><br>${link}
+    <button class="btn-sm btn-blue" style="margin-top:6px;" onclick="navigator.clipboard.writeText('${link}').then(()=>showToast('Copied!','success'))">📋 Copy</button>
+  </div>`;
+}
+
+// ══════════════════════════════════════════
+// UTILITY
+// ══════════════════════════════════════════
+function showToast(msg,type=''){
   const t=document.getElementById('toast');
-  t.textContent=msg; t.className=`toast ${type} show`;
+  t.textContent=msg;t.className=`toast ${type} show`;
   setTimeout(()=>t.classList.remove('show'),3500);
 }
 
-// Close modal on overlay click
-document.getElementById('editModal').addEventListener('click', function(e){
-  if(e.target===this) closeModal();
+// Close modals on overlay click
+['editModal','extendModal','editTestModal','duplicateModal'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',function(e){
+    if (e.target===this) this.classList.remove('show');
+  });
 });
 
 // Default times
-const _now = new Date();
+const _now=new Date();
 _now.setMinutes(_now.getMinutes()+10);
 document.getElementById('ltStart').value=_now.toISOString().slice(0,16);
 _now.setMinutes(_now.getMinutes()+30);
