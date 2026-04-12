@@ -293,6 +293,18 @@ textarea{resize:vertical;min-height:70px;}
             <option value="full_test">📋 Full Mock Test</option>
           </select>
         </div>
+        <div class="form-group full">
+          <label>📂 Test Category (Sections Auto-Set Ho Jaayenge) *</label>
+          <select id="ltCategory" onchange="onCategoryChange()">
+            <option value="">-- Category Select Karo --</option>
+            <option value="prelims_full">📋 Prelims Full Test — 4 sections (Reasoning 25 | GA 25 | Maths 25 | English 25)</option>
+            <option value="english_only">📖 English Module — 45 questions, 1 section</option>
+            <option value="mains_s1">🧠 Mains Section 1 — 60 Qs (Reasoning 30 | Maths 30), 60 min fixed</option>
+            <option value="maths_only">🔢 Maths Module — 30 questions, 1 section</option>
+            <option value="mains_full">🏆 Mains Full Test — Section 1 (60 min: Reasoning 30 + Maths 30) + Section 2 (60 min: English 45 + GK 25)</option>
+          </select>
+          <div id="categoryInfo" style="margin-top:8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 12px;font-size:0.78rem;color:#0284c7;font-weight:600;display:none;"></div>
+        </div>
         <div class="form-group">
           <label>Start Time *</label>
           <input type="datetime-local" id="ltStart">
@@ -847,11 +859,70 @@ function toggleRecurring() {
 }
 
 // ══════════════════════════════════════════
+// CATEGORY CONFIG
+// ══════════════════════════════════════════
+const CATEGORY_CONFIG = {
+  prelims_full: {
+    subject: 'full_test',
+    duration: 60,
+    info: '✅ 4 Sections: Reasoning (Q1-25) | GA (Q26-50) | Maths (Q51-75) | English (Q76-100). Total 100 Qs, 60 min.',
+    getSectionConfig: (total) => [
+      { name: 'General Intelligence & Reasoning', from: 1,  to: 25  },
+      { name: 'General Awareness',                from: 26, to: 50  },
+      { name: 'Quantitative Aptitude',            from: 51, to: 75  },
+      { name: 'English Comprehension',            from: 76, to: 100 },
+    ]
+  },
+  english_only: {
+    subject: 'english',
+    duration: 45,
+    info: '✅ 1 Section: English — 45 Questions, 45 min.',
+    getSectionConfig: (total) => null // no sections
+  },
+  mains_s1: {
+    subject: 'full_test',
+    duration: 60,
+    info: '✅ 2 Sections: Reasoning (Q1-30) | Maths (Q31-60). 60 min fixed time.',
+    getSectionConfig: (total) => [
+      { name: 'General Intelligence & Reasoning', from: 1,  to: 30, time_minutes: 60 },
+      { name: 'Quantitative Aptitude',            from: 31, to: 60, time_minutes: 60 },
+    ]
+  },
+  maths_only: {
+    subject: 'maths',
+    duration: 30,
+    info: '✅ 1 Section: Maths — 30 Questions, 30 min.',
+    getSectionConfig: (total) => null // no sections
+  },
+  mains_full: {
+    subject: 'full_test',
+    duration: 120,
+    info: '✅ 2 Sections: Section 1 — 60 min (Reasoning Q1-30 + Maths Q31-60) | Section 2 — 60 min (English Q61-105 + GK Q106-130).',
+    getSectionConfig: (total) => [
+      { name: 'Section 1: Reasoning & Maths',   from: 1,  to: 60,  time_minutes: 60 },
+      { name: 'Section 2: English & GK',         from: 61, to: 130, time_minutes: 60 },
+    ]
+  }
+};
+
+function onCategoryChange() {
+  const cat = document.getElementById('ltCategory').value;
+  const infoEl = document.getElementById('categoryInfo');
+  if (!cat || !CATEGORY_CONFIG[cat]) { infoEl.style.display = 'none'; return; }
+  const cfg = CATEGORY_CONFIG[cat];
+  infoEl.textContent = cfg.info;
+  infoEl.style.display = 'block';
+  document.getElementById('ltSubject').value = cfg.subject;
+  document.getElementById('ltDuration').value = cfg.duration;
+}
+
+// ══════════════════════════════════════════
 // SCHEDULE TEST
 // ══════════════════════════════════════════
 async function scheduleTest() {
   const name  = document.getElementById('ltName').value.trim();
   const subj  = document.getElementById('ltSubject').value;
+  const cat   = document.getElementById('ltCategory').value;
   const start = document.getElementById('ltStart').value;
   const end   = document.getElementById('ltEnd').value;
   const dur   = parseInt(document.getElementById('ltDuration').value)||20;
@@ -866,10 +937,23 @@ async function scheduleTest() {
   const showExplanation= document.getElementById('ltShowExplanation').checked;
 
   if (!name){showToast('Test name daalo!','error');return;}
+  if (!cat){showToast('Test category select karo!','error');return;}
   if (!start){showToast('Start time daalo!','error');return;}
   if (!end){showToast('End time daalo!','error');return;}
   if (!parsedQuestions.length){showToast('Excel file upload karo!','error');return;}
   if (new Date(end)<=new Date(start)){showToast('End time start se baad hona chahiye!','error');return;}
+
+  // Validate question count based on category
+  const catCfg = CATEGORY_CONFIG[cat];
+  const totalQ = parsedQuestions.length;
+  const minQ = { prelims_full:100, english_only:45, mains_s1:60, maths_only:30, mains_full:130 };
+  if (totalQ < minQ[cat]) {
+    showToast(`❌ ${cat} ke liye kam se kam ${minQ[cat]} questions chahiye! Abhi ${totalQ} hain.`, 'error');
+    return;
+  }
+
+  // Build section_config
+  const sectionConfig = catCfg.getSectionConfig(totalQ);
 
   const btn = document.getElementById('btnSchedule');
   btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Scheduling...';
@@ -883,7 +967,9 @@ async function scheduleTest() {
       instructions:inst, code, status:'scheduled',
       total_questions:parsedQuestions.length,
       is_recurring:isRecurring, recur_freq:recurFreq, recur_count:recurCount,
-      attempt_limit:attemptLimit, show_leaderboard:showLeaderboard, show_explanation:showExplanation
+      attempt_limit:attemptLimit, show_leaderboard:showLeaderboard, show_explanation:showExplanation,
+      category: cat,
+      section_config: sectionConfig ? JSON.stringify(sectionConfig) : null
     }).select('id').single();
     if (ltErr) throw ltErr;
 
