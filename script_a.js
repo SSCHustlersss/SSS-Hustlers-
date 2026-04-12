@@ -1362,9 +1362,8 @@ function switchResultTab(tab) {
   if (tab === 'solutions') {
     analysisFilter = 'all';
     buildFilteredList();
-    analysisIdx = 0;
-    renderAnalysisQuestion();
-    updateAnalysisTabs();
+    renderAnalysisQuestion();  // list render
+    updateAnalysisTabs();      // tab counts update (no extra render inside)
   }
 }
 
