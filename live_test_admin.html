@@ -207,7 +207,14 @@ textarea{resize:vertical;min-height:70px;}
 /* Recurring badge */
 .recurring-info{background:#ede9fe;border:1px solid #ddd6fe;border-radius:8px;padding:10px 14px;font-size:0.78rem;color:#6d28d9;font-weight:600;margin-top:10px;}
 
-.toast{position:fixed;bottom:24px;right:24px;background:#111827;color:#fff;padding:12px 20px;border-radius:10px;font-size:0.82rem;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:all 0.3s;pointer-events:none;max-width:320px;}
+/* Section Config Builder */
+.sec-config-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;background:#f8fafc;border-radius:8px;padding:8px 10px;border:1.5px solid #e0f2fe;}
+.sec-config-row input[type=text]{flex:1;padding:7px 10px;border-radius:7px;border:1.5px solid #bae6fd;font-size:0.82rem;font-family:inherit;outline:none;}
+.sec-config-row input[type=number]{width:64px;padding:7px 8px;border-radius:7px;border:1.5px solid #bae6fd;font-size:0.82rem;font-family:inherit;outline:none;text-align:center;}
+.sec-config-row input:focus{border-color:#0ea5e9;}
+.sec-config-label{font-size:0.7rem;color:#64748b;font-weight:600;white-space:nowrap;}
+.sec-config-remove{background:none;border:none;color:#dc2626;font-size:1rem;cursor:pointer;flex-shrink:0;padding:2px 4px;line-height:1;}
+.sec-config-preview{font-size:0.72rem;color:#0284c7;font-weight:600;background:#e0f2fe;border-radius:6px;padding:4px 10px;margin-top:4px;}
 .toast.show{opacity:1;transform:translateY(0);}
 .toast.success{background:#15803d;}
 .toast.error{background:#dc2626;}
@@ -290,6 +297,20 @@ textarea{resize:vertical;min-height:70px;}
           <textarea id="ltInstructions" placeholder="Students ke liye koi instructions..."></textarea>
         </div>
       </div>
+
+      <!-- Section Config -->
+      <div class="divider"></div>
+      <div class="section-title" style="margin-bottom:4px;">📂 Section Configuration <span style="font-size:0.72rem;font-weight:600;color:#64748b;margin-left:6px;">(optional)</span></div>
+      <div style="font-size:0.75rem;color:#64748b;margin-bottom:12px;">Define karo ki kaun se questions kaun se section mein jaayenge. Sirf tab fill karo jab sections chahiye hoon (e.g. 60 ya 100 questions wale tests).</div>
+
+      <div id="sectionConfigRows"></div>
+      <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;">
+        <button type="button" class="btn-sm btn-blue" onclick="addSectionRow()">+ Section Add Karo</button>
+        <button type="button" class="btn-sm btn-gray" onclick="addDefaultSections(100)">📋 100Q Default (SSC CGL)</button>
+        <button type="button" class="btn-sm btn-gray" onclick="addDefaultSections(60)">📋 60Q Default</button>
+        <button type="button" class="btn-sm btn-red" onclick="clearSections()">🗑 Clear</button>
+      </div>
+      <div id="sectionConfigPreview" class="sec-config-preview" style="display:none;margin-top:8px;"></div>
 
       <!-- Advanced Options -->
       <div class="divider"></div>
@@ -691,6 +712,20 @@ textarea{resize:vertical;min-height:70px;}
       <label>Instructions</label>
       <textarea id="editTestInstructions" rows="3"></textarea>
     </div>
+
+    <!-- Section Config in Edit Modal -->
+    <div class="divider"></div>
+    <div style="font-size:0.85rem;font-weight:700;color:#111827;margin-bottom:4px;">📂 Section Configuration</div>
+    <div style="font-size:0.72rem;color:#64748b;margin-bottom:10px;">Sections define karo ya blank chodo agar sections nahi chahiye.</div>
+    <div id="editSecConfigRows"></div>
+    <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;">
+      <button type="button" class="btn-sm btn-blue" onclick="addEditSectionRow()">+ Section Add Karo</button>
+      <button type="button" class="btn-sm btn-gray" onclick="addEditDefaultSections(100)">📋 100Q SSC Default</button>
+      <button type="button" class="btn-sm btn-gray" onclick="addEditDefaultSections(60)">📋 60Q Default</button>
+      <button type="button" class="btn-sm btn-red" onclick="clearEditSections()">🗑 Clear</button>
+    </div>
+    <div id="editSecConfigPreview" class="sec-config-preview" style="display:none;margin-top:8px;"></div>
+
     <button class="btn-primary" style="margin-top:14px;" onclick="saveTestDetails()">💾 Save Changes</button>
   </div>
 </div>
@@ -737,6 +772,7 @@ let isAddingNew      = false;
 let currentMonitorTestId   = null;
 let currentMonitorTestName = '';
 let currentMonitorTest     = null;
+let editSectionRows  = [];
 let reorderMode      = false;
 let dragSrcId        = null;
 let selectedQIds     = new Set();
@@ -815,6 +851,84 @@ function toggleRecurring() {
 }
 
 // ══════════════════════════════════════════
+// SECTION CONFIG BUILDER
+// ══════════════════════════════════════════
+let sectionRows = [];
+
+function addSectionRow(name='', from='', to='') {
+  const id = Date.now() + Math.random();
+  sectionRows.push({ id, name, from, to });
+  renderSectionRows();
+}
+
+function removeSectionRow(id) {
+  sectionRows = sectionRows.filter(r => r.id !== id);
+  renderSectionRows();
+}
+
+function renderSectionRows() {
+  const el = document.getElementById('sectionConfigRows');
+  if (!sectionRows.length) { el.innerHTML = ''; updateSectionPreview(); return; }
+  el.innerHTML = sectionRows.map((r, i) => `
+    <div class="sec-config-row" id="secrow_${r.id}">
+      <span class="sec-config-label">S${i+1}</span>
+      <input type="text" placeholder="Section naam (e.g. Reasoning)" value="${r.name}"
+        oninput="updateSectionRowField(${r.id},'name',this.value)">
+      <span class="sec-config-label">Q</span>
+      <input type="number" placeholder="1" min="1" value="${r.from}"
+        oninput="updateSectionRowField(${r.id},'from',this.value)">
+      <span class="sec-config-label">to</span>
+      <input type="number" placeholder="25" min="1" value="${r.to}"
+        oninput="updateSectionRowField(${r.id},'to',this.value)">
+      <button class="sec-config-remove" onclick="removeSectionRow(${r.id})">✕</button>
+    </div>`).join('');
+  updateSectionPreview();
+}
+
+function updateSectionRowField(id, field, val) {
+  const row = sectionRows.find(r => r.id === id);
+  if (row) { row[field] = field==='name' ? val : parseInt(val)||''; }
+  updateSectionPreview();
+}
+
+function updateSectionPreview() {
+  const el = document.getElementById('sectionConfigPreview');
+  const valid = sectionRows.filter(r => r.name && r.from && r.to && r.to >= r.from);
+  if (!valid.length) { el.style.display='none'; return; }
+  el.style.display = 'block';
+  el.textContent = '✅ ' + valid.map(r => `${r.name}: Q${r.from}–Q${r.to} (${r.to-r.from+1} qs)`).join('  |  ');
+}
+
+function getSectionConfig() {
+  const valid = sectionRows.filter(r => r.name && r.from && r.to && r.to >= r.from);
+  if (!valid.length) return null;
+  return valid.map(r => ({ name: r.name, from: parseInt(r.from), to: parseInt(r.to) }));
+}
+
+function clearSections() {
+  sectionRows = [];
+  renderSectionRows();
+}
+
+function addDefaultSections(total) {
+  sectionRows = [];
+  if (total === 100) {
+    [
+      { name: 'General Intelligence & Reasoning', from: 1, to: 25 },
+      { name: 'General Awareness',                from: 26, to: 50 },
+      { name: 'Quantitative Aptitude',            from: 51, to: 75 },
+      { name: 'English Comprehension',            from: 76, to: 100 },
+    ].forEach(s => sectionRows.push({ id: Date.now()+Math.random(), ...s }));
+  } else if (total === 60) {
+    [
+      { name: 'General Intelligence & Reasoning', from: 1, to: 30 },
+      { name: 'Quantitative Aptitude',            from: 31, to: 60 },
+    ].forEach(s => sectionRows.push({ id: Date.now()+Math.random(), ...s }));
+  }
+  renderSectionRows();
+}
+
+// ══════════════════════════════════════════
 // SCHEDULE TEST
 // ══════════════════════════════════════════
 async function scheduleTest() {
@@ -843,6 +957,7 @@ async function scheduleTest() {
   btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Scheduling...';
   try {
     const code = name.toLowerCase().replace(/[^a-z0-9]/g,'_')+'_'+Date.now();
+    const secConfig = getSectionConfig();
     const {data:lt, error:ltErr} = await sb.from('live_tests').insert({
       name, subject:subj,
       start_time: new Date(start).toISOString(),
@@ -851,7 +966,8 @@ async function scheduleTest() {
       instructions:inst, code, status:'scheduled',
       total_questions:parsedQuestions.length,
       is_recurring:isRecurring, recur_freq:recurFreq, recur_count:recurCount,
-      attempt_limit:attemptLimit, show_leaderboard:showLeaderboard, show_explanation:showExplanation
+      attempt_limit:attemptLimit, show_leaderboard:showLeaderboard, show_explanation:showExplanation,
+      section_config: secConfig ? JSON.stringify(secConfig) : null
     }).select('id').single();
     if (ltErr) throw ltErr;
 
@@ -954,6 +1070,70 @@ async function deleteTest(id){
   loadLiveTests();
 }
 
+// Edit modal section config helpers
+function addEditSectionRow(name='', from='', to='') {
+  const id = Date.now() + Math.random();
+  editSectionRows.push({ id, name, from, to });
+  renderEditSecRows();
+}
+function removeEditSectionRow(id) {
+  editSectionRows = editSectionRows.filter(r => r.id !== id);
+  renderEditSecRows();
+}
+function renderEditSecRows() {
+  const el = document.getElementById('editSecConfigRows');
+  if (!editSectionRows.length) { el.innerHTML = ''; updateEditSecPreview(); return; }
+  el.innerHTML = editSectionRows.map((r, i) => `
+    <div class="sec-config-row">
+      <span class="sec-config-label">S${i+1}</span>
+      <input type="text" placeholder="Section naam" value="${r.name}"
+        oninput="updateEditSecField(${r.id},'name',this.value)">
+      <span class="sec-config-label">Q</span>
+      <input type="number" placeholder="1" min="1" value="${r.from}"
+        oninput="updateEditSecField(${r.id},'from',this.value)">
+      <span class="sec-config-label">to</span>
+      <input type="number" placeholder="25" min="1" value="${r.to}"
+        oninput="updateEditSecField(${r.id},'to',this.value)">
+      <button class="sec-config-remove" onclick="removeEditSectionRow(${r.id})">✕</button>
+    </div>`).join('');
+  updateEditSecPreview();
+}
+function updateEditSecField(id, field, val) {
+  const row = editSectionRows.find(r => r.id === id);
+  if (row) row[field] = field==='name' ? val : parseInt(val)||'';
+  updateEditSecPreview();
+}
+function updateEditSecPreview() {
+  const el = document.getElementById('editSecConfigPreview');
+  const valid = editSectionRows.filter(r => r.name && r.from && r.to && r.to >= r.from);
+  if (!valid.length) { el.style.display='none'; return; }
+  el.style.display = 'block';
+  el.textContent = '✅ ' + valid.map(r => `${r.name}: Q${r.from}–Q${r.to}`).join('  |  ');
+}
+function getEditSectionConfig() {
+  const valid = editSectionRows.filter(r => r.name && r.from && r.to && r.to >= r.from);
+  if (!valid.length) return null;
+  return valid.map(r => ({ name: r.name, from: parseInt(r.from), to: parseInt(r.to) }));
+}
+function clearEditSections() { editSectionRows = []; renderEditSecRows(); }
+function addEditDefaultSections(total) {
+  editSectionRows = [];
+  if (total === 100) {
+    [
+      { name: 'General Intelligence & Reasoning', from: 1, to: 25 },
+      { name: 'General Awareness',                from: 26, to: 50 },
+      { name: 'Quantitative Aptitude',            from: 51, to: 75 },
+      { name: 'English Comprehension',            from: 76, to: 100 },
+    ].forEach(s => editSectionRows.push({ id: Date.now()+Math.random(), ...s }));
+  } else {
+    [
+      { name: 'General Intelligence & Reasoning', from: 1, to: 30 },
+      { name: 'Quantitative Aptitude',            from: 31, to: 60 },
+    ].forEach(s => editSectionRows.push({ id: Date.now()+Math.random(), ...s }));
+  }
+  renderEditSecRows();
+}
+
 // ══════════════════════════════════════════
 // EDIT TEST DETAILS MODAL
 // ══════════════════════════════════════════
@@ -969,6 +1149,19 @@ async function openEditTestModal(id){
   document.getElementById('editTestPos').value=data.positive_marking||2;
   document.getElementById('editTestNeg').value=data.negative_marking||0.5;
   document.getElementById('editTestInstructions').value=data.instructions||'';
+
+  // Load section_config
+  editSectionRows = [];
+  if (data.section_config) {
+    try {
+      const cfg = typeof data.section_config === 'string' ? JSON.parse(data.section_config) : data.section_config;
+      if (Array.isArray(cfg)) {
+        cfg.forEach(s => editSectionRows.push({ id: Date.now()+Math.random(), name: s.name, from: s.from, to: s.to }));
+      }
+    } catch(e) {}
+  }
+  renderEditSecRows();
+
   document.getElementById('editTestModal').classList.add('show');
 }
 
@@ -978,6 +1171,7 @@ async function saveTestDetails(){
   const start=document.getElementById('editTestStart').value;
   const end=document.getElementById('editTestEnd').value;
   if (!name){showToast('Name daalo!','error');return;}
+  const secConfig = getEditSectionConfig();
   const {error}=await sb.from('live_tests').update({
     name,
     subject: document.getElementById('editTestSubject').value,
@@ -986,7 +1180,8 @@ async function saveTestDetails(){
     duration_minutes: parseInt(document.getElementById('editTestDuration').value)||20,
     positive_marking: parseFloat(document.getElementById('editTestPos').value)||2,
     negative_marking: parseFloat(document.getElementById('editTestNeg').value)||0.5,
-    instructions: document.getElementById('editTestInstructions').value.trim()
+    instructions: document.getElementById('editTestInstructions').value.trim(),
+    section_config: secConfig ? JSON.stringify(secConfig) : null
   }).eq('id',id);
   if (error){showToast('Save failed: '+error.message,'error');return;}
   showToast('✅ Test details save ho gaye!','success');
