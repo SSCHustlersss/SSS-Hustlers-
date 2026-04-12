@@ -364,6 +364,12 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
     </div>
   </div>
 
+  <!-- SECTION TIMER (for Mains fixed-time sections) -->
+  <div id="sectionTimerDisplay" style="display:none;background:#fff7ed;border-bottom:1.5px solid #fed7aa;padding:7px 16px;align-items:center;justify-content:space-between;gap:10px;">
+    <span style="font-size:0.75rem;font-weight:700;color:#c2410c;">⏱ Section Time Left:</span>
+    <span id="sectionTimerVal" style="font-size:1rem;font-weight:800;color:#0ea5e9;font-variant-numeric:tabular-nums;">--:--</span>
+  </div>
+
   <!-- MOBILE TIMER BAR (phone pe timer yahan dikhega) -->
   <div class="mobile-timer-bar" id="mobileTimerBar">
     <div>
@@ -1055,8 +1061,132 @@ const SSC_SECTIONS = [
   { key: 'english',   label: 'English Comprehension' },
 ];
 
+// Per-section timer state
+let sectionTimers = [];       // time_minutes per section (null = no per-section timer)
+let sectionTimeLeft = null;   // seconds left for current section
+let sectionTimerInterval = null;
+
 function buildSections() {
   const wrap = document.getElementById('sectionTabsWrap');
+
+  // ── Priority 1: Admin-defined section_config ──
+  if (liveTest.section_config) {
+    try {
+      const config = typeof liveTest.section_config === 'string'
+        ? JSON.parse(liveTest.section_config)
+        : liveTest.section_config;
+      if (Array.isArray(config) && config.length > 0) {
+        sections = config.map(sec => ({
+          name:         sec.name,
+          label:        sec.name,
+          time_minutes: sec.time_minutes || null,
+          indices: Array.from({ length: sec.to - sec.from + 1 }, (_, i) => sec.from - 1 + i)
+                       .filter(i => i >= 0 && i < questions.length)
+        })).filter(s => s.indices.length > 0);
+
+        // Build per-section timer array
+        sectionTimers = sections.map(s => s.time_minutes || null);
+
+        if (sections.length > 1) {
+          wrap.style.display = 'block';
+          renderSectionTabs();
+          // Start section timer if this section has time_minutes
+          startSectionTimerIfNeeded(0);
+          return;
+        }
+      }
+    } catch(e) { console.warn('section_config parse error:', e); }
+  }
+
+  // ── Priority 2: category-based (no section_config = single section) ──
+  // For english_only and maths_only: always 1 section, no splits
+  const cat = liveTest.category || '';
+  if (cat === 'english_only' || cat === 'maths_only') {
+    sections = [{ name: 'all', label: 'All Questions', indices: questions.map((_,i)=>i) }];
+    wrap.style.display = 'none';
+    return;
+  }
+
+  // ── Priority 3: Auto-detect from subject field ──
+  const SECTION_KEYWORDS = {
+    reasoning: ['reasoning','intelligence','general intelligence','reasoning ability','logical'],
+    gk:        ['gk','general awareness','awareness','general knowledge','gs','general studies'],
+    quant:     ['quant','quantitative','math','maths','mathematics','numerical'],
+    english:   ['english','comprehension','language','grammar','vocabulary'],
+  };
+  function detectSectionKey(subject) {
+    const s = (subject || '').toLowerCase().trim();
+    for (const [key, kws] of Object.entries(SECTION_KEYWORDS)) {
+      if (kws.some(k => s.includes(k))) return key;
+    }
+    return null;
+  }
+
+  const hasSubject = questions.some(q => q.subject && q.subject.trim());
+  if (hasSubject) {
+    const map = { reasoning: [], gk: [], quant: [], english: [], other: [] };
+    questions.forEach((q, i) => { const key = detectSectionKey(q.subject) || 'other'; map[key].push(i); });
+    sections = SSC_SECTIONS.filter(s => map[s.key].length > 0)
+                           .map(s => ({ name: s.key, label: s.label, indices: map[s.key] }));
+    if (sections.length === 0)
+      sections = [{ name: 'all', label: 'All Questions', indices: questions.map((_,i)=>i) }];
+  } else {
+    sections = [{ name: 'all', label: 'All Questions', indices: questions.map((_,i)=>i) }];
+  }
+
+  if (sections.length <= 1) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  renderSectionTabs();
+}
+
+// ── PER-SECTION TIMER ──
+function startSectionTimerIfNeeded(secIdx) {
+  if (sectionTimerInterval) clearInterval(sectionTimerInterval);
+  sectionTimerInterval = null;
+  sectionTimeLeft = null;
+
+  const timeMins = sectionTimers[secIdx];
+  if (!timeMins) return; // no per-section timer
+
+  sectionTimeLeft = timeMins * 60;
+  const timerEl = document.getElementById('sectionTimerDisplay');
+  if (timerEl) { timerEl.style.display = 'flex'; updateSectionTimerDisplay(); }
+
+  sectionTimerInterval = setInterval(() => {
+    sectionTimeLeft--;
+    updateSectionTimerDisplay();
+    if (sectionTimeLeft <= 0) {
+      clearInterval(sectionTimerInterval);
+      sectionTimerInterval = null;
+      // Auto-move to next section or submit
+      if (currentSection < sections.length - 1) {
+        showToast('⏰ Section time khatam! Next section pe ja rahe hain...', '');
+        setTimeout(() => jumpToSection(currentSection + 1), 1500);
+      } else {
+        showToast('⏰ Section time khatam! Test submit ho raha hai...', '');
+        setTimeout(() => submitTest(), 1500);
+      }
+    }
+  }, 1000);
+}
+
+function updateSectionTimerDisplay() {
+  const el = document.getElementById('sectionTimerVal');
+  if (!el || sectionTimeLeft === null) return;
+  const m = Math.floor(sectionTimeLeft / 60);
+  const s = sectionTimeLeft % 60;
+  el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  el.style.color = sectionTimeLeft <= 300 ? '#dc2626' : '#0ea5e9';
+}
+
+function jumpToSection(si) {
+  currentSection = si;
+  const firstIdx = sections[si].indices[0];
+  showQuestion(firstIdx);
+  renderSectionTabs();
+  renderSidebar();
+  startSectionTimerIfNeeded(si);
+}
 
   // ── Priority 1: Admin-defined section_config ──
   if (liveTest.section_config) {
@@ -1132,6 +1262,7 @@ function switchSection(si) {
   const firstIdx = sections[si].indices[0];
   if (firstIdx !== undefined) showQuestion(firstIdx);
   buildDots();
+  startSectionTimerIfNeeded(si);
 }
 
 // ── DOTS ──
