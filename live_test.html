@@ -1188,60 +1188,6 @@ function jumpToSection(si) {
   startSectionTimerIfNeeded(si);
 }
 
-  // ── Priority 1: Admin-defined section_config ──
-  if (liveTest.section_config) {
-    try {
-      const config = typeof liveTest.section_config === 'string'
-        ? JSON.parse(liveTest.section_config)
-        : liveTest.section_config;
-      if (Array.isArray(config) && config.length > 0) {
-        sections = config.map(sec => ({
-          name:    sec.name,
-          label:   sec.name,
-          indices: Array.from({ length: sec.to - sec.from + 1 }, (_, i) => sec.from - 1 + i)
-                       .filter(i => i >= 0 && i < questions.length)
-        })).filter(s => s.indices.length > 0);
-        if (sections.length > 1) {
-          wrap.style.display = 'block';
-          renderSectionTabs();
-          return;
-        }
-      }
-    } catch(e) { console.warn('section_config parse error:', e); }
-  }
-
-  // ── Priority 2: Auto-detect from subject field ──
-  const SECTION_KEYWORDS = {
-    reasoning: ['reasoning','intelligence','general intelligence','reasoning ability','logical'],
-    gk:        ['gk','general awareness','awareness','general knowledge','gs','general studies'],
-    quant:     ['quant','quantitative','math','maths','mathematics','numerical'],
-    english:   ['english','comprehension','language','grammar','vocabulary'],
-  };
-  function detectSectionKey(subject) {
-    const s = (subject || '').toLowerCase().trim();
-    for (const [key, kws] of Object.entries(SECTION_KEYWORDS)) {
-      if (kws.some(k => s.includes(k))) return key;
-    }
-    return null;
-  }
-
-  const hasSubject = questions.some(q => q.subject && q.subject.trim());
-  if (hasSubject) {
-    const map = { reasoning: [], gk: [], quant: [], english: [], other: [] };
-    questions.forEach((q, i) => { const key = detectSectionKey(q.subject) || 'other'; map[key].push(i); });
-    sections = SSC_SECTIONS.filter(s => map[s.key].length > 0)
-                           .map(s => ({ name: s.key, label: s.label, indices: map[s.key] }));
-    if (sections.length === 0)
-      sections = [{ name: 'all', label: 'All Questions', indices: questions.map((_,i)=>i) }];
-  } else {
-    sections = [{ name: 'all', label: 'All Questions', indices: questions.map((_,i)=>i) }];
-  }
-
-  if (sections.length <= 1) { wrap.style.display = 'none'; return; }
-  wrap.style.display = 'block';
-  renderSectionTabs();
-}
-
 function renderSectionTabs() {
   const tabsEl = document.getElementById('sectionTabs');
   tabsEl.innerHTML = sections.map((sec, si) => {
