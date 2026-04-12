@@ -198,6 +198,9 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
 .sec-score-fill{height:100%;border-radius:4px;transition:width 0.6s;}
 .sec-score-val{font-size:0.78rem;font-weight:800;min-width:55px;text-align:right;flex-shrink:0;}
 .sec-score-detail{font-size:0.65rem;color:#94a3b8;font-weight:600;min-width:70px;text-align:right;flex-shrink:0;}
+
+/* Result Buttons */
+.result-btns{display:flex;gap:10px;padding:16px;}
 .btn-share,.btn-back-result{flex:1;padding:13px;border-radius:11px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;border:none;}
 .btn-share{background:#e0f2fe;color:#0284c7;}
 .btn-back-result{background:#0ea5e9;color:#fff;}
@@ -1055,14 +1058,12 @@ const SSC_SECTIONS = [
 function buildSections() {
   const wrap = document.getElementById('sectionTabsWrap');
 
-  // ── Priority 1: Admin-defined section_config (JSON column in live_tests) ──
-  // Format: [{name:"Reasoning", from:1, to:25}, {name:"Maths", from:26, to:60}]
+  // ── Priority 1: Admin-defined section_config ──
   if (liveTest.section_config) {
     try {
       const config = typeof liveTest.section_config === 'string'
         ? JSON.parse(liveTest.section_config)
         : liveTest.section_config;
-
       if (Array.isArray(config) && config.length > 0) {
         sections = config.map(sec => ({
           name:    sec.name,
@@ -1070,7 +1071,6 @@ function buildSections() {
           indices: Array.from({ length: sec.to - sec.from + 1 }, (_, i) => sec.from - 1 + i)
                        .filter(i => i >= 0 && i < questions.length)
         })).filter(s => s.indices.length > 0);
-
         if (sections.length > 1) {
           wrap.style.display = 'block';
           renderSectionTabs();
@@ -1087,7 +1087,6 @@ function buildSections() {
     quant:     ['quant','quantitative','math','maths','mathematics','numerical'],
     english:   ['english','comprehension','language','grammar','vocabulary'],
   };
-
   function detectSectionKey(subject) {
     const s = (subject || '').toLowerCase().trim();
     for (const [key, kws] of Object.entries(SECTION_KEYWORDS)) {
@@ -1099,23 +1098,16 @@ function buildSections() {
   const hasSubject = questions.some(q => q.subject && q.subject.trim());
   if (hasSubject) {
     const map = { reasoning: [], gk: [], quant: [], english: [], other: [] };
-    questions.forEach((q, i) => {
-      const key = detectSectionKey(q.subject) || 'other';
-      map[key].push(i);
-    });
-    sections = SSC_SECTIONS
-      .filter(s => map[s.key].length > 0)
-      .map(s => ({ name: s.key, label: s.label, indices: map[s.key] }));
+    questions.forEach((q, i) => { const key = detectSectionKey(q.subject) || 'other'; map[key].push(i); });
+    sections = SSC_SECTIONS.filter(s => map[s.key].length > 0)
+                           .map(s => ({ name: s.key, label: s.label, indices: map[s.key] }));
     if (sections.length === 0)
       sections = [{ name: 'all', label: 'All Questions', indices: questions.map((_,i)=>i) }];
   } else {
     sections = [{ name: 'all', label: 'All Questions', indices: questions.map((_,i)=>i) }];
   }
 
-  if (sections.length <= 1) {
-    wrap.style.display = 'none';
-    return;
-  }
+  if (sections.length <= 1) { wrap.style.display = 'none'; return; }
   wrap.style.display = 'block';
   renderSectionTabs();
 }
@@ -1209,7 +1201,7 @@ function togglePanel() {
   else sb.classList.toggle('collapsed');
 }
 
-// Mobile + Telegram browser pe panel ke bahar touch/click karo toh close ho jaye
+// Mobile + Telegram browser pe panel ke bahar touch/click → close
 function closePanelIfOutside(target) {
   if (window.innerWidth > 600) return;
   const sidebar = document.getElementById('ntaSidebar');
@@ -1218,7 +1210,7 @@ function closePanelIfOutside(target) {
   if (sidebar.contains(target) || (toggleBtn && toggleBtn.contains(target))) return;
   sidebar.classList.remove('mob-open');
 }
-document.addEventListener('click', function(e) { closePanelIfOutside(e.target); });
+document.addEventListener('click',      function(e) { closePanelIfOutside(e.target); });
 document.addEventListener('touchstart', function(e) { closePanelIfOutside(e.target); }, { passive: true });
 
 function confirmExit() {
@@ -1337,8 +1329,6 @@ async function showResultScreen(score, correct, wrong, skipped, attempted, accur
   }
 
   document.getElementById('resultScreen').classList.add('show');
-
-  // Load leaderboard (live + registered)
   await loadLeaderboard(score);
 }
 
