@@ -177,96 +177,77 @@ function updateAnalysisTabs() {
     btn.style.fontWeight = isActive ? '700' : '600';
     btn.classList.toggle('active', isActive);
   });
-  renderAnalysisQuestion();
+  // renderAnalysisQuestion() yahan NAHI — setAnalysisFilter se already call hoti hai
 }
 
 function renderAnalysisQuestion() {
   const body = document.getElementById('analysisBody');
   if (!body) return;
+
+  // Hide old Prev/Next/Counter — ab zarurat nahi
+  const prev = document.getElementById('analysisPrev');
+  const next = document.getElementById('analysisNext');
+  const counter = document.getElementById('analysisCounter');
+  if (prev) prev.style.display = 'none';
+  if (next) next.style.display = 'none';
+  if (counter) counter.style.display = 'none';
+
   if (analysisFiltered.length === 0) {
     body.innerHTML = `<div style="text-align:center;padding:40px;color:#aaa;font-size:0.9rem;">Koi question nahi is filter mein</div>`;
-    const prev = document.getElementById('analysisPrev');
-    const next = document.getElementById('analysisNext');
-    const counter = document.getElementById('analysisCounter');
-    if (prev) prev.disabled = true;
-    if (next) next.disabled = true;
-    if (counter) counter.textContent = '0 / 0';
     return;
   }
-  if (analysisIdx >= analysisFiltered.length) analysisIdx = analysisFiltered.length - 1;
-  if (analysisIdx < 0) analysisIdx = 0;
 
-  const { q, i, status, userAns } = analysisFiltered[analysisIdx];
-  const opts = [
-    {k:'A', txt: getLangText(q.option_a), img: q.option_a_image},
-    {k:'B', txt: getLangText(q.option_b), img: q.option_b_image},
-    {k:'C', txt: getLangText(q.option_c), img: q.option_c_image},
-    {k:'D', txt: getLangText(q.option_d), img: q.option_d_image}
-  ];
-  const badge = status==='skip'
-    ? '<span class="aq-badge skip">Skipped</span>'
-    : status==='correct'
-    ? '<span class="aq-badge correct">Correct ✅</span>'
-    : '<span class="aq-badge wrong">Wrong ❌</span>';
+  let html = '';
+  if (sections.length > 1) {
+    sections.forEach(sec => {
+      const secItems = analysisFiltered.filter(item => sec.indices.includes(item.i));
+      if (secItems.length === 0) return;
+      html += `<div style="padding:10px 14px 4px;font-size:0.75rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:0.5px;background:#f8fafc;border-top:1px solid #e8ecf0;border-bottom:1px solid #e8ecf0;">${sec.label} &nbsp;<span style="color:#aaa;font-weight:600;">${secItems.length} Qs</span></div>`;
+      secItems.forEach(item => { html += buildQuestionCard(item); });
+    });
+  } else {
+    analysisFiltered.forEach(item => { html += buildQuestionCard(item); });
+  }
 
-  const hasImgOpts = opts.some(o => o.img);
-  const optsHtml = hasImgOpts
-    ? `<div class="aq-opts-img">${opts.map(o => {
-        let cls = 'aq-opt-img';
-        if (o.k === q.correct_answer) cls += ' opt-correct';
-        else if (o.k === userAns && status==='wrong') cls += ' opt-wrong';
-        const content = o.img ? `<img src="${o.img}" alt="Option ${o.k}" onclick="openImgZoom('${o.img}')">` : `<span>${o.txt||''}</span>`;
-        return `<div class="${cls}"><span class="aq-opt-label">${o.k}</span>${content}
-          ${o.k===q.correct_answer?'<span style="font-size:0.7rem;font-weight:700;color:#00c853;">✓ Correct</span>':''}
-          ${o.k===userAns&&status==='wrong'?'<span style="font-size:0.7rem;font-weight:700;color:#e63946;">✗ Your Ans</span>':''}
-        </div>`;
-      }).join('')}</div>`
-    : `<div class="aq-options">${opts.map(o => {
-        let cls = 'aq-opt';
-        if (o.k === q.correct_answer) cls += ' opt-correct';
-        else if (o.k === userAns && status==='wrong') cls += ' opt-wrong';
-        return `<div class="${cls}"><span class="aq-opt-label">${o.k}</span><span>${o.txt||''}</span>
-          ${o.k===q.correct_answer?'<span style="margin-left:auto;font-size:0.75rem;font-weight:700;color:#00c853;">✓ Correct</span>':''}
-          ${o.k===userAns&&status==='wrong'?'<span style="margin-left:auto;font-size:0.75rem;font-weight:700;color:#e63946;">✗ Your Answer</span>':''}
-        </div>`;
-      }).join('')}</div>`;
+  body.innerHTML = html;
+  analysisFiltered.forEach(item => fetchQuestionStats(item.q, item.i));
+}
+
+function buildQuestionCard({ q, i, status, userAns }) {
+  const statusColor = status==='correct' ? '#00a040' : status==='wrong' ? '#e63946' : '#888';
+  const statusBg    = status==='correct' ? '#e8f5e9' : status==='wrong' ? '#fdecea' : '#f5f5f5';
+  const statusLabel = status==='correct' ? '✅ Correct' : status==='wrong' ? '❌ Wrong' : '⏭ Skipped';
 
   const timeTaken = (window.questionTimes && window.questionTimes[i]) || 0;
   let timeHtml = '';
   if (timeTaken > 0) {
-    const mins = Math.floor(timeTaken / 60), secs = timeTaken % 60;
-    const timeStr = mins > 0 ? `${mins}:${String(secs).padStart(2,'0')}` : `${secs} sec`;
+    const mins = Math.floor(timeTaken/60), secs = timeTaken%60;
+    const timeStr = mins > 0 ? `${mins}:${String(secs).padStart(2,'0')}` : `${secs}s`;
     const timeColor = timeTaken<=30?'#00c853':timeTaken<=60?'#ffb300':'#e63946';
-    const timeIcon  = timeTaken<=30?'⚡':timeTaken<=60?'⏱':'🐢';
-    timeHtml = `<span style="font-size:0.72rem;font-weight:700;color:${timeColor};background:${timeColor}18;padding:3px 8px;border-radius:6px;">${timeIcon} ${timeStr}</span>`;
+    timeHtml = `<span style="font-size:0.68rem;font-weight:700;color:${timeColor};">⚡${timeStr}</span>`;
   }
 
-  body.innerHTML = `
-    <div class="analysis-q aq-${status}">
-      <div class="aq-header">
-        <span class="aq-num">Q${i+1} of ${questions.length}</span>
-        ${badge}
-        <button class="btn-bookmark aq-bookmark ${savedQuestions.has(i)?'saved':''}" onclick="toggleAnalysisBookmark(${i})" style="margin-left:auto;font-size:1.1rem;padding:4px 8px;">🔖</button>
-        <button onclick="openAiSolver(${analysisIdx})" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border:none;padding:5px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;">🤖 AI</button>
-      </div>
-      <div class="aq-question">${getLangText(q.question_text)}</div>
-      ${q.question_image ? `<div class="q-image-wrap"><img src="${q.question_image}" alt="Diagram" onclick="openImgZoom(this.src)" style="cursor:zoom-in;"></div>` : ''}
-      ${optsHtml}
-      ${q.explanation ? `<div class="aq-explanation"><strong>💡 Explanation:</strong> ${getLangText(q.explanation)}</div>` : ''}
-      <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">
-        ${timeHtml}
-        <span id="pctStat_${i}" style="font-size:0.72rem;font-weight:700;color:#888;background:#f5f5f5;padding:3px 8px;border-radius:6px;">👥 Loading...</span>
-      </div>
-    </div>`;
+  const rawText = getLangText(q.question_text) || '';
+  const preview = rawText.replace(/<[^>]+>/g,'').trim();
+  const previewShort = preview.slice(0,100) + (preview.length>100?'...':'');
 
-  fetchQuestionStats(q, i);
-
-  const counter = document.getElementById('analysisCounter');
-  const prev = document.getElementById('analysisPrev');
-  const next = document.getElementById('analysisNext');
-  if (counter) counter.textContent = `${analysisIdx+1} / ${analysisFiltered.length}`;
-  if (prev) prev.disabled = analysisIdx === 0;
-  if (next) next.disabled = analysisIdx === analysisFiltered.length - 1;
+  return `<div onclick="openReviewMode(${i})" style="
+      background:#fff;border-radius:10px;margin:8px 10px;padding:12px 14px;
+      box-shadow:0 1px 4px rgba(0,0,0,0.07);cursor:pointer;
+      border:1.5px solid #f0f0f0;active:background:#f8faff;">
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
+      <div style="min-width:26px;height:26px;border-radius:50%;background:${statusBg};color:${statusColor};
+        font-size:0.7rem;font-weight:800;display:flex;align-items:center;justify-content:center;
+        border:1.5px solid ${statusColor}33;flex-shrink:0;">${i+1}</div>
+      <span style="font-size:0.7rem;font-weight:700;color:${statusColor};background:${statusBg};
+        padding:2px 8px;border-radius:20px;">${statusLabel}</span>
+      ${timeHtml}
+      <span id="pctStat_${i}" style="font-size:0.66rem;font-weight:600;color:#bbb;margin-left:auto;">👥 ...</span>
+    </div>
+    <div style="font-size:0.82rem;color:#333;line-height:1.5;">${previewShort}</div>
+    ${status==='wrong' ? `<div style="margin-top:5px;font-size:0.71rem;color:#e63946;">Your: <b>${userAns}</b> &nbsp;·&nbsp; Correct: <b style="color:#00a040;">${q.correct_answer}</b></div>` : ''}
+    ${status==='skip'  ? `<div style="margin-top:5px;font-size:0.71rem;color:#888;">Correct ans: <b>${q.correct_answer}</b></div>` : ''}
+  </div>`;
 }
 
 async function toggleAnalysisBookmark(idx) {
@@ -318,12 +299,118 @@ async function fetchQuestionStats(q, qIdx) {
   } catch(e) {}
 }
 
-function analysisPrev() { if(analysisIdx>0){ analysisIdx--; renderAnalysisQuestion(); } }
-function analysisNext() { if(analysisIdx<analysisFiltered.length-1){ analysisIdx++; renderAnalysisQuestion(); } }
+function analysisPrev() { /* deprecated */ }
+function analysisNext() { /* deprecated */ }
+
+// ============ REVIEW MODE ============
+function openReviewMode(idx) {
+  window._reviewMode = true;
+  document.getElementById('quizBody').style.display = 'block';
+  document.getElementById('quizFooter').style.display = 'flex';
+  document.getElementById('qNavDots').style.display = sections.length > 1 ? 'block' : 'grid';
+  document.querySelector('.nta-body').style.display = 'flex';
+  document.getElementById('quizHeader').style.display = 'flex';
+  document.getElementById('resultScreen').classList.remove('show');
+  const mobBar = document.getElementById('mobileTimerBar');
+  if (mobBar) mobBar.style.display = 'none';
+  const timerEl = document.getElementById('quizTimer');
+  if (timerEl) { timerEl.textContent = 'REVIEW'; timerEl.style.color = '#4285f4'; timerEl.style.fontSize = '0.72rem'; }
+  const pauseBtn = document.getElementById('btnPause');
+  if (pauseBtn) pauseBtn.style.display = 'none';
+
+  // Exit button → closeReviewMode
+  const exitBtn = document.getElementById('btnExitQuiz');
+  if (exitBtn) { exitBtn.setAttribute('onclick', 'closeReviewMode()'); }
+  const exitLbl = document.getElementById('btnExitLabel');
+  if (exitLbl) exitLbl.textContent = 'Back';
+
+  // qStatus rebuild — green=correct, red=wrong, grey=skip
+  questions.forEach((q, i) => {
+    const a = answers[i];
+    if (!a) qStatus[i] = 'not_visited';
+    else if (a === q.correct_answer) qStatus[i] = 'answered';
+    else qStatus[i] = 'not_answered';
+  });
+
+  currentQ = idx;
+  renderQNavDots();
+  renderReviewQuestion(idx);
+}
+
+function closeReviewMode() {
+  window._reviewMode = false;
+  document.getElementById('quizBody').style.display = 'none';
+  document.getElementById('quizFooter').style.display = 'none';
+  document.getElementById('qNavDots').style.display = 'none';
+  document.querySelector('.nta-body').style.display = 'none';
+  document.getElementById('quizHeader').style.display = 'none';
+  document.getElementById('resultScreen').classList.add('show');
+  const pauseBtn = document.getElementById('btnPause');
+  if (pauseBtn) pauseBtn.style.display = '';
+  // Exit button restore
+  const exitBtn = document.getElementById('btnExitQuiz');
+  if (exitBtn) exitBtn.setAttribute('onclick', 'exitQuiz()');
+  const exitLbl = document.getElementById('btnExitLabel');
+  if (exitLbl) exitLbl.textContent = 'Exit';
+  switchResultTab('solutions');
+}
+
+function renderReviewQuestion(idx) {
+  currentQ = idx;
+  renderQuestionContent(idx);
+
+  setTimeout(() => {
+    const q = questions[idx];
+    const userAns = answers[idx];
+    document.querySelectorAll('.option-btn').forEach(btn => {
+      btn.style.pointerEvents = 'none';
+      const lbl = btn.querySelector('.option-label');
+      if (!lbl) return;
+      const k = lbl.textContent.trim();
+      btn.querySelectorAll('.review-indicator').forEach(el => el.remove());
+      if (k === q.correct_answer) {
+        btn.style.background = '#e8f5e9';
+        btn.style.borderColor = '#00a040';
+        const ind = document.createElement('span');
+        ind.className = 'review-indicator';
+        ind.style.cssText = 'margin-left:auto;font-size:0.72rem;font-weight:700;color:#00a040;';
+        ind.textContent = '✓ Correct';
+        btn.appendChild(ind);
+      } else if (userAns && k === userAns) {
+        btn.style.background = '#fdecea';
+        btn.style.borderColor = '#e63946';
+        const ind = document.createElement('span');
+        ind.className = 'review-indicator';
+        ind.style.cssText = 'margin-left:auto;font-size:0.72rem;font-weight:700;color:#e63946;';
+        ind.textContent = '✗ Your Ans';
+        btn.appendChild(ind);
+      }
+    });
+    const expBox = document.getElementById('explanationBox');
+    const expTxt = document.getElementById('explanationText');
+    if (expBox && expTxt) {
+      if (q.explanation && q.explanation.trim()) {
+        expTxt.innerHTML = getLangText(q.explanation);
+        expBox.style.display = 'block';
+      } else {
+        expBox.style.display = 'none';
+      }
+    }
+  }, 60);
+
+  const prevBtn = document.getElementById('btnPrev');
+  const nextBtn = document.getElementById('btnNext');
+  const submitBtn = document.getElementById('btnSubmit');
+  if (prevBtn) { prevBtn.style.display = idx===0?'none':'inline-block'; prevBtn.onclick = () => { renderReviewQuestion(idx-1); renderQNavDots(); }; }
+  if (nextBtn) { nextBtn.style.display = idx===questions.length-1?'none':'inline-block'; nextBtn.onclick = () => { renderReviewQuestion(idx+1); renderQNavDots(); }; }
+  if (submitBtn) submitBtn.style.display = 'none';
+  renderQNavDots();
+}
 
 function openAiSolver(idx) {
-  if (!analysisFiltered[idx]) return;
-  const { q } = analysisFiltered[idx];
+  // idx = question index (0-based) in questions array
+  const q = questions[idx];
+  if (!q) return;
   const qText = getLangText(q.question_text) || '';
   const fullQ = `${qText}\n\nA) ${getLangText(q.option_a)||''}\nB) ${getLangText(q.option_b)||''}\nC) ${getLangText(q.option_c)||''}\nD) ${getLangText(q.option_d)||''}\n\nCorrect Answer: ${q.correct_answer||''}`;
   window.location.href = `doubt-solver.html?q=${encodeURIComponent(fullQ)}`;
