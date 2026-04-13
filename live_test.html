@@ -755,7 +755,7 @@ async function joinTest() {
     .select('id, score, correct, wrong, skipped, answers, submitted_at')
     .eq('live_test_id', liveTest.id)
     .eq('participant_name', participantName)
-    .eq('device_fingerprint', deviceFingerprint)
+    
     .not('submitted_at', 'is', null)
     .maybeSingle();
 
