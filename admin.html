@@ -2611,6 +2611,7 @@ function switchTab(name, el) {
   if (name === 'pdfs') { loadPdfList(); }
   if (name === 'rooms') { setTimeout(() => loadRooms(), 50); }
   if (name === 'typing') { setTimeout(() => loadTypingPassages(), 50); }
+  if (name === 'download') { ftLoadTestNames(); }
 }
 
 // ============ MANAGE TESTS ============
@@ -2804,6 +2805,11 @@ function renderCategoryTestList(tests) {
                     📅 Sched
                   </button>`
               }
+              <button onclick="downloadSingleTest('${escHtml(t.name)}')"
+                style="background:rgba(0,200,83,0.1);color:#00c853;border:1px solid rgba(0,200,83,0.25);padding:5px 10px;border-radius:7px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;"
+                title="Download as Excel">
+                ⬇️
+              </button>
               <button onclick="deleteSingleTest('${escHtml(t.name)}')"
                 style="background:rgba(230,57,70,0.1);color:#e63946;border:1px solid rgba(230,57,70,0.25);padding:5px 10px;border-radius:7px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;">
                 🗑️
@@ -2858,6 +2864,11 @@ function renderFlatTestList(tests) {
           ? `<button onclick="unscheduleTest('${escHtml(t.name)}')" style="background:rgba(0,200,83,0.1);color:#00c853;border:1px solid rgba(0,200,83,0.3);padding:5px 9px;border-radius:7px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;">🟢 Live</button>`
           : `<button onclick="openScheduleModal('${escHtml(t.name)}')" style="background:rgba(255,179,0,0.1);color:var(--yellow);border:1px solid rgba(255,179,0,0.3);padding:5px 9px;border-radius:7px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;">📅 Sched</button>`
         }
+        <button onclick="downloadSingleTest('${escHtml(t.name)}')"
+          style="background:rgba(0,200,83,0.1);color:#00c853;border:1px solid rgba(0,200,83,0.25);padding:5px 9px;border-radius:7px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;"
+          title="Download this test as Excel">
+          ⬇️
+        </button>
         <button onclick="deleteSingleTest('${escHtml(t.name)}')"
           style="background:rgba(230,57,70,0.1);color:#e63946;border:1px solid rgba(230,57,70,0.25);padding:5px 9px;border-radius:7px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;">
           🗑️
@@ -4106,6 +4117,45 @@ window.addEventListener('load', function() {
 
     <div id="dlStatus" style="margin-top:14px;font-size:0.82rem;color:var(--text-muted);text-align:center;min-height:20px;"></div>
   </div>
+
+  <!-- FULL TEST DOWNLOAD SECTION -->
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title">🗂️ Full Test Download <span class="badge">BY TEST NAME</span></div>
+    <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:18px;">Kisi ek specific test ke saare questions download karo — subject filter ki zaroorat nahi.</p>
+
+    <div class="section-divider"><span>🔽 Test Select Karo</span></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+      <div style="grid-column:1/-1;">
+        <label style="font-size:0.75rem;font-weight:700;color:var(--text-muted);display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.4px;">📝 Test Name</label>
+        <div style="position:relative;">
+          <input type="text" id="ftTestNameInp" placeholder="Test name type karo ya list se select karo..." oninput="ftFilterTestList()"
+            style="width:100%;padding:11px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;font-size:0.88rem;font-family:inherit;color:var(--text);outline:none;"
+            onfocus="ftShowDropdown()" onblur="setTimeout(ftHideDropdown, 200)">
+          <div id="ftDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg3);border:1px solid var(--border);border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+          </div>
+        </div>
+        <div id="ftSelectedBadge" style="display:none;margin-top:8px;background:rgba(0,200,83,0.08);border:1px solid rgba(0,200,83,0.25);border-radius:8px;padding:8px 14px;font-size:0.82rem;font-weight:700;color:#00c853;">
+          ✅ Selected: <span id="ftSelectedName"></span>
+        </div>
+      </div>
+    </div>
+
+    <div id="ftCountBox" style="display:none;background:rgba(66,133,244,0.08);border:1px solid rgba(66,133,244,0.2);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:0.85rem;color:var(--blue);">
+      📊 <span id="ftCountText">0 questions found</span>
+    </div>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <button onclick="ftFetchCount()" style="flex:1;min-width:140px;padding:13px;border-radius:10px;background:rgba(66,133,244,0.12);color:var(--blue);border:1px solid rgba(66,133,244,0.3);font-size:0.88rem;font-weight:700;cursor:pointer;font-family:inherit;">
+        🔍 Count Questions
+      </button>
+      <button onclick="ftDownload()" id="ftBtn" style="flex:2;min-width:180px;padding:13px;border-radius:10px;background:var(--red);color:#fff;border:none;font-size:0.9rem;font-weight:800;cursor:pointer;font-family:inherit;">
+        📥 Download This Test
+      </button>
+    </div>
+
+    <div id="ftStatus" style="margin-top:14px;font-size:0.82rem;color:var(--text-muted);text-align:center;min-height:20px;"></div>
+  </div>
 </div>
 
 <script>
@@ -4283,41 +4333,162 @@ async function dlDownload() {
     return;
   }
 
-  // Build Excel rows — 14-column format
-  const headers = ['question_text','option_a','option_b','option_c','option_d','correct_answer','subject','difficulty','explanation','exam_type','language','positive_marking','negative_marking','test_duration'];
-  const rows = allData.map(r => headers.map(h => r[h] ?? ''));
-
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-
-  // Header styling — dark blue bg, white bold text
-  const headerStyle = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1F4E79' } }, alignment: { horizontal: 'center' } };
-  headers.forEach((_, i) => {
-    const cell = XLSX.utils.encode_cell({ r: 0, c: i });
-    if (ws[cell]) ws[cell].s = headerStyle;
-  });
-
-  // Column widths
-  ws['!cols'] = [
-    {wch:60},{wch:35},{wch:35},{wch:35},{wch:35},
-    {wch:12},{wch:14},{wch:10},{wch:50},{wch:12},
-    {wch:12},{wch:14},{wch:14},{wch:14}
-  ];
-
-  const exam = document.getElementById('dlExam').value;
-  const subj = document.getElementById('dlSubject').value;
-  const topic = document.getElementById('dlTopic').value;
-  const sheetName = (subj + (topic ? '_' + topic : '')).slice(0, 31);
-  const fileName = `SSC_Hustlers_${exam}_${subj}${topic?'_'+topic:''}_${allData.length}Qs.xlsx`;
-
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  XLSX.writeFile(wb, fileName);
+  // Build Excel rows — using shared builder
+  _buildAndDownloadExcel(allData, `${exam}_${subj}${topic?'_'+topic:''}`);
 
   document.getElementById('dlStatus').textContent = `✅ ${allData.length} questions downloaded!`;
   btn.disabled=false; btn.textContent='📥 Download Excel';
 }
 
-// ============ GENERIC FIGURE DRAWER (Edit + AddToTest modals) ============
+// ══ FULL TEST DOWNLOAD (BY TEST NAME) ══
+let _ftSelectedTestName = '';
+let _ftAllTestNames = [];
+
+async function ftLoadTestNames() {
+  // Use allTests if already loaded, else fetch
+  if (allTests && allTests.length > 0) {
+    _ftAllTestNames = allTests.map(t => t.name).sort();
+  } else {
+    const { data } = await sb.from('quizzes').select('test_name').not('test_name','is',null);
+    const names = [...new Set((data||[]).map(r => r.test_name).filter(Boolean))].sort();
+    _ftAllTestNames = names;
+  }
+}
+
+function ftShowDropdown() {
+  if (!_ftAllTestNames.length) ftLoadTestNames().then(() => ftFilterTestList());
+  else ftFilterTestList();
+  document.getElementById('ftDropdown').style.display = 'block';
+}
+
+function ftHideDropdown() {
+  document.getElementById('ftDropdown').style.display = 'none';
+}
+
+function ftFilterTestList() {
+  const q = (document.getElementById('ftTestNameInp').value || '').toLowerCase().trim();
+  const filtered = q
+    ? _ftAllTestNames.filter(n => n.toLowerCase().includes(q))
+    : _ftAllTestNames;
+  const dd = document.getElementById('ftDropdown');
+  if (!filtered.length) {
+    dd.innerHTML = '<div style="padding:12px 16px;font-size:0.82rem;color:var(--text-muted);">No tests found</div>';
+    dd.style.display = 'block';
+    return;
+  }
+  dd.innerHTML = filtered.slice(0, 50).map(name =>
+    `<div onclick="ftSelectTest(this.dataset.name)"
+      data-name="${name.replace(/"/g,'&quot;')}"
+      style="padding:10px 16px;font-size:0.85rem;font-weight:600;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;"
+      onmouseover="this.style.background='rgba(230,57,70,0.08)'" onmouseout="this.style.background=''"
+    >${escHtml(name)}</div>`
+  ).join('');
+  dd.style.display = 'block';
+}
+
+function ftSelectTest(name) {
+  _ftSelectedTestName = name;
+  document.getElementById('ftTestNameInp').value = name;
+  document.getElementById('ftSelectedName').textContent = name;
+  document.getElementById('ftSelectedBadge').style.display = 'block';
+  document.getElementById('ftCountBox').style.display = 'none';
+  document.getElementById('ftStatus').textContent = '';
+  document.getElementById('ftDropdown').style.display = 'none';
+}
+
+async function ftFetchCount() {
+  const testName = document.getElementById('ftTestNameInp').value.trim();
+  if (!testName) { alert('Test name daalo ya select karo!'); return; }
+  document.getElementById('ftStatus').textContent = '⏳ Counting...';
+  const { count, error } = await sb.from('quizzes')
+    .select('*', { count: 'exact', head: true })
+    .eq('test_name', testName);
+  if (error) { document.getElementById('ftStatus').textContent = '❌ ' + error.message; return; }
+  document.getElementById('ftCountBox').style.display = 'block';
+  document.getElementById('ftCountText').textContent = (count || 0) + ' questions found in "' + testName + '"';
+  document.getElementById('ftStatus').textContent = '';
+}
+
+async function ftDownload() {
+  const testName = document.getElementById('ftTestNameInp').value.trim();
+  if (!testName) { alert('Test name daalo ya select karo!'); return; }
+  const btn = document.getElementById('ftBtn');
+  btn.disabled = true; btn.textContent = '⏳ Fetching...';
+  document.getElementById('ftStatus').textContent = '⏳ Questions fetch ho rahe hain...';
+
+  let allData = [], from = 0, batchSize = 1000;
+  while (true) {
+    const { data, error } = await sb.from('quizzes')
+      .select('question_text,option_a,option_b,option_c,option_d,correct_answer,subject,difficulty,explanation,exam_type,language,positive_marking,negative_marking,test_duration,topic,test_name')
+      .eq('test_name', testName)
+      .order('q_order', { ascending: true })
+      .range(from, from + batchSize - 1);
+    if (error) { document.getElementById('ftStatus').textContent = '❌ ' + error.message; btn.disabled=false; btn.textContent='📥 Download This Test'; return; }
+    if (!data || !data.length) break;
+    allData = allData.concat(data);
+    document.getElementById('ftStatus').textContent = `⏳ ${allData.length} questions fetched...`;
+    if (data.length < batchSize) break;
+    from += batchSize;
+  }
+
+  if (!allData.length) {
+    document.getElementById('ftStatus').textContent = '⚠️ Koi data nahi mila!';
+    btn.disabled=false; btn.textContent='📥 Download This Test';
+    return;
+  }
+
+  _buildAndDownloadExcel(allData, testName);
+  document.getElementById('ftStatus').textContent = `✅ ${allData.length} questions downloaded!`;
+  btn.disabled=false; btn.textContent='📥 Download This Test';
+}
+
+// ── Shared Excel builder ──
+function _buildAndDownloadExcel(allData, fileLabel) {
+  const headers = ['question_text','option_a','option_b','option_c','option_d','correct_answer','subject','difficulty','explanation','exam_type','language','positive_marking','negative_marking','test_duration','topic','test_name'];
+  const rows = allData.map(r => headers.map(h => r[h] ?? ''));
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const headerStyle = { font:{bold:true,color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'1F4E79'}}, alignment:{horizontal:'center'} };
+  headers.forEach((_, i) => {
+    const cell = XLSX.utils.encode_cell({r:0, c:i});
+    if (ws[cell]) ws[cell].s = headerStyle;
+  });
+  ws['!cols'] = [{wch:60},{wch:35},{wch:35},{wch:35},{wch:35},{wch:12},{wch:14},{wch:10},{wch:50},{wch:12},{wch:12},{wch:14},{wch:14},{wch:14},{wch:20},{wch:40}];
+  const safeLabel = fileLabel.replace(/[^a-zA-Z0-9_\- ]/g,'_').slice(0,28);
+  const sheetName = safeLabel.slice(0,31);
+  const fileName = `SSC_Hustlers_${safeLabel}_${allData.length}Qs.xlsx`;
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  XLSX.writeFile(wb, fileName);
+}
+
+// ── Download single test from Manage Tests tab ──
+async function downloadSingleTest(testName) {
+  if (!confirm(`"${testName}" ke saare questions download karna hai?`)) return;
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = '⏳';
+
+  let allData = [], from = 0, batchSize = 1000;
+  while (true) {
+    const { data, error } = await sb.from('quizzes')
+      .select('question_text,option_a,option_b,option_c,option_d,correct_answer,subject,difficulty,explanation,exam_type,language,positive_marking,negative_marking,test_duration,topic,test_name')
+      .eq('test_name', testName)
+      .order('q_order', { ascending: true })
+      .range(from, from + batchSize - 1);
+    if (error) { alert('Error: ' + error.message); btn.disabled=false; btn.textContent=orig; return; }
+    if (!data || !data.length) break;
+    allData = allData.concat(data);
+    if (data.length < batchSize) break;
+    from += batchSize;
+  }
+
+  if (!allData.length) { alert('⚠️ Koi questions nahi mile!'); btn.disabled=false; btn.textContent=orig; return; }
+  _buildAndDownloadExcel(allData, testName);
+  btn.disabled=false; btn.textContent=orig;
+}
+
+// Patch dlDownload to use shared builder
+
 const _figColors = { edit: '#e8eaf0', at: '#e8eaf0' };
 const _figDrawing = { edit: false, at: false };
 
