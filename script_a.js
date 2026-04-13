@@ -1201,11 +1201,8 @@ async function getLeaderboardData(testName) {
 
 // ============ SUBMIT ============
 async function submitQuiz() {
-  // FIX Bug #25: Timer zero karo + display reset karo
   clearInterval(timerInterval);
   timeLeft = 0;
-  const timerEl = document.getElementById('quizTimer');
-  if (timerEl) { timerEl.textContent = '00:00'; timerEl.classList.remove('danger'); timerEl.style.color = '#ffcc02'; }
   window._quizSubmitted = true;
 
   if (window.questionTimes !== undefined && window.questionStartTime) {
@@ -1220,8 +1217,8 @@ async function submitQuiz() {
     else if (a === q.correct_answer) { correct++; score += posMarking; }
     else { wrong++; score -= negMarking; }
   });
+  score = Math.round(score * 10) / 10;
   const totalMarks = questions[0].total_marks || (questions.length * posMarking);
-  // FIX: Negative score bhi dikhao, floor mat karo
   const attempted = questions.length - skip;
   const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
 
@@ -1230,29 +1227,58 @@ async function submitQuiz() {
   document.getElementById('qNavDots').style.display = 'none';
   document.getElementById('quizHeader').style.display = 'none';
   document.querySelector('.nta-body').style.display = 'none';
+  const mobBar = document.getElementById('mobileTimerBar');
+  if (mobBar) mobBar.style.display = 'none';
 
-  document.getElementById('resultTestTitle').textContent = activeTestName;
-  document.getElementById('resultScore').textContent = `${score.toFixed(1)}/${totalMarks}`;
-  document.getElementById('resultSub').textContent = `Avg: -- | Best: --`;
+  // Result header
+  const userName = currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'Student';
+  const nameEl = document.getElementById('resultNameDisplay');
+  if (nameEl) nameEl.textContent = '👤 ' + userName;
+  document.getElementById('resultScore').textContent = score + ' pts';
+  document.getElementById('resultSub').textContent = `Correct: ${correct} | Wrong: ${wrong} | Skipped: ${skip}`;
   document.getElementById('rCorrect').textContent = correct;
-  document.getElementById('rWrong').textContent = wrong;
-  document.getElementById('rSkip').textContent = skip;
-  document.getElementById('rAccuracy').textContent = accuracy;
+  document.getElementById('rWrong').textContent   = wrong;
+  document.getElementById('rSkip').textContent    = skip;
+  document.getElementById('rAccuracy').textContent = accuracy + '%';
   document.getElementById('rAttempted').textContent = attempted;
-  document.getElementById('rTotal').textContent = questions.length;
-  document.getElementById('rankPercentileRow').style.display = 'none';
-  document.getElementById('rankNA').style.display = 'block';
+  document.getElementById('rTotal').textContent     = questions.length;
 
-  switchResultTab('analysis');
+  // Sectional scores
+  if (sections.length > 1) {
+    const secColors = ['#0ea5e9','#16a34a','#f59e0b','#8b5cf6','#ec4899'];
+    const rows = sections.map((sec, si) => {
+      let sC=0, sW=0, sS=0, sScore=0;
+      sec.indices.forEach(i => {
+        const a = answers[i], q = questions[i];
+        if (!a) { sS++; return; }
+        const ca = (q.correct_answer||'').toString().trim().toUpperCase();
+        if (a.toUpperCase()===ca) { sC++; sScore+=posMarking; }
+        else { sW++; sScore-=negMarking; }
+      });
+      sScore = Math.round(sScore*10)/10;
+      const maxS = sec.indices.length * posMarking;
+      const pct = maxS>0 ? Math.max(0, Math.round((sScore/maxS)*100)) : 0;
+      const color = secColors[si % secColors.length];
+      return `<div class="sec-score-row">
+        <div class="sec-score-name">${sec.label.replace('General Intelligence & ','').replace(' Comprehension','')}</div>
+        <div class="sec-score-track"><div class="sec-score-fill" style="width:${pct}%;background:${color};"></div></div>
+        <div class="sec-score-val" style="color:${color};">${sScore}</div>
+        <div class="sec-score-detail">${sC}✅ ${sW}❌ ${sS}⏭</div>
+      </div>`;
+    }).join('');
+    document.getElementById('sectionalScoresList').innerHTML = rows;
+    document.getElementById('sectionalScoresWrap').style.display = 'block';
+  }
+
   document.getElementById('resultScreen').classList.add('show');
 
-  // Supabase mein save
-  // FIX: Session expire hone pe re-fetch karo
+  // Save to Supabase
   if (!currentUser) {
     const { data: { user } } = await sb.auth.getUser();
     currentUser = user;
   }
-  if (!currentUser) { console.error('No user session'); return; }
+  if (!currentUser) return;
+
   try {
     let _uName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Student';
     let _avatarUrl = currentUser.user_metadata?.avatar_url || null;
@@ -1262,68 +1288,179 @@ async function submitQuiz() {
       if (prof?.avatar_url) _avatarUrl = prof.avatar_url;
     } catch(e) {}
 
-    // FIX Bug #12: answer_map mein sab indexes store karo (skip bhi)
     const fullAnswerMap = {};
     questions.forEach((q, i) => { fullAnswerMap[i] = answers[i] || null; });
 
-    const { error: insertError } = await sb.from('test_attempts').insert({
-      user_id:             currentUser.id,
-      full_name:           _uName,
-      avatar_url:          _avatarUrl,
-      test_name:           activeTestName,
-      exam_type:           currentExam,
-      subject:             questions[0]?.subject || currentSubject?.key,
-      topic:               currentTopic?.key || null,
-      score:               parseFloat(score.toFixed(1)),
-      total_marks:         totalMarks,
-      correct_answers:     correct,
-      wrong_answers:       wrong,
+    await sb.from('test_attempts').insert({
+      user_id: currentUser.id, full_name: _uName, avatar_url: _avatarUrl,
+      test_name: activeTestName, exam_type: currentExam,
+      subject: questions[0]?.subject || currentSubject?.key,
+      topic: currentTopic?.key || null,
+      score: parseFloat(score.toFixed(1)), total_marks: totalMarks,
+      correct_answers: correct, wrong_answers: wrong,
       questions_attempted: attempted,
-      answer_map:          JSON.stringify(fullAnswerMap),
-      time_map:            JSON.stringify(window.questionTimes || {})
+      answer_map: JSON.stringify(fullAnswerMap),
+      time_map: JSON.stringify(window.questionTimes || {})
     });
 
-    // FIX: Hamesha localStorage clear karo submit ke baad
     clearQuizState(activeTestName);
-    // Store completed flag so Resume never shows after submit
     try { localStorage.setItem('completed_' + activeTestName, '1'); } catch(e) {}
-    if (insertError) {
-      console.error('Submit insert error:', insertError);
-      alert('INSERT ERROR: ' + JSON.stringify(insertError));
-    }
 
-    const finalScore = parseFloat(score.toFixed(1));
-    const { uniqueUsers } = await getLeaderboardData(activeTestName);
-    let allUsers = [...uniqueUsers];
-    if (!allUsers.find(u => u.user_id === currentUser.id)) {
-      allUsers.push({ user_id: currentUser.id, score: finalScore });
-      allUsers.sort((a, b) => b.score - a.score);
-    }
-
-    // FIX Bug #15: Same score pe sahi rank calculate karo
-    const rank = allUsers.filter(u => u.score > finalScore).length + 1;
-    const total = allUsers.length || 1;
-    const percentile = total > 1 ? Math.round(((total - rank) / (total - 1)) * 100) : 100;
-
-    document.getElementById('rankPercentileRow').style.display = 'flex';
-    document.getElementById('rankNA').style.display = 'none';
-    document.getElementById('rpRank').textContent = `#${rank}`;
-    document.getElementById('rpTotal').textContent = total;
-    document.getElementById('rpPercentile').textContent = percentile;
-    document.getElementById('rpPercentile').style.color = percentile>=90?'#00c853':percentile>=70?'#4285f4':'#e63946';
-
-    const scores = uniqueUsers.map(u => u.score);
-    const topperScore = scores.length > 0 ? Math.max(...scores) : finalScore;
-    const avgScore    = scores.length > 0 ? scores.reduce((a,b)=>a+b,0)/scores.length : finalScore;
-    updateMarksChart(finalScore, topperScore, avgScore, totalMarks, rank, total);
-
-    const top10 = allUsers.slice(0, 10);
-    if (top10.length > 0) renderLeaderboard(top10, currentUser.id);
+    // Leaderboard + rank
+    await loadResultLeaderboard(score);
 
   } catch(e) {
     console.error('Submit error:', e);
-    alert('⚠️ Result save nahi hua — network check karo aur dobara try karo.');
   }
+}
+
+// ── RESULT LEADERBOARD ──
+async function loadResultLeaderboard(myScore) {
+  const el = document.getElementById('lbList');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Loading...</div>';
+  try {
+    const { data: allAttempts } = await sb.from('test_attempts')
+      .select('user_id, full_name, score, avatar_url')
+      .ilike('test_name', activeTestName.trim())
+      .order('score', { ascending: false });
+
+    if (!allAttempts || !allAttempts.length) {
+      el.innerHTML = '<div style="text-align:center;padding:24px;color:#94a3b8;font-size:0.82rem;">Abhi koi result nahi</div>';
+      return;
+    }
+
+    // Unique users
+    const seen = new Set();
+    const uniqueUsers = allAttempts.filter(a => { if (seen.has(a.user_id)) return false; seen.add(a.user_id); return true; });
+
+    const total = uniqueUsers.length;
+    const myRank = uniqueUsers.filter(u => u.score > myScore).length + 1;
+    const percentile = total > 1 ? Math.round(((total - myRank) / (total - 1)) * 100) : 100;
+
+    document.getElementById('rankRow').style.display = 'flex';
+    document.getElementById('rpRank').textContent = '#' + myRank;
+    document.getElementById('rpTotal').textContent = total;
+    document.getElementById('rpPercentile').textContent = percentile + '%';
+
+    const medals = ['🥇','🥈','🥉'];
+    const top3 = uniqueUsers.slice(0, 3);
+    const rest  = uniqueUsers.slice(3);
+    const reordered = [top3[1], top3[0], top3[2]].filter(Boolean);
+    const orderMap  = [1, 0, 2];
+    const myId = currentUser?.id;
+
+    const podiumHtml = top3.length >= 1 ? `<div class="lb-podium">${reordered.map((r, pi) => {
+      const origIdx = orderMap[pi];
+      const isMe = r.user_id === myId;
+      const initials = (r.full_name||'S').slice(0,2).toUpperCase();
+      return `<div class="lb-podium-item">
+        <span>${medals[origIdx]||''}</span>
+        <div class="lb-circle lp-${pi===1?'lg':'md'}">${initials}</div>
+        <div class="lb-pname">${isMe?'⭐ ':''} ${r.full_name||'Student'}</div>
+        <div class="lb-pscore">${r.score} pts</div>
+      </div>`;
+    }).join('')}</div>` : '';
+
+    const restHtml = rest.map((r, i) => {
+      const isMe = r.user_id === myId;
+      return `<div class="lb-row ${isMe?'lb-me':''}">
+        <span class="lb-pos">#${i+4}</span>
+        <span class="lb-name">${isMe?'⭐ ':''} ${r.full_name||'Student'}</span>
+        <span class="lb-score">${r.score} pts</span>
+      </div>`;
+    }).join('');
+
+    el.innerHTML = podiumHtml + restHtml;
+
+  } catch(e) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:#dc2626;font-size:0.82rem;">Leaderboard load nahi hua</div>';
+  }
+}
+
+// ── SOLUTIONS ──
+let solFilter = 'all', solIdx = 0, solFiltered = [];
+
+function setSolFilter(filter) {
+  document.querySelectorAll('.sol-filter-row .a-tab').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  solFilter = filter;
+  solIdx = 0;
+  buildSolList();
+  showSolution();
+}
+
+function buildSolList() {
+  solFiltered = questions.map((q, i) => ({ q, i, ans: answers[i] })).filter(({ q, ans }) => {
+    const ca = (q.correct_answer||'').toString().trim().toUpperCase();
+    if (solFilter==='all') return true;
+    if (solFilter==='correct') return ans && ans.toUpperCase()===ca;
+    if (solFilter==='wrong')   return ans && ans.toUpperCase()!==ca;
+    if (solFilter==='skip')    return !ans;
+    return true;
+  });
+}
+
+function showSolution() {
+  const el = document.getElementById('solBody');
+  if (!el) return;
+  if (!solFiltered.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">Koi question nahi is filter mein</div>';
+    document.getElementById('solCounter').textContent = '0 / 0';
+    return;
+  }
+  const { q, i, ans } = solFiltered[solIdx];
+  const ca = (q.correct_answer||'').toString().trim().toUpperCase();
+  const correct = ans && ans.toUpperCase()===ca;
+  const skipped = !ans;
+  const statusCls = skipped?'skip':correct?'correct':'wrong';
+  const statusLbl = skipped?'⏭ Skipped':correct?'✅ Correct':'❌ Wrong';
+  el.innerHTML = `<div class="ana-q-card">
+    <div class="ana-q-header">
+      <span class="ana-status-badge ${statusCls}">${statusLbl}</span>
+      <span class="ana-q-num">Q${i+1}</span>
+    </div>
+    <div class="ana-q-text">${esc(getLangText(q.question_text))}</div>
+    <div class="ana-opts">
+      ${['A','B','C','D'].map(l => {
+        const val = getLangText(q['option_'+l.toLowerCase()]);
+        const isCorrect = l===ca;
+        const isWrong   = l===(ans||'').toUpperCase() && !isCorrect;
+        return `<div class="ana-opt ${isCorrect?'correct':isWrong?'wrong':''}">
+          <span class="ana-opt-label">${l}</span>
+          <span>${esc(val)}</span>
+        </div>`;
+      }).join('')}
+    </div>
+    ${q.explanation ? `<div class="ana-explanation">💡 <strong>Explanation:</strong> ${esc(getLangText(q.explanation))}</div>` : ''}
+  </div>`;
+  document.getElementById('solCounter').textContent = `${solIdx+1} / ${solFiltered.length}`;
+}
+
+function solNext() { if (solIdx < solFiltered.length-1) { solIdx++; showSolution(); } }
+function solPrev() { if (solIdx > 0) { solIdx--; showSolution(); } }
+
+// ── RESULT TABS ──
+function switchResultTab(tab, e) {
+  document.querySelectorAll('.rtab-btn').forEach(b => b.classList.remove('active'));
+  if (e && e.target) e.target.classList.add('active');
+  document.getElementById('rtabLeaderboard').style.display = tab==='leaderboard' ? 'block' : 'none';
+  document.getElementById('rtabSolutions').style.display   = tab==='solutions'   ? 'flex'  : 'none';
+  if (tab==='solutions') { buildSolList(); showSolution(); }
+}
+
+// ── SHARE ──
+function shareResult() {
+  const score   = document.getElementById('resultScore').textContent;
+  const correct = document.getElementById('rCorrect').textContent;
+  const wrong   = document.getElementById('rWrong').textContent;
+  const name    = currentUser?.user_metadata?.full_name || 'Student';
+  const msg = `🎯 *SSC Hustlers*\n\n📝 ${activeTestName}\n👤 ${name}\n🏆 Score: ${score}\n✅ Correct: ${correct}  ❌ Wrong: ${wrong}\n\n🔗 ${window.location.href}`;
+  if (navigator.share) navigator.share({ title: 'SSC Hustlers', text: msg }).catch(() => copyToClipboard(msg));
+  else copyToClipboard(msg);
+}
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => alert('✅ Result copied!')).catch(() => window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank'));
 }
 
 function rateTest(rating, btn) {
