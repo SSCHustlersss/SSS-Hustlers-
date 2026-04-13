@@ -865,12 +865,12 @@ const CATEGORY_CONFIG = {
   prelims_full: {
     subject: 'full_test',
     duration: 60,
-    info: '✅ 4 Sections: Reasoning (Q1-25) | GA (Q26-50) | Maths (Q51-75) | English (Q76-100). Total 100 Qs, 60 min.',
+    info: '✅ 4 Sections: Reasoning (Q1-25) | GA (Q26-50) | Maths (Q51-75) | English (Q76-100). Total 100 Qs, 60 min. Har section 15 min locked.',
     getSectionConfig: (total) => [
-      { name: 'General Intelligence & Reasoning', from: 1,  to: 25  },
-      { name: 'General Awareness',                from: 26, to: 50  },
-      { name: 'Quantitative Aptitude',            from: 51, to: 75  },
-      { name: 'English Comprehension',            from: 76, to: 100 },
+      { name: 'General Intelligence & Reasoning', from: 1,  to: 25,  time_minutes: 15 },
+      { name: 'General Awareness',                from: 26, to: 50,  time_minutes: 15 },
+      { name: 'Quantitative Aptitude',            from: 51, to: 75,  time_minutes: 15 },
+      { name: 'English Comprehension',            from: 76, to: 100, time_minutes: 15 },
     ]
   },
   english_only: {
