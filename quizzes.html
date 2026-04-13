@@ -11,6 +11,73 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ── LIVE-STYLE RESULT SCREEN ── */
+.result-screen{display:none;position:fixed;inset:0;z-index:300;background:#f0f9ff;overflow-y:auto;flex-direction:column;}
+.result-screen.show{display:flex;}
+.result-header{background:#0ea5e9;padding:24px 16px;text-align:center;color:#fff;flex-shrink:0;}
+.result-name{font-size:0.85rem;color:rgba(255,255,255,0.8);margin-bottom:4px;}
+.result-score-big{font-size:2.4rem;font-weight:800;color:#fff;}
+.result-sub{font-size:0.75rem;color:rgba(255,255,255,0.75);margin-top:4px;}
+.result-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px;}
+.result-stat-card{background:#fff;border-radius:12px;padding:14px 10px;text-align:center;border:1px solid #e0f2fe;}
+.result-stat-val{font-size:1.3rem;font-weight:800;}
+.result-stat-lbl{font-size:0.68rem;color:#64748b;margin-top:2px;font-weight:600;}
+.rank-row{display:flex;align-items:center;justify-content:center;gap:20px;padding:12px 16px;background:#fff;margin:0 16px 12px;border-radius:12px;border:1px solid #e0f2fe;}
+.rank-item{text-align:center;}
+.rank-val{font-size:1.1rem;font-weight:800;color:#0ea5e9;}
+.rank-lbl{font-size:0.65rem;color:#64748b;font-weight:600;}
+.sectional-wrap{padding:0 16px 4px;}
+.sectional-title{font-size:0.78rem;font-weight:800;color:#475569;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;}
+.sec-score-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.sec-score-name{font-size:0.75rem;font-weight:600;color:#374151;width:110px;flex-shrink:0;line-height:1.3;}
+.sec-score-track{flex:1;height:8px;background:#e0f2fe;border-radius:4px;overflow:hidden;}
+.sec-score-fill{height:100%;border-radius:4px;transition:width 0.6s;}
+.sec-score-val{font-size:0.78rem;font-weight:800;min-width:55px;text-align:right;flex-shrink:0;}
+.sec-score-detail{font-size:0.65rem;color:#94a3b8;font-weight:600;min-width:70px;text-align:right;flex-shrink:0;}
+.result-tabs{display:flex;border-bottom:1px solid #e0f2fe;background:#fff;position:sticky;top:0;z-index:5;}
+.rtab-btn{flex:1;padding:12px 4px;border:none;background:transparent;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;color:#64748b;border-bottom:2px solid transparent;}
+.rtab-btn.active{color:#0ea5e9;border-bottom-color:#0ea5e9;}
+.lb-podium{display:flex;justify-content:center;align-items:flex-end;gap:10px;padding:20px 16px;}
+.lb-podium-item{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.lb-circle{border-radius:50%;background:#0ea5e9;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;color:#fff;}
+.lp-lg{width:52px;height:52px;}.lp-md{width:44px;height:44px;}
+.lb-pname{font-size:0.68rem;font-weight:700;color:#475569;text-align:center;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lb-pscore{font-size:0.72rem;font-weight:800;color:#0284c7;}
+.lb-row{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid #e0f2fe;font-size:0.82rem;}
+.lb-row.lb-me{background:#e0f2fe;}
+.lb-pos{width:24px;font-weight:800;color:#94a3b8;font-size:0.78rem;}
+.lb-name{flex:1;font-weight:600;color:#111827;}
+.lb-score{font-weight:800;color:#0ea5e9;}
+.lb-type{font-size:0.65rem;color:#94a3b8;margin-left:4px;}
+.sol-filter-row{display:flex;border-bottom:1px solid #e0f2fe;background:#fff;position:sticky;top:0;z-index:5;}
+.a-tab{flex:1;padding:11px 4px;border:none;background:transparent;font-size:0.72rem;font-weight:600;cursor:pointer;font-family:inherit;color:#64748b;border-bottom:2px solid transparent;}
+.a-tab.active{color:#0ea5e9;border-bottom-color:#0ea5e9;font-weight:700;}
+.sol-body{padding:16px;flex:1;overflow-y:auto;}
+.sol-nav{padding:12px 16px;border-top:1px solid #e0f2fe;display:flex;align-items:center;justify-content:space-between;background:#fff;}
+.sol-nav-btn{padding:9px 18px;border-radius:8px;border:1.5px solid #cbd5e1;background:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;color:#111827;}
+.sol-nav-btn.next-btn{border:none;background:#0ea5e9;color:#fff;}
+.sol-counter{font-size:0.82rem;color:#475569;font-weight:600;}
+.ana-q-card{background:#fff;border-radius:12px;border:1.5px solid #e0f2fe;overflow:hidden;}
+.ana-q-header{padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #e0f2fe;}
+.ana-status-badge{font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:50px;}
+.ana-status-badge.correct{background:#dcfce7;color:#15803d;}
+.ana-status-badge.wrong{background:#fee2e2;color:#dc2626;}
+.ana-status-badge.skip{background:#f1f5f9;color:#64748b;}
+.ana-q-num{font-size:0.72rem;color:#94a3b8;font-weight:600;}
+.ana-q-text{padding:12px 14px;font-size:0.88rem;font-weight:600;line-height:1.7;color:#111827;white-space:pre-line;}
+.ana-opts{padding:0 14px 14px;display:flex;flex-direction:column;gap:7px;}
+.ana-opt{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;border:1.5px solid #e0f2fe;font-size:0.82rem;color:#111827;}
+.ana-opt.correct{border-color:#16a34a;background:#dcfce7;color:#15803d;font-weight:700;}
+.ana-opt.wrong{border-color:#dc2626;background:#fee2e2;color:#dc2626;font-weight:700;}
+.ana-opt-label{width:24px;height:24px;border-radius:50%;background:#e0f2fe;display:flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:800;flex-shrink:0;color:#0284c7;}
+.ana-opt.correct .ana-opt-label{background:#16a34a;color:#fff;}
+.ana-opt.wrong .ana-opt-label{background:#dc2626;color:#fff;}
+.ana-explanation{margin:0 14px 14px;background:#f0f9ff;border:1.5px solid #0ea5e9;border-radius:9px;padding:10px 12px;font-size:0.8rem;line-height:1.6;color:#111827;}
+.result-btns{display:flex;gap:10px;padding:16px;}
+.btn-share{flex:1;padding:13px;border-radius:11px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;border:none;background:#e0f2fe;color:#0284c7;}
+.btn-back-result{flex:1;padding:13px;border-radius:11px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;border:none;background:#0ea5e9;color:#fff;}
+</style>
 </head>
 <body>
 
@@ -220,164 +287,67 @@
 
     <!-- RESULT SCREEN -->
     <div class="result-screen" id="resultScreen">
-      <div style="background:#1a1a2e;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;">
-        <button onclick="exitQuiz()" style="background:none;border:none;color:#fff;font-size:1.1rem;cursor:pointer;">←</button>
-        <span id="resultTestTitle" style="color:#fff;font-size:0.9rem;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+      <!-- Result Header -->
+      <div class="result-header">
+        <div class="result-name" id="resultNameDisplay"></div>
+        <div class="result-score-big" id="resultScore">0</div>
+        <div class="result-sub" id="resultSub"></div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="result-cards">
+        <div class="result-stat-card"><div class="result-stat-val" style="color:#16a34a" id="rCorrect">0</div><div class="result-stat-lbl">Correct</div></div>
+        <div class="result-stat-card"><div class="result-stat-val" style="color:#dc2626" id="rWrong">0</div><div class="result-stat-lbl">Wrong</div></div>
+        <div class="result-stat-card"><div class="result-stat-val" style="color:#64748b" id="rSkip">0</div><div class="result-stat-lbl">Skipped</div></div>
+        <div class="result-stat-card"><div class="result-stat-val" style="color:#0ea5e9" id="rAccuracy">0%</div><div class="result-stat-lbl">Accuracy</div></div>
+        <div class="result-stat-card"><div class="result-stat-val" id="rAttempted">0</div><div class="result-stat-lbl">Attempted</div></div>
+        <div class="result-stat-card"><div class="result-stat-val" id="rTotal">0</div><div class="result-stat-lbl">Total Qs</div></div>
+      </div>
+
+      <!-- Rank Row -->
+      <div class="rank-row" id="rankRow" style="display:none;">
+        <div class="rank-item"><div class="rank-val" id="rpRank">--</div><div class="rank-lbl">Your Rank</div></div>
+        <div class="rank-item"><div class="rank-val" id="rpTotal">--</div><div class="rank-lbl">Total Students</div></div>
+        <div class="rank-item"><div class="rank-val" id="rpPercentile">--</div><div class="rank-lbl">Percentile</div></div>
+      </div>
+
+      <!-- Sectional Scores -->
+      <div class="sectional-wrap" id="sectionalScoresWrap" style="display:none;">
+        <div class="sectional-title">📊 Sectional Performance</div>
+        <div id="sectionalScoresList"></div>
       </div>
 
       <!-- Tabs -->
-      <div style="display:flex;border-bottom:1px solid #eee;background:#fff;flex-shrink:0;">
-        <button id="tabAnalysis" onclick="switchResultTab('analysis')" style="flex:1;padding:13px 0;border:none;background:transparent;font-size:0.82rem;font-weight:700;color:#3d6ef5;border-bottom:2px solid #3d6ef5;cursor:pointer;font-family:inherit;">Analysis</button>
-        <button id="tabSolutions" onclick="switchResultTab('solutions')" style="flex:1;padding:13px 0;border:none;background:transparent;font-size:0.82rem;font-weight:600;color:#888;border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Solutions</button>
-        <button id="tabLeaderboard" onclick="switchResultTab('leaderboard')" style="flex:1;padding:13px 0;border:none;background:transparent;font-size:0.82rem;font-weight:600;color:#888;border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Leaderboard</button>
+      <div class="result-tabs">
+        <button class="rtab-btn active" onclick="switchResultTab('leaderboard',event)">🏆 Leaderboard</button>
+        <button class="rtab-btn" onclick="switchResultTab('solutions',event)">🔍 Solutions</button>
       </div>
 
-      <div style="overflow-y:auto;flex:1;">
+      <!-- Leaderboard Tab -->
+      <div id="rtabLeaderboard" style="overflow-y:auto;">
+        <div id="lbList" style="padding-bottom:16px;"></div>
+      </div>
 
-        <!-- ANALYSIS TAB -->
-        <div id="rtabAnalysis" style="padding:0;overflow-y:auto;">
-          <div style="padding:16px;">
-            <!-- Correct/Wrong/Skip Pills -->
-            <div style="display:flex;gap:8px;margin-bottom:16px;">
-              <div style="flex:1;background:#e8f5e9;border:1.5px solid #a5d6a7;border-radius:50px;padding:8px 14px;text-align:center;">
-                <div style="font-size:1.1rem;font-weight:800;color:#2e7d32;" id="rCorrect">0</div>
-                <div style="font-size:0.72rem;color:#388e3c;font-weight:600;">Correct</div>
-              </div>
-              <div style="flex:1;background:#fce4ec;border:1.5px solid #f48fb1;border-radius:50px;padding:8px 14px;text-align:center;">
-                <div style="font-size:1.1rem;font-weight:800;color:#c62828;" id="rWrong">0</div>
-                <div style="font-size:0.72rem;color:#e53935;font-weight:600;">Incorrect</div>
-              </div>
-              <div style="flex:1;background:#f5f5f5;border:1.5px solid #e0e0e0;border-radius:50px;padding:8px 14px;text-align:center;">
-                <div style="font-size:1.1rem;font-weight:800;color:#666;" id="rSkip">0</div>
-                <div style="font-size:0.72rem;color:#888;font-weight:600;">Unattempted</div>
-              </div>
-            </div>
-
-            <!-- Stats Grid -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
-              <div style="background:#f8f9ff;border-radius:10px;padding:12px 14px;border:1px solid #e8ecff;">
-                <div style="font-size:0.7rem;color:#888;font-weight:600;margin-bottom:4px;">SCORE</div>
-                <div style="font-size:1rem;font-weight:800;color:#1a1a2e;" id="resultScore">0</div>
-                <div style="font-size:0.7rem;color:#aaa;" id="resultSub"></div>
-              </div>
-              <div style="background:#f8f9ff;border-radius:10px;padding:12px 14px;border:1px solid #e8ecff;">
-                <div style="font-size:0.7rem;color:#888;font-weight:600;margin-bottom:4px;">ACCURACY</div>
-                <div style="font-size:1rem;font-weight:800;color:#1a1a2e;"><span id="rAccuracy">0</span>%</div>
-                <div style="font-size:0.7rem;color:#aaa;"><span id="rAttempted">0</span>/<span id="rTotal">0</span> attempted</div>
-              </div>
-              <div style="background:#f8f9ff;border-radius:10px;padding:12px 14px;border:1px solid #e8ecff;">
-                <div style="font-size:0.7rem;color:#888;font-weight:600;margin-bottom:4px;">PERCENTILE</div>
-                <div style="font-size:1rem;font-weight:800;color:#1a1a2e;" id="rpPercentile">--</div>
-                <div style="font-size:0.7rem;color:#aaa;">out of 100</div>
-              </div>
-              <div id="rankCard" style="background:#f8f9ff;border-radius:10px;padding:12px 14px;border:1px solid #e8ecff;">
-                <div style="font-size:0.7rem;color:#888;font-weight:600;margin-bottom:4px;">RANK</div>
-                <div style="font-size:1rem;font-weight:800;color:#1a1a2e;" id="rankNA">--</div>
-                <div id="rankPercentileRow" style="display:none;">
-                  <div style="font-size:1rem;font-weight:800;color:#3d6ef5;"><span id="rpRank">--</span></div>
-                  <div style="font-size:0.7rem;color:#aaa;">out of <span id="rpTotal">--</span></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Marks vs Rank Chart -->
-          <div style="padding:0 16px 16px;">
-            <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:16px;">
-              <div style="font-size:0.75rem;font-weight:800;color:#333;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:14px;">MARKS VS RANK</div>
-              <div style="display:flex;align-items:flex-end;gap:12px;height:100px;margin-bottom:8px;">
-                <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px;height:100%;">
-                  <div style="flex:1;width:100%;display:flex;align-items:flex-end;">
-                    <div id="barYou" style="width:100%;background:#3d6ef5;border-radius:4px 4px 0 0;min-height:4px;transition:height 0.5s;"></div>
-                  </div>
-                  <span style="font-size:0.7rem;font-weight:600;color:#555;">You</span>
-                </div>
-                <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px;height:100%;">
-                  <div style="flex:1;width:100%;display:flex;align-items:flex-end;">
-                    <div id="barTopper" style="width:100%;background:#9c27b0;border-radius:4px 4px 0 0;min-height:4px;transition:height 0.5s;"></div>
-                  </div>
-                  <span style="font-size:0.7rem;font-weight:600;color:#555;">Topper</span>
-                </div>
-                <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px;height:100%;">
-                  <div style="flex:1;width:100%;display:flex;align-items:flex-end;">
-                    <div id="barAvg" style="width:100%;background:#9c27b0;opacity:0.5;border-radius:4px 4px 0 0;min-height:4px;transition:height 0.5s;"></div>
-                  </div>
-                  <span style="font-size:0.7rem;font-weight:600;color:#555;">Average</span>
-                </div>
-              </div>
-              <div style="display:flex;gap:12px;margin-top:4px;">
-                <div style="flex:1;text-align:center;font-size:0.72rem;font-weight:700;color:#3d6ef5;" id="barYouLabel">--</div>
-                <div style="flex:1;text-align:center;font-size:0.72rem;font-weight:700;color:#9c27b0;" id="barTopperLabel">--</div>
-                <div style="flex:1;text-align:center;font-size:0.72rem;font-weight:700;color:#9c27b0;opacity:0.6;" id="barAvgLabel">--</div>
-              </div>
-              <!-- FIX Bug #2: rankBadge element added here in HTML -->
-              <div style="margin-top:12px;display:flex;align-items:center;gap:8px;">
-                <div id="rankBadge" style="background:#1a1a2e;color:#fff;border-radius:8px;padding:6px 12px;font-size:0.82rem;font-weight:800;">-- Rank</div>
-                <div style="display:flex;align-items:center;gap:4px;">
-                  <div style="width:10px;height:10px;border-radius:50%;background:#3d6ef5;"></div>
-                  <span style="font-size:0.72rem;color:#666;">Marks</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Rating Section -->
-          <div style="padding:0 16px 20px;">
-            <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:16px;">
-              <div style="font-size:0.85rem;font-weight:700;color:#1a1a2e;margin-bottom:4px;">How was the quality of questions?</div>
-              <div style="font-size:0.75rem;color:#aaa;margin-bottom:12px;">Your feedback will help us improve</div>
-              <div style="display:flex;gap:6px;justify-content:space-between;">
-                <button onclick="rateTest(1,this)" class="rate-btn" style="flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:inherit;">
-                  <span style="font-size:1.4rem;">⭐</span><span style="font-size:0.62rem;color:#888;">Very Bad</span>
-                </button>
-                <button onclick="rateTest(2,this)" class="rate-btn" style="flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:inherit;">
-                  <span style="font-size:1.4rem;">⭐</span><span style="font-size:0.62rem;color:#888;">Bad</span>
-                </button>
-                <button onclick="rateTest(3,this)" class="rate-btn" style="flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:inherit;">
-                  <span style="font-size:1.4rem;">⭐</span><span style="font-size:0.62rem;color:#888;">Average</span>
-                </button>
-                <button onclick="rateTest(4,this)" class="rate-btn" style="flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:inherit;">
-                  <span style="font-size:1.4rem;">⭐</span><span style="font-size:0.62rem;color:#888;">Good</span>
-                </button>
-                <button onclick="rateTest(5,this)" class="rate-btn" style="flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:inherit;">
-                  <span style="font-size:1.4rem;">⭐</span><span style="font-size:0.62rem;color:#888;">Excellent</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Buttons -->
-          <div style="padding:0 16px 20px;display:flex;gap:8px;flex-direction:column;">
-            <div style="display:flex;gap:8px;">
-              <button onclick="shareResult()" style="flex:1;background:#f5f5f5;color:#555;border:1.5px solid #eee;padding:12px;border-radius:10px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;">📤 Share</button>
-              <button onclick="exitQuiz()" style="flex:2;background:#3d6ef5;color:#fff;border:none;padding:12px;border-radius:10px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;">✅ Done</button>
-            </div>
-          </div>
+      <!-- Solutions Tab -->
+      <div id="rtabSolutions" style="display:none;flex-direction:column;flex:1;">
+        <div class="sol-filter-row">
+          <button class="a-tab active" onclick="setSolFilter('all')">All</button>
+          <button class="a-tab" onclick="setSolFilter('correct')">✅ Correct</button>
+          <button class="a-tab" onclick="setSolFilter('wrong')">❌ Wrong</button>
+          <button class="a-tab" onclick="setSolFilter('skip')">⏭ Skipped</button>
         </div>
-
-        <!-- SOLUTIONS TAB -->
-        <div id="rtabSolutions" style="display:none;flex-direction:column;height:100%;">
-          <div style="display:flex;border-bottom:1px solid #eee;background:#fff;position:sticky;top:0;z-index:5;">
-            <button class="a-tab active" id="aTabAll" onclick="setAnalysisFilter('all')" style="flex:1;padding:11px 4px;border:none;background:transparent;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;color:#3d6ef5;border-bottom:2px solid #3d6ef5;">All</button>
-            <button class="a-tab" id="aTabCorrect" onclick="setAnalysisFilter('correct')" style="flex:1;padding:11px 4px;border:none;background:transparent;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit;color:#888;border-bottom:2px solid transparent;">✅ Correct</button>
-            <button class="a-tab" id="aTabWrong" onclick="setAnalysisFilter('wrong')" style="flex:1;padding:11px 4px;border:none;background:transparent;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit;color:#888;border-bottom:2px solid transparent;">❌ Wrong</button>
-            <button class="a-tab" id="aTabSkip" onclick="setAnalysisFilter('skip')" style="flex:1;padding:11px 4px;border:none;background:transparent;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit;color:#888;border-bottom:2px solid transparent;">⏭ Skipped</button>
-          </div>
-          <div class="analysis-body" id="analysisBody" style="padding:16px;flex:1;overflow-y:auto;"></div>
-          <div class="analysis-nav" style="padding:12px 16px;border-top:1px solid #eee;display:flex;align-items:center;justify-content:space-between;background:#fff;">
-            <button class="a-nav-btn" id="analysisPrev" onclick="analysisPrev()" style="padding:9px 18px;border-radius:8px;border:1.5px solid #ddd;background:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;color:#333;">← Prev</button>
-            <span class="a-nav-counter" id="analysisCounter" style="font-size:0.82rem;color:#666;font-weight:600;">1 / 1</span>
-            <button class="a-nav-btn a-nav-next" id="analysisNext" onclick="analysisNext()" style="padding:9px 18px;border-radius:8px;border:none;background:#3d6ef5;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;color:#fff;">Next →</button>
-          </div>
+        <div class="sol-body" id="solBody"></div>
+        <div class="sol-nav">
+          <button class="sol-nav-btn" onclick="solPrev()">← Prev</button>
+          <span class="sol-counter" id="solCounter">1 / 1</span>
+          <button class="sol-nav-btn next-btn" onclick="solNext()">Next →</button>
         </div>
+      </div>
 
-        <!-- LEADERBOARD TAB -->
-        <div id="rtabLeaderboard" style="display:none;padding:16px;overflow-y:auto;flex:1;">
-          <div class="leaderboard-box" id="leaderboardBox">
-            <div id="lbList"></div>
-          </div>
-        </div>
-
+      <!-- Buttons -->
+      <div class="result-btns">
+        <button class="btn-share" onclick="shareResult()">📤 Share</button>
+        <button class="btn-back-result" onclick="exitQuiz()">← Dashboard</button>
       </div>
     </div><!-- end result-screen -->
 
