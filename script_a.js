@@ -1339,10 +1339,10 @@ async function submitQuiz() {
   document.getElementById('rankRow').style.display = 'none';
   
 
-  switchResultTab('leaderboard');
   document.getElementById('resultScreen').classList.add('show');
-  document.getElementById('quizOverlay').classList.add('show'); // FIX: overlay show karo warna result dikh nahi sakta
+  document.getElementById('quizOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
+  switchResultTab('solutions'); // FIX: pehle solutions dikhao, leaderboard data aane ke baad switch karenge
 
   // Supabase mein save
   // FIX: Session expire hone pe re-fetch karo
@@ -1416,7 +1416,10 @@ async function submitQuiz() {
     updateMarksChart(finalScore, topperScore, avgScore, totalMarks, rank, total);
 
     const top10 = allUsers.slice(0, 10);
-    if (top10.length > 0) renderLeaderboard(top10, currentUser.id);
+    if (top10.length > 0) {
+      renderLeaderboard(top10, currentUser.id);
+      switchResultTab('leaderboard'); // FIX: ab data aa gaya, leaderboard tab dikhao
+    }
 
   } catch(e) {
     console.error('Submit error:', e);
@@ -1545,15 +1548,16 @@ async function viewResult(testName) {
   
 
   // FIX Bug #12: answer_map reconstruct — null entries bhi handle karo
+  // FIX: keys ko number mein convert karo warna solutions tab mein match nahi hoga
   answers = {};
   if (att.answer_map) {
     try {
       const parsed = JSON.parse(att.answer_map);
-      Object.entries(parsed).forEach(([k, v]) => { if (v) answers[k] = v; });
+      Object.entries(parsed).forEach(([k, v]) => { if (v) answers[parseInt(k)] = v; });
     } catch(e) {}
   }
 
-  switchResultTab('leaderboard');
+  switchResultTab('solutions'); // FIX: pehle solutions dikhao turant
   document.getElementById('resultScreen').classList.add('show');
   document.getElementById('quizOverlay').classList.add('show');
   document.getElementById('quizHeader').style.display = 'none';
@@ -1578,7 +1582,10 @@ async function viewResult(testName) {
     const avgScore = scores.length>0 ? scores.reduce((a,b)=>a+b,0)/scores.length : score;
     updateMarksChart(score, topperScore, avgScore, totalMarks, rank, totalAtts);
     const top10 = allUsers2.slice(0,10);
-    if (top10.length>0) renderLeaderboard(top10, currentUser.id);
+    if (top10.length>0) {
+      renderLeaderboard(top10, currentUser.id);
+      switchResultTab('leaderboard'); // FIX: data aane ke baad leaderboard tab dikhao
+    }
   } catch(e) { console.error('viewResult leaderboard error:', e); }
 }
 
