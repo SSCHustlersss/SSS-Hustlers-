@@ -458,6 +458,8 @@ function saveQuizState() {
     totalQs: questions.length,
     posMarking,
     negMarking,
+    sectionTimers: window._sectionTimers || null,
+    currentSection,
     savedAt: Date.now()
   };
   try { localStorage.setItem(key, JSON.stringify(state)); } catch(e) {}
