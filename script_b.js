@@ -181,7 +181,7 @@ function updateAnalysisTabs() {
 }
 
 function renderAnalysisQuestion() {
-  const body = document.getElementById('analysisBody');
+  const body = document.getElementById('solBody'); // FIX: analysisBody nahi, HTML mein solBody hai
   if (!body) return;
 
   // Hide old Prev/Next/Counter — ab zarurat nahi
@@ -708,5 +708,8 @@ async function loadNavAvatar() {
 }
 
 // ============ START ============
+// FIX: HTML mein setSolFilter() call hai — alias provide karo
+function setSolFilter(f) { setAnalysisFilter(f); }
+
 init();
 loadTheme();
