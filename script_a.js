@@ -1341,6 +1341,8 @@ async function submitQuiz() {
 
   switchResultTab('leaderboard');
   document.getElementById('resultScreen').classList.add('show');
+  document.getElementById('quizOverlay').classList.add('show'); // FIX: overlay show karo warna result dikh nahi sakta
+  document.body.style.overflow = 'hidden';
 
   // Supabase mein save
   // FIX: Session expire hone pe re-fetch karo
@@ -1445,7 +1447,7 @@ function updateMarksChart(myScore, topperScore, avgScore, totalMarks, rank, tota
 }
 
 function switchResultTab(tab) {
-  ['analysis','solutions','leaderboard'].forEach(t => {
+  ['solutions','leaderboard'].forEach(t => {
     const content = document.getElementById('rtab' + t.charAt(0).toUpperCase() + t.slice(1));
     const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
     if (content) content.style.display = t===tab ? (t==='solutions'?'flex':'block') : 'none';
@@ -1453,6 +1455,7 @@ function switchResultTab(tab) {
       btn.style.color = t===tab ? '#3d6ef5' : '#888';
       btn.style.borderBottomColor = t===tab ? '#3d6ef5' : 'transparent';
       btn.style.fontWeight = t===tab ? '700' : '600';
+      btn.classList.toggle('active', t===tab);
     }
   });
   if (tab === 'solutions') {
