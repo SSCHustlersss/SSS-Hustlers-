@@ -223,24 +223,76 @@ function buildSections() {
   if (sections.length <= 1) { wrap.style.display = 'none'; return; }
   wrap.style.display = 'block';
   currentSection = 0;
+
+  // Initialize per-section timers (15 min each = 900s), only if not resuming
+  if (!window._sectionTimers || window._sectionTimers.length !== sections.length) {
+    window._sectionTimers = sections.map(() => 15 * 60);
+    window._currentSecTimer = null;
+  }
+
   renderSectionTabs();
 }
 
 function renderSectionTabs() {
   const el = document.getElementById('sectionTabs');
   if (!el) return;
+
+  // Determine which section is currently active (by timer)
+  let currentActiveSec = currentSection;
+  if (window._sectionTimers && window._sectionTimers.length > 0) {
+    const activeSec = window._sectionTimers.findIndex(t => t > 0);
+    currentActiveSec = activeSec === -1 ? sections.length : activeSec;
+  }
+
   el.innerHTML = sections.map((sec, si) => {
     const ans = sec.indices.filter(i => qStatus[i]==='answered'||qStatus[i]==='ans_marked').length;
     const total = sec.indices.length;
     const isActive = si === currentSection;
-    return `<button class="sec-tab ${isActive?'active':''}" onclick="switchSection(${si})">
-      ${sec.label}
+
+    // Lock logic: past sections (si < currentActiveSec) are locked, future sections too
+    const isPast   = si < currentActiveSec;
+    const isFuture = si > currentActiveSec;
+    const isLocked = isPast || isFuture;
+
+    // Timer display for current active section
+    let timerBadge = '';
+    if (window._sectionTimers && si === currentActiveSec && window._sectionTimers[si] > 0) {
+      const m = Math.floor(window._sectionTimers[si] / 60).toString().padStart(2,'0');
+      const s = (window._sectionTimers[si] % 60).toString().padStart(2,'0');
+      const secLeft = window._sectionTimers[si];
+      const color = secLeft <= 120 ? '#ff2222' : secLeft <= 300 ? '#ff8800' : '#00c853';
+      timerBadge = `<span style="font-size:0.65rem;font-weight:800;color:${color};margin-left:4px;">⏱${m}:${s}</span>`;
+    }
+
+    const lockIcon = isPast ? ' 🔒' : isFuture ? ' ⏳' : '';
+    const opacity  = isLocked ? 'opacity:0.5;cursor:not-allowed;' : '';
+
+    return `<button class="sec-tab ${isActive?'active':''}" onclick="switchSection(${si})" style="${opacity}">
+      ${sec.label}${lockIcon}${timerBadge}
       <span class="sec-tab-badge ${ans>0?'sec-tab-ans':''}">${ans}/${total}</span>
     </button>`;
   }).join('');
 }
 
 function switchSection(si) {
+  // FIX: Section tabs locked — sirf current ya past sections pe ja sakte hain
+  // (Section timers active hote waqt future/current section tab click nahi ho sakta)
+  if (window._sectionTimers && window._sectionTimers.length > 0) {
+    // Find which section is currently active by timer
+    const activeSec = window._sectionTimers.findIndex(t => t > 0);
+    const currentActiveSec = activeSec === -1 ? sections.length : activeSec;
+    if (si > currentActiveSec) {
+      // Future section — block
+      return;
+    }
+    if (si === currentActiveSec) {
+      // Current section — allow (same as current)
+    }
+    // Past sections — BLOCK (permanently locked)
+    if (si < currentActiveSec) {
+      return;
+    }
+  }
   currentSection = si;
   renderSectionTabs();
   const firstIdx = sections[si]?.indices[0];
@@ -944,6 +996,13 @@ async function launchQuiz(selectedLang) {
       timeLeft = savedState.timeLeft;
       currentQ = savedState.currentQ || 0;
       qStatus = savedState.qStatus || {};
+      // Restore section timers from saved state
+      if (savedState.sectionTimers) {
+        window._sectionTimers = savedState.sectionTimers;
+      }
+      if (typeof savedState.currentSection === 'number') {
+        currentSection = savedState.currentSection;
+      }
       // FIX: posMarking/negMarking hamesha questions se lo, savedState se nahi
       // posMarking aur negMarking pehle se set ho chuke hain questions[0] se
     } else {
@@ -1081,8 +1140,16 @@ function renderQNavDots() {
   }
 
   // Section-wise dots — Live Test style
+  // Determine currently active section (by timer)
+  let activeSecIdx = currentSection;
+  if (window._sectionTimers && window._sectionTimers.length > 0) {
+    const ai = window._sectionTimers.findIndex(t => t > 0);
+    activeSecIdx = ai === -1 ? sections.length - 1 : ai;
+  }
+
   document.getElementById('qNavDots').innerHTML = sections.map((sec, si) => {
     const secAns = sec.indices.filter(i => qStatus[i]==='answered'||qStatus[i]==='ans_marked').length;
+    const isLockedSec = si !== activeSecIdx; // only current section is clickable
     const dots = sec.indices.map(i => {
       const s = qStatus[i] || 'not_visited';
       let bg = '#e8edf5'; let color = '#333'; let border = '#ccd4e0';
@@ -1092,17 +1159,20 @@ function renderQNavDots() {
       else if (s==='ans_marked')   { bg='#7b1fa2'; color='#fff'; border='#2e7d32'; }
       const dispNum = sec.indices.indexOf(i)+1;
       const isActive = i===currentQ;
-      return `<div onclick="showQuestion(${i})" title="Q${i+1}" style="
-        height:32px;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;
+      const clickHandler = isLockedSec ? '' : `onclick="showQuestion(${i})"`;
+      const lockStyle = isLockedSec ? 'opacity:0.45;cursor:not-allowed;' : 'cursor:pointer;';
+      return `<div ${clickHandler} title="Q${i+1}" style="
+        height:32px;border-radius:6px;font-size:0.72rem;font-weight:700;
         background:${bg};color:${color};border:2px solid ${border};
         display:flex;align-items:center;justify-content:center;
+        ${lockStyle}
         ${isActive ? 'outline:2px solid #ff6d00;outline-offset:1px;' : ''}
         transition:all 0.12s;">${dispNum}</div>`;
     }).join('');
     return `<div style="
         background:#1565c0;padding:8px 10px;margin-top:2px;
         display:flex;align-items:center;justify-content:space-between;gap:4px;">
-        <span style="font-size:0.68rem;font-weight:800;color:#fff;line-height:1.3;">${sec.label}</span>
+        <span style="font-size:0.68rem;font-weight:800;color:#fff;line-height:1.3;">${sec.label}${isLockedSec ? (si < activeSecIdx ? ' 🔒' : ' ⏳') : ''}</span>
         <span style="font-size:0.65rem;font-weight:800;color:#fff;background:rgba(255,255,255,0.2);
           padding:2px 8px;border-radius:50px;white-space:nowrap;">${secAns}/${sec.indices.length}</span>
       </div>
@@ -1120,6 +1190,31 @@ function startTimer() {
     if (isPaused) return;
     timeLeft--;
     updateTimerDisplay();
+
+    // Per-section timer tick
+    if (sections.length > 1 && window._sectionTimers) {
+      const si = currentSection;
+      if (window._sectionTimers[si] > 0) {
+        window._sectionTimers[si]--;
+        renderSectionTabs(); // refresh timer badge on tab
+        if (window._sectionTimers[si] <= 0) {
+          // Section time up — auto advance to next section or submit
+          if (si < sections.length - 1) {
+            currentSection = si + 1;
+            const nextFirst = sections[currentSection]?.indices[0];
+            if (nextFirst !== undefined) showQuestion(nextFirst);
+            renderQNavDots();
+            renderSectionTabs();
+          } else {
+            // Last section done — auto submit
+            clearInterval(timerInterval);
+            submitQuiz();
+            return;
+          }
+        }
+      }
+    }
+
     if (timeLeft % 10 === 0) saveQuizState();
     if (timeLeft <= 0) { clearInterval(timerInterval); submitQuiz(); }
   }, 1000);
@@ -1201,8 +1296,12 @@ async function getLeaderboardData(testName) {
 
 // ============ SUBMIT ============
 async function submitQuiz() {
+  // FIX Bug #25: Timer zero karo + display reset karo
   clearInterval(timerInterval);
   timeLeft = 0;
+  window._sectionTimers = null; // Reset section timers on submit
+  const timerEl = document.getElementById('quizTimer');
+  if (timerEl) { timerEl.textContent = '00:00'; timerEl.classList.remove('danger'); timerEl.style.color = '#ffcc02'; }
   window._quizSubmitted = true;
 
   if (window.questionTimes !== undefined && window.questionStartTime) {
@@ -1217,8 +1316,8 @@ async function submitQuiz() {
     else if (a === q.correct_answer) { correct++; score += posMarking; }
     else { wrong++; score -= negMarking; }
   });
-  score = Math.round(score * 10) / 10;
   const totalMarks = questions[0].total_marks || (questions.length * posMarking);
+  // FIX: Negative score bhi dikhao, floor mat karo
   const attempted = questions.length - skip;
   const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
 
@@ -1227,58 +1326,29 @@ async function submitQuiz() {
   document.getElementById('qNavDots').style.display = 'none';
   document.getElementById('quizHeader').style.display = 'none';
   document.querySelector('.nta-body').style.display = 'none';
-  const mobBar = document.getElementById('mobileTimerBar');
-  if (mobBar) mobBar.style.display = 'none';
 
-  // Result header
-  const userName = currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'Student';
-  const nameEl = document.getElementById('resultNameDisplay');
-  if (nameEl) nameEl.textContent = '👤 ' + userName;
-  document.getElementById('resultScore').textContent = score + ' pts';
-  document.getElementById('resultSub').textContent = `Correct: ${correct} | Wrong: ${wrong} | Skipped: ${skip}`;
+  document.getElementById('resultTestTitle').textContent = activeTestName;
+  document.getElementById('resultScore').textContent = `${score.toFixed(1)}/${totalMarks}`;
+  document.getElementById('resultSub').textContent = `Avg: -- | Best: --`;
   document.getElementById('rCorrect').textContent = correct;
-  document.getElementById('rWrong').textContent   = wrong;
-  document.getElementById('rSkip').textContent    = skip;
-  document.getElementById('rAccuracy').textContent = accuracy + '%';
+  document.getElementById('rWrong').textContent = wrong;
+  document.getElementById('rSkip').textContent = skip;
+  document.getElementById('rAccuracy').textContent = accuracy;
   document.getElementById('rAttempted').textContent = attempted;
-  document.getElementById('rTotal').textContent     = questions.length;
+  document.getElementById('rTotal').textContent = questions.length;
+  document.getElementById('rankPercentileRow').style.display = 'none';
+  document.getElementById('rankNA').style.display = 'block';
 
-  // Sectional scores
-  if (sections.length > 1) {
-    const secColors = ['#0ea5e9','#16a34a','#f59e0b','#8b5cf6','#ec4899'];
-    const rows = sections.map((sec, si) => {
-      let sC=0, sW=0, sS=0, sScore=0;
-      sec.indices.forEach(i => {
-        const a = answers[i], q = questions[i];
-        if (!a) { sS++; return; }
-        const ca = (q.correct_answer||'').toString().trim().toUpperCase();
-        if (a.toUpperCase()===ca) { sC++; sScore+=posMarking; }
-        else { sW++; sScore-=negMarking; }
-      });
-      sScore = Math.round(sScore*10)/10;
-      const maxS = sec.indices.length * posMarking;
-      const pct = maxS>0 ? Math.max(0, Math.round((sScore/maxS)*100)) : 0;
-      const color = secColors[si % secColors.length];
-      return `<div class="sec-score-row">
-        <div class="sec-score-name">${sec.label.replace('General Intelligence & ','').replace(' Comprehension','')}</div>
-        <div class="sec-score-track"><div class="sec-score-fill" style="width:${pct}%;background:${color};"></div></div>
-        <div class="sec-score-val" style="color:${color};">${sScore}</div>
-        <div class="sec-score-detail">${sC}✅ ${sW}❌ ${sS}⏭</div>
-      </div>`;
-    }).join('');
-    document.getElementById('sectionalScoresList').innerHTML = rows;
-    document.getElementById('sectionalScoresWrap').style.display = 'block';
-  }
-
+  switchResultTab('analysis');
   document.getElementById('resultScreen').classList.add('show');
 
-  // Save to Supabase
+  // Supabase mein save
+  // FIX: Session expire hone pe re-fetch karo
   if (!currentUser) {
     const { data: { user } } = await sb.auth.getUser();
     currentUser = user;
   }
-  if (!currentUser) return;
-
+  if (!currentUser) { console.error('No user session'); return; }
   try {
     let _uName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Student';
     let _avatarUrl = currentUser.user_metadata?.avatar_url || null;
@@ -1288,179 +1358,68 @@ async function submitQuiz() {
       if (prof?.avatar_url) _avatarUrl = prof.avatar_url;
     } catch(e) {}
 
+    // FIX Bug #12: answer_map mein sab indexes store karo (skip bhi)
     const fullAnswerMap = {};
     questions.forEach((q, i) => { fullAnswerMap[i] = answers[i] || null; });
 
-    await sb.from('test_attempts').insert({
-      user_id: currentUser.id, full_name: _uName, avatar_url: _avatarUrl,
-      test_name: activeTestName, exam_type: currentExam,
-      subject: questions[0]?.subject || currentSubject?.key,
-      topic: currentTopic?.key || null,
-      score: parseFloat(score.toFixed(1)), total_marks: totalMarks,
-      correct_answers: correct, wrong_answers: wrong,
+    const { error: insertError } = await sb.from('test_attempts').insert({
+      user_id:             currentUser.id,
+      full_name:           _uName,
+      avatar_url:          _avatarUrl,
+      test_name:           activeTestName,
+      exam_type:           currentExam,
+      subject:             questions[0]?.subject || currentSubject?.key,
+      topic:               currentTopic?.key || null,
+      score:               parseFloat(score.toFixed(1)),
+      total_marks:         totalMarks,
+      correct_answers:     correct,
+      wrong_answers:       wrong,
       questions_attempted: attempted,
-      answer_map: JSON.stringify(fullAnswerMap),
-      time_map: JSON.stringify(window.questionTimes || {})
+      answer_map:          JSON.stringify(fullAnswerMap),
+      time_map:            JSON.stringify(window.questionTimes || {})
     });
 
+    // FIX: Hamesha localStorage clear karo submit ke baad
     clearQuizState(activeTestName);
+    // Store completed flag so Resume never shows after submit
     try { localStorage.setItem('completed_' + activeTestName, '1'); } catch(e) {}
+    if (insertError) {
+      console.error('Submit insert error:', insertError);
+      alert('INSERT ERROR: ' + JSON.stringify(insertError));
+    }
 
-    // Leaderboard + rank
-    await loadResultLeaderboard(score);
+    const finalScore = parseFloat(score.toFixed(1));
+    const { uniqueUsers } = await getLeaderboardData(activeTestName);
+    let allUsers = [...uniqueUsers];
+    if (!allUsers.find(u => u.user_id === currentUser.id)) {
+      allUsers.push({ user_id: currentUser.id, score: finalScore });
+      allUsers.sort((a, b) => b.score - a.score);
+    }
+
+    // FIX Bug #15: Same score pe sahi rank calculate karo
+    const rank = allUsers.filter(u => u.score > finalScore).length + 1;
+    const total = allUsers.length || 1;
+    const percentile = total > 1 ? Math.round(((total - rank) / (total - 1)) * 100) : 100;
+
+    document.getElementById('rankPercentileRow').style.display = 'flex';
+    document.getElementById('rankNA').style.display = 'none';
+    document.getElementById('rpRank').textContent = `#${rank}`;
+    document.getElementById('rpTotal').textContent = total;
+    document.getElementById('rpPercentile').textContent = percentile;
+    document.getElementById('rpPercentile').style.color = percentile>=90?'#00c853':percentile>=70?'#4285f4':'#e63946';
+
+    const scores = uniqueUsers.map(u => u.score);
+    const topperScore = scores.length > 0 ? Math.max(...scores) : finalScore;
+    const avgScore    = scores.length > 0 ? scores.reduce((a,b)=>a+b,0)/scores.length : finalScore;
+    updateMarksChart(finalScore, topperScore, avgScore, totalMarks, rank, total);
+
+    const top10 = allUsers.slice(0, 10);
+    if (top10.length > 0) renderLeaderboard(top10, currentUser.id);
 
   } catch(e) {
     console.error('Submit error:', e);
+    alert('⚠️ Result save nahi hua — network check karo aur dobara try karo.');
   }
-}
-
-// ── RESULT LEADERBOARD ──
-async function loadResultLeaderboard(myScore) {
-  const el = document.getElementById('lbList');
-  if (!el) return;
-  el.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Loading...</div>';
-  try {
-    const { data: allAttempts } = await sb.from('test_attempts')
-      .select('user_id, full_name, score, avatar_url')
-      .ilike('test_name', activeTestName.trim())
-      .order('score', { ascending: false });
-
-    if (!allAttempts || !allAttempts.length) {
-      el.innerHTML = '<div style="text-align:center;padding:24px;color:#94a3b8;font-size:0.82rem;">Abhi koi result nahi</div>';
-      return;
-    }
-
-    // Unique users
-    const seen = new Set();
-    const uniqueUsers = allAttempts.filter(a => { if (seen.has(a.user_id)) return false; seen.add(a.user_id); return true; });
-
-    const total = uniqueUsers.length;
-    const myRank = uniqueUsers.filter(u => u.score > myScore).length + 1;
-    const percentile = total > 1 ? Math.round(((total - myRank) / (total - 1)) * 100) : 100;
-
-    document.getElementById('rankRow').style.display = 'flex';
-    document.getElementById('rpRank').textContent = '#' + myRank;
-    document.getElementById('rpTotal').textContent = total;
-    document.getElementById('rpPercentile').textContent = percentile + '%';
-
-    const medals = ['🥇','🥈','🥉'];
-    const top3 = uniqueUsers.slice(0, 3);
-    const rest  = uniqueUsers.slice(3);
-    const reordered = [top3[1], top3[0], top3[2]].filter(Boolean);
-    const orderMap  = [1, 0, 2];
-    const myId = currentUser?.id;
-
-    const podiumHtml = top3.length >= 1 ? `<div class="lb-podium">${reordered.map((r, pi) => {
-      const origIdx = orderMap[pi];
-      const isMe = r.user_id === myId;
-      const initials = (r.full_name||'S').slice(0,2).toUpperCase();
-      return `<div class="lb-podium-item">
-        <span>${medals[origIdx]||''}</span>
-        <div class="lb-circle lp-${pi===1?'lg':'md'}">${initials}</div>
-        <div class="lb-pname">${isMe?'⭐ ':''} ${r.full_name||'Student'}</div>
-        <div class="lb-pscore">${r.score} pts</div>
-      </div>`;
-    }).join('')}</div>` : '';
-
-    const restHtml = rest.map((r, i) => {
-      const isMe = r.user_id === myId;
-      return `<div class="lb-row ${isMe?'lb-me':''}">
-        <span class="lb-pos">#${i+4}</span>
-        <span class="lb-name">${isMe?'⭐ ':''} ${r.full_name||'Student'}</span>
-        <span class="lb-score">${r.score} pts</span>
-      </div>`;
-    }).join('');
-
-    el.innerHTML = podiumHtml + restHtml;
-
-  } catch(e) {
-    el.innerHTML = '<div style="text-align:center;padding:20px;color:#dc2626;font-size:0.82rem;">Leaderboard load nahi hua</div>';
-  }
-}
-
-// ── SOLUTIONS ──
-let solFilter = 'all', solIdx = 0, solFiltered = [];
-
-function setSolFilter(filter) {
-  document.querySelectorAll('.sol-filter-row .a-tab').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-  solFilter = filter;
-  solIdx = 0;
-  buildSolList();
-  showSolution();
-}
-
-function buildSolList() {
-  solFiltered = questions.map((q, i) => ({ q, i, ans: answers[i] })).filter(({ q, ans }) => {
-    const ca = (q.correct_answer||'').toString().trim().toUpperCase();
-    if (solFilter==='all') return true;
-    if (solFilter==='correct') return ans && ans.toUpperCase()===ca;
-    if (solFilter==='wrong')   return ans && ans.toUpperCase()!==ca;
-    if (solFilter==='skip')    return !ans;
-    return true;
-  });
-}
-
-function showSolution() {
-  const el = document.getElementById('solBody');
-  if (!el) return;
-  if (!solFiltered.length) {
-    el.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">Koi question nahi is filter mein</div>';
-    document.getElementById('solCounter').textContent = '0 / 0';
-    return;
-  }
-  const { q, i, ans } = solFiltered[solIdx];
-  const ca = (q.correct_answer||'').toString().trim().toUpperCase();
-  const correct = ans && ans.toUpperCase()===ca;
-  const skipped = !ans;
-  const statusCls = skipped?'skip':correct?'correct':'wrong';
-  const statusLbl = skipped?'⏭ Skipped':correct?'✅ Correct':'❌ Wrong';
-  el.innerHTML = `<div class="ana-q-card">
-    <div class="ana-q-header">
-      <span class="ana-status-badge ${statusCls}">${statusLbl}</span>
-      <span class="ana-q-num">Q${i+1}</span>
-    </div>
-    <div class="ana-q-text">${esc(getLangText(q.question_text))}</div>
-    <div class="ana-opts">
-      ${['A','B','C','D'].map(l => {
-        const val = getLangText(q['option_'+l.toLowerCase()]);
-        const isCorrect = l===ca;
-        const isWrong   = l===(ans||'').toUpperCase() && !isCorrect;
-        return `<div class="ana-opt ${isCorrect?'correct':isWrong?'wrong':''}">
-          <span class="ana-opt-label">${l}</span>
-          <span>${esc(val)}</span>
-        </div>`;
-      }).join('')}
-    </div>
-    ${q.explanation ? `<div class="ana-explanation">💡 <strong>Explanation:</strong> ${esc(getLangText(q.explanation))}</div>` : ''}
-  </div>`;
-  document.getElementById('solCounter').textContent = `${solIdx+1} / ${solFiltered.length}`;
-}
-
-function solNext() { if (solIdx < solFiltered.length-1) { solIdx++; showSolution(); } }
-function solPrev() { if (solIdx > 0) { solIdx--; showSolution(); } }
-
-// ── RESULT TABS ──
-function switchResultTab(tab, e) {
-  document.querySelectorAll('.rtab-btn').forEach(b => b.classList.remove('active'));
-  if (e && e.target) e.target.classList.add('active');
-  document.getElementById('rtabLeaderboard').style.display = tab==='leaderboard' ? 'block' : 'none';
-  document.getElementById('rtabSolutions').style.display   = tab==='solutions'   ? 'flex'  : 'none';
-  if (tab==='solutions') { buildSolList(); showSolution(); }
-}
-
-// ── SHARE ──
-function shareResult() {
-  const score   = document.getElementById('resultScore').textContent;
-  const correct = document.getElementById('rCorrect').textContent;
-  const wrong   = document.getElementById('rWrong').textContent;
-  const name    = currentUser?.user_metadata?.full_name || 'Student';
-  const msg = `🎯 *SSC Hustlers*\n\n📝 ${activeTestName}\n👤 ${name}\n🏆 Score: ${score}\n✅ Correct: ${correct}  ❌ Wrong: ${wrong}\n\n🔗 ${window.location.href}`;
-  if (navigator.share) navigator.share({ title: 'SSC Hustlers', text: msg }).catch(() => copyToClipboard(msg));
-  else copyToClipboard(msg);
-}
-function copyToClipboard(text) {
-  navigator.clipboard.writeText(text).then(() => alert('✅ Result copied!')).catch(() => window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank'));
 }
 
 function rateTest(rating, btn) {
@@ -1508,27 +1467,49 @@ function switchResultTab(tab) {
 async function viewResult(testName) {
   activeTestName = testName.trim();
 
+  // FIX Bug viewResult: currentSubject null hone pe bhi kaam kare (e.g. Full Test)
   let vq = sb.from('quizzes').select('*')
-    .eq('exam_type', currentExam).eq('subject', currentSubject.key)
-    .eq('test_name', testName).order('q_order', { ascending: true });
-  if (currentTopic) vq = vq.eq('topic', currentTopic.key);
-  const { data, error } = await vq;
+    .eq('exam_type', currentExam)
+    .eq('test_name', testName)
+    .order('q_order', { ascending: true });
+  if (currentSubject?.key) {
+    if (currentSubject.key === 'full_test') {
+      vq = vq.eq('topic', 'full_test');
+    } else {
+      vq = vq.eq('subject', currentSubject.key);
+      if (currentTopic) vq = vq.eq('topic', currentTopic.key);
+    }
+  }
+  let { data, error } = await vq;
+
+  // Fallback: topic key se bhi try karo
+  if ((!data || data.length === 0) && currentTopic?.key) {
+    const fb = await sb.from('quizzes').select('*')
+      .eq('exam_type', currentExam).eq('subject', currentTopic.key)
+      .eq('test_name', testName).order('q_order', { ascending: true });
+    if (!fb.error && fb.data?.length > 0) { data = fb.data; error = null; }
+  }
+
   if (error || !data || data.length === 0) { alert('⚠️ Questions load nahi hue!'); return; }
   questions = data;
   detectHindi();
 
   // FIX Bug #16: Latest attempt fetch karo (most recent first)
+  // FIX viewResult: subject null hone pe subject filter skip karo
   let attQ = sb.from('test_attempts').select('*')
     .eq('user_id', currentUser.id).eq('test_name', testName)
-    .eq('exam_type', currentExam).eq('subject', currentSubject?.key)
+    .eq('exam_type', currentExam)
     .order('created_at', { ascending: false }).limit(1);
+  if (currentSubject?.key && currentSubject.key !== 'full_test') {
+    attQ = attQ.eq('subject', currentSubject.key);
+  }
   if (currentTopic) attQ = attQ.eq('topic', currentTopic.key);
   let { data: attResultData } = await attQ;
 
   if (!attResultData || attResultData.length === 0) {
+    // Broad fallback — sirf test_name se try karo
     const { data: attFallback } = await sb.from('test_attempts').select('*')
       .eq('user_id', currentUser.id).eq('test_name', testName)
-      .eq('exam_type', currentExam).eq('subject', currentSubject?.key)
       .order('created_at', { ascending: false }).limit(1);
     if (!attFallback || attFallback.length === 0) { alert('Koi attempt nahi mila!'); return; }
     attResultData = attFallback;
@@ -1615,6 +1596,8 @@ function exitQuiz() {
   window.removeEventListener('offline', handleOffline);
   isPaused = false;
   sections = []; currentSection = 0;
+  // FIX: Reset section timers on exit
+  window._sectionTimers = null;
   const wrap = document.getElementById('sectionTabsWrap');
   if (wrap) wrap.style.display = 'none';
   const mobBar = document.getElementById('mobileTimerBar');
