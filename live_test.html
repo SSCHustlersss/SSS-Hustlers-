@@ -753,22 +753,36 @@ async function joinTest() {
   }
   questions = qs;
 
-  // ── Check if already submitted ──
+  // ── Check if already submitted (same device + same name) ──
   const { data: prevAttempt } = await sb.from('live_test_attempts')
     .select('id, score, correct, wrong, skipped, answers, submitted_at')
     .eq('live_test_id', liveTest.id)
     .eq('participant_name', participantName)
     .eq('device_fingerprint', deviceFingerprint)
     .not('submitted_at', 'is', null)
+    .order('submitted_at', { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (prevAttempt) {
-    // Already submitted — directly show result
-    const savedAnswers = JSON.parse(prevAttempt.answers || '{}');
-    answers = savedAnswers;
+    // Already attempt kar chuka hai — seedha result dikhao
+    attemptId = prevAttempt.id;
+    const prevAnswers = JSON.parse(prevAttempt.answers || '{}');
+    answers = prevAnswers;
+    // qStatus reconstruct karo
+    questions.forEach((q, i) => {
+      const ans = prevAnswers[i];
+      if (ans) {
+        const correctAns = (q.correct_answer || '').toString().trim().toUpperCase();
+        qStatus[i] = ans.toUpperCase() === correctAns ? 'answered' : 'answered';
+      } else {
+        qStatus[i] = 'not_answered';
+      }
+    });
     const attempted = prevAttempt.correct + prevAttempt.wrong;
     const accuracy  = attempted > 0 ? Math.round((prevAttempt.correct / attempted) * 100) : 0;
-    document.getElementById('quizOverlay').classList.remove('show');
+    document.getElementById('btnJoin').disabled = false;
+    document.getElementById('btnJoin').textContent = 'Join Test →';
     showResultScreen(prevAttempt.score, prevAttempt.correct, prevAttempt.wrong, prevAttempt.skipped, attempted, accuracy);
     return;
   }
@@ -1055,9 +1069,18 @@ function showQuestion(idx) {
     const isLastInSec  = sec && posInSec === sec.indices.length - 1;
     const isLastSec    = currentSection === sections.length - 1;
     document.getElementById('btnPrev').style.display   = isFirstInSec ? 'none' : '';
-    document.getElementById('btnNext').style.display   = (isLastInSec && isLastSec) ? 'none' : '';
-    document.getElementById('btnSubmit').style.display = (isLastInSec && isLastSec) ? '' : 'none';
+    // Section timer mode: Next button hides at end of each section (auto-switch hoga), last section pe Submit dikhao
+    if (hasSectionTimer) {
+      document.getElementById('btnNext').style.display   = isLastInSec ? 'none' : '';
+      document.getElementById('btnSubmit').style.display = (isLastInSec && isLastSec) ? '' : 'none';
+    } else {
+      document.getElementById('btnNext').style.display   = (isLastInSec && isLastSec) ? 'none' : '';
+      document.getElementById('btnSubmit').style.display = (isLastInSec && isLastSec) ? '' : 'none';
+    }
   }
+  // Sidebar submit button: hamesha visible aur working
+  const ntaSubmitBtn = document.querySelector('.nta-submit-btn');
+  if (ntaSubmitBtn) ntaSubmitBtn.style.display = '';
 
   buildDots();
   updateLegend();
@@ -1153,6 +1176,14 @@ function buildSections() {
     } catch(e) { console.warn('section_config parse error:', e); }
   }
 
+  // ── Priority 1.5: Single-section categories (english_only, maths_only) ──
+  const SINGLE_SECTION_CATEGORIES = ['english_only', 'maths_only'];
+  if (liveTest.category && SINGLE_SECTION_CATEGORIES.includes(liveTest.category)) {
+    sections = [{ name: 'all', label: 'All Questions', indices: questions.map((_,i)=>i) }];
+    wrap.style.display = 'none';
+    return;
+  }
+
   // ── Priority 2: Auto-detect from subject field ──
   const SECTION_KEYWORDS = {
     reasoning: ['reasoning','intelligence','general intelligence','reasoning ability','logical'],
@@ -1243,6 +1274,9 @@ function buildDots() {
   document.getElementById('sidebarSecHdr').style.display = 'none';
   wrap.innerHTML = sections.map((sec, si) => {
     const ans = sec.indices.filter(i => qStatus[i] === 'answered' || qStatus[i] === 'ans_marked').length;
+    const isLockedSec = hasSectionTimer && si > currentSection;
+    const isDoneSec   = hasSectionTimer && si < currentSection;
+    const secIcon = isLockedSec ? ' 🔒' : isDoneSec ? ' ✅' : '';
     const dots = sec.indices.map(i => {
       let cls = '';
       const s = qStatus[i];
@@ -1250,11 +1284,12 @@ function buildDots() {
       else if (s === 'not_answered') cls = 'not-answered';
       else if (s === 'marked') cls = 'marked';
       if (i === currentQ) cls += ' current';
-      // Display number within section
       const dispNum = sec.indices.indexOf(i) + 1;
-      return `<div class="q-dot ${cls}" onclick="showQuestion(${i})" title="Q${i+1}">${dispNum}</div>`;
+      const clickHandler = isLockedSec ? '' : `onclick="showQuestion(${i})"`;
+      const lockStyle = isLockedSec ? 'opacity:0.4;cursor:not-allowed;pointer-events:none;' : '';
+      return `<div class="q-dot ${cls}" ${clickHandler} style="${lockStyle}" title="Q${i+1}">${dispNum}</div>`;
     }).join('');
-    return `<div class="nta-sec-hdr-section">${sec.label}<span class="nta-sec-count">${ans}/${sec.indices.length}</span></div>
+    return `<div class="nta-sec-hdr-section" style="${isLockedSec?'opacity:0.6;':''}">${sec.label}${secIcon}<span class="nta-sec-count">${ans}/${sec.indices.length}</span></div>
       <div class="q-nav-dots" style="padding:8px;display:flex;flex-wrap:wrap;gap:5px;">${dots}</div>`;
   }).join('');
 
