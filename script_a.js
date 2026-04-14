@@ -193,42 +193,106 @@ function detectSectionKey(subject) {
   return null;
 }
 function buildSections() {
-  const isFullTest = currentCategory === 'full_test';
-  if (!isFullTest) { sections = []; return; }
-
-  const map = {};
-  questions.forEach((q, i) => {
-    const key = detectSectionKey(q.subject) || 'gk';
-    if (!map[key]) map[key] = [];
-    map[key].push(i);
-  });
-
-  sections = Object.entries(SSC_SECTION_MAP)
-    .filter(([k]) => map[k] && map[k].length > 0)
-    .map(([k, v]) => ({ key: k, label: v.label, indices: map[k] }));
-
   const wrap = document.getElementById('sectionTabsWrap');
+  const total = questions.length;
+
+  // Sirf 50+ questions pe sections dikhao
+  if (total < 50) {
+    sections = [];
+    if (wrap) wrap.style.display = 'none';
+    return;
+  }
+
+  // Fixed ranges: Q1-25 Reasoning, Q26-50 GK, Q51-75 Maths, Q76-100 English
+  const FIXED = [
+    { key:'reasoning', label:'General Intelligence & Reasoning', from:0,  to:24  },
+    { key:'gk',        label:'General Awareness',                from:25, to:49  },
+    { key:'quant',     label:'Quantitative Aptitude',            from:50, to:74  },
+    { key:'english',   label:'English Comprehension',            from:75, to:99  },
+  ];
+
+  sections = FIXED
+    .filter(s => s.from < total)
+    .map(s => ({
+      key:     s.key,
+      label:   s.label,
+      indices: Array.from({ length: Math.min(s.to, total-1) - s.from + 1 }, (_, i) => s.from + i)
+    }));
+
   if (!wrap) return;
   if (sections.length <= 1) { wrap.style.display = 'none'; return; }
   wrap.style.display = 'block';
   currentSection = 0;
+
+  // Initialize per-section timers (15 min each = 900s), only if not resuming
+  if (!window._sectionTimers || window._sectionTimers.length !== sections.length) {
+    window._sectionTimers = sections.map(() => 15 * 60);
+    window._currentSecTimer = null;
+  }
+
   renderSectionTabs();
 }
 
 function renderSectionTabs() {
   const el = document.getElementById('sectionTabs');
   if (!el) return;
+
+  // Determine which section is currently active (by timer)
+  let currentActiveSec = currentSection;
+  if (window._sectionTimers && window._sectionTimers.length > 0) {
+    const activeSec = window._sectionTimers.findIndex(t => t > 0);
+    currentActiveSec = activeSec === -1 ? sections.length : activeSec;
+  }
+
   el.innerHTML = sections.map((sec, si) => {
     const ans = sec.indices.filter(i => qStatus[i]==='answered'||qStatus[i]==='ans_marked').length;
+    const total = sec.indices.length;
     const isActive = si === currentSection;
-    return `<button onclick="switchSection(${si})" style="padding:11px 14px;border:none;background:transparent;color:${isActive?'#3d6ef5':'#64748b'};font-size:0.75rem;font-weight:${isActive?'700':'600'};cursor:pointer;font-family:inherit;border-bottom:3px solid ${isActive?'#3d6ef5':'transparent'};white-space:nowrap;transition:all 0.15s;">
-      ${sec.label}
-      <span style="font-size:0.6rem;font-weight:800;padding:2px 6px;border-radius:50px;margin-left:5px;vertical-align:middle;background:${ans>0?'#dcfce7':'#e2e8f0'};color:${ans>0?'#15803d':'#475569'};">${ans}/${sec.indices.length}</span>
+
+    // Lock logic: past sections (si < currentActiveSec) are locked, future sections too
+    const isPast   = si < currentActiveSec;
+    const isFuture = si > currentActiveSec;
+    const isLocked = isPast || isFuture;
+
+    // Timer display for current active section
+    let timerBadge = '';
+    if (window._sectionTimers && si === currentActiveSec && window._sectionTimers[si] > 0) {
+      const m = Math.floor(window._sectionTimers[si] / 60).toString().padStart(2,'0');
+      const s = (window._sectionTimers[si] % 60).toString().padStart(2,'0');
+      const secLeft = window._sectionTimers[si];
+      const color = secLeft <= 120 ? '#ff2222' : secLeft <= 300 ? '#ff8800' : '#00c853';
+      timerBadge = `<span style="font-size:0.65rem;font-weight:800;color:${color};margin-left:4px;">⏱${m}:${s}</span>`;
+    }
+
+    const lockIcon = isPast ? ' 🔒' : isFuture ? ' ⏳' : '';
+    const opacity  = isLocked ? 'opacity:0.5;cursor:not-allowed;' : '';
+
+    return `<button class="sec-tab ${isActive?'active':''}" onclick="switchSection(${si})" style="${opacity}">
+      ${sec.label}${lockIcon}${timerBadge}
+      <span class="sec-tab-badge ${ans>0?'sec-tab-ans':''}">${ans}/${total}</span>
     </button>`;
   }).join('');
 }
 
 function switchSection(si) {
+  // FIX: Section tabs locked — sirf current ya past sections pe ja sakte hain
+  // (Section timers active hote waqt future/current section tab click nahi ho sakta)
+  if (window._sectionTimers && window._sectionTimers.length > 0) {
+    // Find which section is currently active by timer
+    const activeSec = window._sectionTimers.findIndex(t => t > 0);
+    const currentActiveSec = activeSec === -1 ? sections.length : activeSec;
+    if (si > currentActiveSec) {
+      // Future section — block
+      return;
+    }
+    if (si === currentActiveSec) {
+      // Current section — allow (same as current)
+    }
+    // Past sections — BLOCK (permanently locked)
+    if (si < currentActiveSec) {
+      return;
+    }
+  }
   currentSection = si;
   renderSectionTabs();
   const firstIdx = sections[si]?.indices[0];
@@ -523,10 +587,15 @@ async function loadCounts() {
   const subjects = getSubjects();
   for (const s of subjects) {
     try {
-      const { count } = await sb.from('quizzes')
+      let q = sb.from('quizzes')
         .select('*', { count:'exact', head:true })
-        .eq('exam_type', currentExam)
-        .eq('subject', s.key);
+        .eq('exam_type', currentExam);
+      if (s.key === 'full_test') {
+        q = q.eq('topic', 'full_test');
+      } else {
+        q = q.eq('subject', s.key);
+      }
+      const { count } = await q;
       const el = document.getElementById('cnt-' + s.key);
       if (el) el.textContent = count > 0 ? count + ' Qs' : 'Coming Soon';
     } catch(e) {
@@ -615,7 +684,7 @@ async function loadTestsForSubject(subjectKey, label, icon, topicKey, inTopics) 
     .select('test_name, positive_marking, negative_marking, test_duration, total_marks, difficulty, unlock_at, created_at')
     .eq('exam_type', currentExam)
     .not('test_name', 'is', null)
-    .order('created_at', { ascending: true });
+    .order('q_order', { ascending: true });
   // FIX: subject='full_test' ka matlab exam-level full test — topic se filter karo
   if (subjectKey === 'full_test') {
     query = query.eq('topic', 'full_test');
@@ -630,7 +699,7 @@ async function loadTestsForSubject(subjectKey, label, icon, topicKey, inTopics) 
     const fallbackQuery = sb.from('quizzes')
       .select('test_name, positive_marking, negative_marking, test_duration, total_marks, difficulty, unlock_at, created_at')
       .eq('exam_type', currentExam).eq('subject', topicKey)
-      .not('test_name', 'is', null).order('created_at', { ascending: true });
+      .not('test_name', 'is', null).order('q_order', { ascending: true });
     const { data: fallbackData, error: fallbackError } = await fallbackQuery;
     if (!fallbackError && fallbackData && fallbackData.length > 0) { data = fallbackData; error = null; }
   }
@@ -657,7 +726,7 @@ async function loadTestsForSubject(subjectKey, label, icon, topicKey, inTopics) 
       .eq('user_id', currentUser.id)
       .eq('exam_type', currentExam)
       .in('test_name', testNames)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: false });
     if (attData) {
       attData.forEach(row => {
         if (!attemptsMap[row.test_name]) attemptsMap[row.test_name] = [];
@@ -711,18 +780,21 @@ async function loadTestsForSubject(subjectKey, label, icon, topicKey, inTopics) 
           actionBtn = `<button class="btn-start-test" onclick="event.stopPropagation();startQuiz('${esc(name)}')">Start →</button>`;
         }
       } else if (attemptCount === 1) {
-        // FIX Bug #15: Same score pe rank sahi ho — score/total accurate dikhao
         const pct = lastAttempt.total_marks ? Math.round((lastAttempt.score / lastAttempt.total_marks) * 100) : 0;
-        statusTag = `<span class="ttag ${pct>=70?'green':pct>=40?'blue':'red'}">${lastAttempt.score}/${lastAttempt.total_marks} (${pct}%)</span>`;
+        const attemptedOn = lastAttempt.created_at ? new Date(lastAttempt.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric', timeZone:'Asia/Kolkata' }) : '';
+        statusTag = `<span class="ttag ${pct>=70?'green':pct>=40?'blue':'red'}">${lastAttempt.score}/${lastAttempt.total_marks} · ${pct}%</span>`;
         actionBtn = `<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-          <button class="btn-start-test" onclick="event.stopPropagation();viewResult('${esc(name)}')">📊 Result</button>
-          <button class="btn-start-test" style="background:#fff3e0;color:#e65100;border-color:#e65100;font-size:0.72rem;padding:5px 10px;" onclick="event.stopPropagation();reattemptQuiz('${esc(name)}')">🔁 Reattempt</button>
+          <button class="btn-start-test" onclick="event.stopPropagation();viewResult('${esc(name)}')">View Results</button>
+          <button class="btn-start-test" style="background:#fff3e0;color:#e65100;border-color:#e65100;font-size:0.72rem;padding:5px 10px;" onclick="event.stopPropagation();reattemptQuiz('${esc(name)}')">Reattempt →</button>
         </div>`;
+        statusTag += attemptedOn ? `<span class="ttag" style="background:#f0f4ff;color:#1a237e;">📅 ${attemptedOn}</span>` : '';
       } else {
         const pct = lastAttempt.total_marks ? Math.round((lastAttempt.score / lastAttempt.total_marks) * 100) : 0;
-        statusTag = `<span class="ttag ${pct>=70?'green':pct>=40?'blue':'red'}">${lastAttempt.score}/${lastAttempt.total_marks} (${pct}%)</span>`;
+        const attemptedOn = lastAttempt.created_at ? new Date(lastAttempt.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric', timeZone:'Asia/Kolkata' }) : '';
+        statusTag = `<span class="ttag ${pct>=70?'green':pct>=40?'blue':'red'}">${lastAttempt.score}/${lastAttempt.total_marks} · ${pct}%</span>`;
+        statusTag += attemptedOn ? `<span class="ttag" style="background:#f0f4ff;color:#1a237e;">📅 ${attemptedOn}</span>` : '';
         actionBtn = `<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-          <button class="btn-start-test" onclick="event.stopPropagation();viewResult('${esc(name)}')">📊 Result</button>
+          <button class="btn-start-test" onclick="event.stopPropagation();viewResult('${esc(name)}')">View Results</button>
           <span style="font-size:0.65rem;color:#aaa;text-align:center;">Max attempts done</span>
         </div>`;
       }
@@ -811,14 +883,14 @@ async function startQuiz(testName) {
 
   let quizQuery = sb.from('quizzes').select('*')
     .eq('exam_type', currentExam).eq('subject', currentSubject.key)
-    .eq('test_name', testName).order('created_at', { ascending: true });
+    .eq('test_name', testName).order('q_order', { ascending: true });
   if (currentTopic) quizQuery = quizQuery.eq('topic', currentTopic.key);
   let { data, error } = await quizQuery;
 
   if ((!data || data.length === 0) && currentTopic) {
     const fb = await sb.from('quizzes').select('*')
       .eq('exam_type', currentExam).eq('subject', currentTopic.key)
-      .eq('test_name', testName).order('created_at', { ascending: true });
+      .eq('test_name', testName).order('q_order', { ascending: true });
     if (!fb.error && fb.data && fb.data.length > 0) { data = fb.data; error = null; }
   }
 
@@ -841,14 +913,14 @@ async function reattemptQuiz(testName) {
 
   let quizQuery = sb.from('quizzes').select('*')
     .eq('exam_type', currentExam).eq('subject', currentSubject.key)
-    .eq('test_name', testName).order('created_at', { ascending: true });
+    .eq('test_name', testName).order('q_order', { ascending: true });
   if (currentTopic) quizQuery = quizQuery.eq('topic', currentTopic.key);
   let { data, error } = await quizQuery;
 
   if ((!data || data.length === 0) && currentTopic) {
     const fb = await sb.from('quizzes').select('*')
       .eq('exam_type', currentExam).eq('subject', currentTopic.key)
-      .eq('test_name', testName).order('created_at', { ascending: true });
+      .eq('test_name', testName).order('q_order', { ascending: true });
     if (!fb.error && fb.data && fb.data.length > 0) { data = fb.data; error = null; }
   }
 
@@ -898,6 +970,8 @@ async function launchQuiz(selectedLang) {
   timeLeft = (questions[0].test_duration || 30) * 60;
 
   document.getElementById('quizTitle').innerHTML = `${EXAM_LABELS[currentExam] || currentExam} — <span>${activeTestName}</span>`;
+  const unEl = document.getElementById('quizUserName');
+  if (unEl) unEl.textContent = currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || '';
   document.getElementById('mPos').textContent = posMarking;
   document.getElementById('mNeg').textContent = negMarking;
   document.getElementById('mPosInfo').textContent = '+' + posMarking;
@@ -922,6 +996,13 @@ async function launchQuiz(selectedLang) {
       timeLeft = savedState.timeLeft;
       currentQ = savedState.currentQ || 0;
       qStatus = savedState.qStatus || {};
+      // Restore section timers from saved state
+      if (savedState.sectionTimers) {
+        window._sectionTimers = savedState.sectionTimers;
+      }
+      if (typeof savedState.currentSection === 'number') {
+        currentSection = savedState.currentSection;
+      }
       // FIX: posMarking/negMarking hamesha questions se lo, savedState se nahi
       // posMarking aur negMarking pehle se set ho chuke hain questions[0] se
     } else {
@@ -963,9 +1044,9 @@ async function launchQuiz(selectedLang) {
   document.getElementById('quizOverlay').classList.add('show');
   // FIX Bug #18: quiz-header show karo
   document.getElementById('quizHeader').style.display = 'flex';
-  // Mobile timer
+  // Mobile timer bar — hamesha show karo (live test style)
   const mobBar = document.getElementById('mobileTimerBar');
-  if (mobBar) mobBar.style.display = window.innerWidth <= 600 ? 'flex' : 'none';
+  if (mobBar) mobBar.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
 
@@ -1043,38 +1124,59 @@ function renderQNavDots() {
 
   if (!sections.length) {
     // Simple flat dots
-    document.getElementById('qNavDots').innerHTML = questions.map((q,i) => {
-      const s = qStatus[i] || 'not_visited';
-      let cls = 'q-dot';
-      if (s==='answered') cls += ' answered';
-      else if (s==='marked') cls += ' marked';
-      else if (s==='ans_marked') cls += ' ans-marked';
-      else if (s==='not_answered') cls += ' not-answered';
-      if (i===currentQ) cls += ' current';
-      return `<div class="${cls}" onclick="showQuestion(${i})">${i+1}</div>`;
-    }).join('');
+    document.getElementById('qNavDots').innerHTML =
+      `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:6px 8px;">` +
+      questions.map((q,i) => {
+        const s = qStatus[i] || 'not_visited';
+        let cls = 'q-dot';
+        if (s==='answered') cls += ' answered';
+        else if (s==='marked') cls += ' marked';
+        else if (s==='ans_marked') cls += ' ans-marked';
+        else if (s==='not_answered') cls += ' not-answered';
+        if (i===currentQ) cls += ' current';
+        return `<div class="${cls}" onclick="showQuestion(${i})">${i+1}</div>`;
+      }).join('') + `</div>`;
     return;
   }
 
-  // Section-wise dots
+  // Section-wise dots — Live Test style
+  // Determine currently active section (by timer)
+  let activeSecIdx = currentSection;
+  if (window._sectionTimers && window._sectionTimers.length > 0) {
+    const ai = window._sectionTimers.findIndex(t => t > 0);
+    activeSecIdx = ai === -1 ? sections.length - 1 : ai;
+  }
+
   document.getElementById('qNavDots').innerHTML = sections.map((sec, si) => {
     const secAns = sec.indices.filter(i => qStatus[i]==='answered'||qStatus[i]==='ans_marked').length;
+    const isLockedSec = si !== activeSecIdx; // only current section is clickable
     const dots = sec.indices.map(i => {
       const s = qStatus[i] || 'not_visited';
-      let cls = 'q-dot';
-      if (s==='answered') cls += ' answered';
-      else if (s==='marked') cls += ' marked';
-      else if (s==='ans_marked') cls += ' ans-marked';
-      else if (s==='not_answered') cls += ' not-answered';
-      if (i===currentQ) cls += ' current';
+      let bg = '#e8edf5'; let color = '#333'; let border = '#ccd4e0';
+      if (s==='answered')     { bg='#00c853'; color='#fff'; border='#00c853'; }
+      else if (s==='not_answered') { bg='#e63946'; color='#fff'; border='#e63946'; }
+      else if (s==='marked')       { bg='#7b1fa2'; color='#fff'; border='#7b1fa2'; }
+      else if (s==='ans_marked')   { bg='#7b1fa2'; color='#fff'; border='#2e7d32'; }
       const dispNum = sec.indices.indexOf(i)+1;
-      return `<div class="${cls}" onclick="showQuestion(${i})" title="Q${i+1}">${dispNum}</div>`;
+      const isActive = i===currentQ;
+      const clickHandler = isLockedSec ? '' : `onclick="showQuestion(${i})"`;
+      const lockStyle = isLockedSec ? 'opacity:0.45;cursor:not-allowed;' : 'cursor:pointer;';
+      return `<div ${clickHandler} title="Q${i+1}" style="
+        height:32px;border-radius:6px;font-size:0.72rem;font-weight:700;
+        background:${bg};color:${color};border:2px solid ${border};
+        display:flex;align-items:center;justify-content:center;
+        ${lockStyle}
+        ${isActive ? 'outline:2px solid #ff6d00;outline-offset:1px;' : ''}
+        transition:all 0.12s;">${dispNum}</div>`;
     }).join('');
-    return `<div style="font-size:0.65rem;font-weight:800;color:#fff;background:#3d6ef5;padding:4px 10px;margin-top:4px;display:flex;align-items:center;justify-content:space-between;">
-      <span>${sec.label}</span>
-      <span style="font-size:0.6rem;background:rgba(255,255,255,0.25);padding:1px 6px;border-radius:50px;">${secAns}/${sec.indices.length}</span>
-    </div>
-    <div style="display:flex;flex-wrap:wrap;gap:5px;padding:8px;">${dots}</div>`;
+    return `<div style="
+        background:#1565c0;padding:8px 10px;margin-top:2px;
+        display:flex;align-items:center;justify-content:space-between;gap:4px;">
+        <span style="font-size:0.68rem;font-weight:800;color:#fff;line-height:1.3;">${sec.label}${isLockedSec ? (si < activeSecIdx ? ' 🔒' : ' ⏳') : ''}</span>
+        <span style="font-size:0.65rem;font-weight:800;color:#fff;background:rgba(255,255,255,0.2);
+          padding:2px 8px;border-radius:50px;white-space:nowrap;">${secAns}/${sec.indices.length}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:8px 10px;">${dots}</div>`; 
   }).join('');
 
   // Re-render tabs badges
@@ -1088,6 +1190,31 @@ function startTimer() {
     if (isPaused) return;
     timeLeft--;
     updateTimerDisplay();
+
+    // Per-section timer tick
+    if (sections.length > 1 && window._sectionTimers) {
+      const si = currentSection;
+      if (window._sectionTimers[si] > 0) {
+        window._sectionTimers[si]--;
+        renderSectionTabs(); // refresh timer badge on tab
+        if (window._sectionTimers[si] <= 0) {
+          // Section time up — auto advance to next section or submit
+          if (si < sections.length - 1) {
+            currentSection = si + 1;
+            const nextFirst = sections[currentSection]?.indices[0];
+            if (nextFirst !== undefined) showQuestion(nextFirst);
+            renderQNavDots();
+            renderSectionTabs();
+          } else {
+            // Last section done — auto submit
+            clearInterval(timerInterval);
+            submitQuiz();
+            return;
+          }
+        }
+      }
+    }
+
     if (timeLeft % 10 === 0) saveQuizState();
     if (timeLeft <= 0) { clearInterval(timerInterval); submitQuiz(); }
   }, 1000);
@@ -1123,9 +1250,9 @@ function updateTimerDisplay() {
     mobEl.style.background = timeLeft<=120 ? '#ff2222' : timeLeft<=300 ? '#ff8800' : '#e63946';
   }
 
-  // Last 60 mins warning bar
+  // secTimeWarn - hidden rakhein, timer header mein hai
   const warnEl = document.getElementById('secTimeWarn');
-  if (warnEl) warnEl.style.display = timeLeft <= 3600 ? '' : 'none';
+  if (warnEl) warnEl.style.display = 'none';
 }
 
 // ── LEADERBOARD DATA HELPER (FIX Bug #19: function define kiya) ──
@@ -1172,6 +1299,7 @@ async function submitQuiz() {
   // FIX Bug #25: Timer zero karo + display reset karo
   clearInterval(timerInterval);
   timeLeft = 0;
+  window._sectionTimers = null; // Reset section timers on submit
   const timerEl = document.getElementById('quizTimer');
   if (timerEl) { timerEl.textContent = '00:00'; timerEl.classList.remove('danger'); timerEl.style.color = '#ffcc02'; }
   window._quizSubmitted = true;
@@ -1208,10 +1336,10 @@ async function submitQuiz() {
   document.getElementById('rAccuracy').textContent = accuracy;
   document.getElementById('rAttempted').textContent = attempted;
   document.getElementById('rTotal').textContent = questions.length;
-  document.getElementById('rankPercentileRow').style.display = 'none';
-  document.getElementById('rankNA').style.display = 'block';
+  document.getElementById('rankRow').style.display = 'none';
+  
 
-  switchResultTab('analysis');
+  switchResultTab('leaderboard');
   document.getElementById('resultScreen').classList.add('show');
 
   // Supabase mein save
@@ -1273,8 +1401,8 @@ async function submitQuiz() {
     const total = allUsers.length || 1;
     const percentile = total > 1 ? Math.round(((total - rank) / (total - 1)) * 100) : 100;
 
-    document.getElementById('rankPercentileRow').style.display = 'flex';
-    document.getElementById('rankNA').style.display = 'none';
+    document.getElementById('rankRow').style.display = 'flex';
+    
     document.getElementById('rpRank').textContent = `#${rank}`;
     document.getElementById('rpTotal').textContent = total;
     document.getElementById('rpPercentile').textContent = percentile;
@@ -1330,9 +1458,8 @@ function switchResultTab(tab) {
   if (tab === 'solutions') {
     analysisFilter = 'all';
     buildFilteredList();
-    analysisIdx = 0;
-    renderAnalysisQuestion();
-    updateAnalysisTabs();
+    renderAnalysisQuestion();  // list render
+    updateAnalysisTabs();      // tab counts update (no extra render inside)
   }
 }
 
@@ -1340,27 +1467,49 @@ function switchResultTab(tab) {
 async function viewResult(testName) {
   activeTestName = testName.trim();
 
+  // FIX Bug viewResult: currentSubject null hone pe bhi kaam kare (e.g. Full Test)
   let vq = sb.from('quizzes').select('*')
-    .eq('exam_type', currentExam).eq('subject', currentSubject.key)
-    .eq('test_name', testName).order('created_at', { ascending: true });
-  if (currentTopic) vq = vq.eq('topic', currentTopic.key);
-  const { data, error } = await vq;
+    .eq('exam_type', currentExam)
+    .eq('test_name', testName)
+    .order('q_order', { ascending: true });
+  if (currentSubject?.key) {
+    if (currentSubject.key === 'full_test') {
+      vq = vq.eq('topic', 'full_test');
+    } else {
+      vq = vq.eq('subject', currentSubject.key);
+      if (currentTopic) vq = vq.eq('topic', currentTopic.key);
+    }
+  }
+  let { data, error } = await vq;
+
+  // Fallback: topic key se bhi try karo
+  if ((!data || data.length === 0) && currentTopic?.key) {
+    const fb = await sb.from('quizzes').select('*')
+      .eq('exam_type', currentExam).eq('subject', currentTopic.key)
+      .eq('test_name', testName).order('q_order', { ascending: true });
+    if (!fb.error && fb.data?.length > 0) { data = fb.data; error = null; }
+  }
+
   if (error || !data || data.length === 0) { alert('⚠️ Questions load nahi hue!'); return; }
   questions = data;
   detectHindi();
 
   // FIX Bug #16: Latest attempt fetch karo (most recent first)
+  // FIX viewResult: subject null hone pe subject filter skip karo
   let attQ = sb.from('test_attempts').select('*')
     .eq('user_id', currentUser.id).eq('test_name', testName)
-    .eq('exam_type', currentExam).eq('subject', currentSubject?.key)
+    .eq('exam_type', currentExam)
     .order('created_at', { ascending: false }).limit(1);
+  if (currentSubject?.key && currentSubject.key !== 'full_test') {
+    attQ = attQ.eq('subject', currentSubject.key);
+  }
   if (currentTopic) attQ = attQ.eq('topic', currentTopic.key);
   let { data: attResultData } = await attQ;
 
   if (!attResultData || attResultData.length === 0) {
+    // Broad fallback — sirf test_name se try karo
     const { data: attFallback } = await sb.from('test_attempts').select('*')
       .eq('user_id', currentUser.id).eq('test_name', testName)
-      .eq('exam_type', currentExam).eq('subject', currentSubject?.key)
       .order('created_at', { ascending: false }).limit(1);
     if (!attFallback || attFallback.length === 0) { alert('Koi attempt nahi mila!'); return; }
     attResultData = attFallback;
@@ -1389,8 +1538,8 @@ async function viewResult(testName) {
   document.getElementById('rAccuracy').textContent = accuracy;
   document.getElementById('rAttempted').textContent = attempted;
   document.getElementById('rTotal').textContent = questions.length;
-  document.getElementById('rankPercentileRow').style.display = 'none';
-  document.getElementById('rankNA').style.display = 'block';
+  document.getElementById('rankRow').style.display = 'none';
+  
 
   // FIX Bug #12: answer_map reconstruct — null entries bhi handle karo
   answers = {};
@@ -1401,7 +1550,7 @@ async function viewResult(testName) {
     } catch(e) {}
   }
 
-  switchResultTab('analysis');
+  switchResultTab('leaderboard');
   document.getElementById('resultScreen').classList.add('show');
   document.getElementById('quizOverlay').classList.add('show');
   document.getElementById('quizHeader').style.display = 'none';
@@ -1415,8 +1564,8 @@ async function viewResult(testName) {
     const rank = allUsers2.filter(u => u.score > score).length + 1;
     const totalAtts = allUsers2.length || 1;
     const percentile = totalAtts > 1 ? Math.round(((totalAtts - rank) / (totalAtts - 1)) * 100) : 100;
-    document.getElementById('rankPercentileRow').style.display = 'flex';
-    document.getElementById('rankNA').style.display = 'none';
+    document.getElementById('rankRow').style.display = 'flex';
+    
     document.getElementById('rpRank').textContent = `#${rank}`;
     document.getElementById('rpTotal').textContent = totalAtts;
     document.getElementById('rpPercentile').textContent = percentile;
@@ -1447,6 +1596,8 @@ function exitQuiz() {
   window.removeEventListener('offline', handleOffline);
   isPaused = false;
   sections = []; currentSection = 0;
+  // FIX: Reset section timers on exit
+  window._sectionTimers = null;
   const wrap = document.getElementById('sectionTabsWrap');
   if (wrap) wrap.style.display = 'none';
   const mobBar = document.getElementById('mobileTimerBar');
