@@ -1336,10 +1336,10 @@ async function submitQuiz() {
   document.getElementById('rAccuracy').textContent = accuracy;
   document.getElementById('rAttempted').textContent = attempted;
   document.getElementById('rTotal').textContent = questions.length;
-  document.getElementById('rankPercentileRow').style.display = 'none';
-  document.getElementById('rankNA').style.display = 'block';
+  document.getElementById('rankRow').style.display = 'none';
+  
 
-  switchResultTab('analysis');
+  switchResultTab('leaderboard');
   document.getElementById('resultScreen').classList.add('show');
 
   // Supabase mein save
@@ -1401,8 +1401,8 @@ async function submitQuiz() {
     const total = allUsers.length || 1;
     const percentile = total > 1 ? Math.round(((total - rank) / (total - 1)) * 100) : 100;
 
-    document.getElementById('rankPercentileRow').style.display = 'flex';
-    document.getElementById('rankNA').style.display = 'none';
+    document.getElementById('rankRow').style.display = 'flex';
+    
     document.getElementById('rpRank').textContent = `#${rank}`;
     document.getElementById('rpTotal').textContent = total;
     document.getElementById('rpPercentile').textContent = percentile;
@@ -1538,8 +1538,8 @@ async function viewResult(testName) {
   document.getElementById('rAccuracy').textContent = accuracy;
   document.getElementById('rAttempted').textContent = attempted;
   document.getElementById('rTotal').textContent = questions.length;
-  document.getElementById('rankPercentileRow').style.display = 'none';
-  document.getElementById('rankNA').style.display = 'block';
+  document.getElementById('rankRow').style.display = 'none';
+  
 
   // FIX Bug #12: answer_map reconstruct — null entries bhi handle karo
   answers = {};
@@ -1550,7 +1550,7 @@ async function viewResult(testName) {
     } catch(e) {}
   }
 
-  switchResultTab('analysis');
+  switchResultTab('leaderboard');
   document.getElementById('resultScreen').classList.add('show');
   document.getElementById('quizOverlay').classList.add('show');
   document.getElementById('quizHeader').style.display = 'none';
@@ -1564,8 +1564,8 @@ async function viewResult(testName) {
     const rank = allUsers2.filter(u => u.score > score).length + 1;
     const totalAtts = allUsers2.length || 1;
     const percentile = totalAtts > 1 ? Math.round(((totalAtts - rank) / (totalAtts - 1)) * 100) : 100;
-    document.getElementById('rankPercentileRow').style.display = 'flex';
-    document.getElementById('rankNA').style.display = 'none';
+    document.getElementById('rankRow').style.display = 'flex';
+    
     document.getElementById('rpRank').textContent = `#${rank}`;
     document.getElementById('rpTotal').textContent = totalAtts;
     document.getElementById('rpPercentile').textContent = percentile;
