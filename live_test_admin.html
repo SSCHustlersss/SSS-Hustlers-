@@ -317,6 +317,11 @@ textarea{resize:vertical;min-height:70px;}
           <label>Duration (minutes)</label>
           <input type="number" id="ltDuration" value="20" min="5" max="180">
         </div>
+        <div class="form-group full" id="sectionTimerWrap" style="display:none;">
+          <label>⏱ Section Timer (minutes per section)</label>
+          <div id="sectionTimerFields" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;"></div>
+          <div style="font-size:0.72rem;color:#64748b;margin-top:6px;">📌 Har section ka alag timer set karo. Category change karne pe auto-fill hoga.</div>
+        </div>
         <div class="form-group">
           <label>Positive Marking</label>
           <input type="number" id="ltPos" value="2" step="0.5" min="0">
@@ -731,6 +736,11 @@ textarea{resize:vertical;min-height:70px;}
         <input type="number" id="editTestNeg" step="0.5" min="0">
       </div>
     </div>
+    <div class="form-group full" id="editSectionTimerWrap" style="display:none;margin-top:8px;">
+      <label>⏱ Section Timer (minutes per section)</label>
+      <div id="editSectionTimerFields" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;"></div>
+      <div style="font-size:0.72rem;color:#64748b;margin-top:4px;">Section timer change karne ke baad Duration bhi auto-update hoga.</div>
+    </div>
     <div class="form-group" style="margin-top:8px;">
       <label>Instructions</label>
       <textarea id="editTestInstructions" rows="3"></textarea>
@@ -908,12 +918,44 @@ const CATEGORY_CONFIG = {
 function onCategoryChange() {
   const cat = document.getElementById('ltCategory').value;
   const infoEl = document.getElementById('categoryInfo');
-  if (!cat || !CATEGORY_CONFIG[cat]) { infoEl.style.display = 'none'; return; }
+  if (!cat || !CATEGORY_CONFIG[cat]) { infoEl.style.display = 'none'; document.getElementById('sectionTimerWrap').style.display='none'; return; }
   const cfg = CATEGORY_CONFIG[cat];
   infoEl.textContent = cfg.info;
   infoEl.style.display = 'block';
   document.getElementById('ltSubject').value = cfg.subject;
   document.getElementById('ltDuration').value = cfg.duration;
+
+  // Section timer fields
+  const secConfig = cfg.getSectionConfig(100);
+  const wrap = document.getElementById('sectionTimerWrap');
+  const fields = document.getElementById('sectionTimerFields');
+  if (secConfig && secConfig.length > 1) {
+    wrap.style.display = 'block';
+    fields.innerHTML = secConfig.map((sec, i) => `
+      <div style="display:flex;flex-direction:column;gap:4px;min-width:140px;">
+        <label style="font-size:0.68rem;color:#0284c7;font-weight:700;">${sec.name.split(':')[0].substring(0,22)}</label>
+        <input type="number" id="secTimer_${i}" value="${sec.time_minutes}" min="5" max="180"
+          style="padding:8px 10px;border-radius:8px;border:1.5px solid #bae6fd;font-size:0.85rem;font-family:inherit;width:100%;"
+          onchange="syncTotalDuration()">
+      </div>`).join('');
+    syncTotalDuration();
+  } else {
+    wrap.style.display = 'none';
+    fields.innerHTML = '';
+  }
+}
+
+function syncTotalDuration() {
+  const cat = document.getElementById('ltCategory').value;
+  if (!cat || !CATEGORY_CONFIG[cat]) return;
+  const secConfig = CATEGORY_CONFIG[cat].getSectionConfig(100);
+  if (!secConfig) return;
+  let total = 0;
+  secConfig.forEach((_, i) => {
+    const el = document.getElementById('secTimer_' + i);
+    if (el) total += parseInt(el.value) || 0;
+  });
+  document.getElementById('ltDuration').value = total;
 }
 
 // ══════════════════════════════════════════
@@ -952,8 +994,14 @@ async function scheduleTest() {
     return;
   }
 
-  // Build section_config
-  const sectionConfig = catCfg.getSectionConfig(totalQ);
+  // Build section_config — UI se custom timers padhlo
+  let sectionConfig = catCfg.getSectionConfig(totalQ);
+  if (sectionConfig) {
+    sectionConfig = sectionConfig.map((sec, i) => {
+      const el = document.getElementById('secTimer_' + i);
+      return { ...sec, time_minutes: el ? (parseInt(el.value) || sec.time_minutes) : sec.time_minutes };
+    });
+  }
 
   const btn = document.getElementById('btnSchedule');
   btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Scheduling...';
@@ -1087,7 +1135,43 @@ async function openEditTestModal(id){
   document.getElementById('editTestPos').value=data.positive_marking||2;
   document.getElementById('editTestNeg').value=data.negative_marking||0.5;
   document.getElementById('editTestInstructions').value=data.instructions||'';
+
+  // Section timer fields
+  const wrap = document.getElementById('editSectionTimerWrap');
+  const fields = document.getElementById('editSectionTimerFields');
+  let secConfig = null;
+  try {
+    if (data.section_config) {
+      secConfig = typeof data.section_config === 'string' ? JSON.parse(data.section_config) : data.section_config;
+    }
+  } catch(e) {}
+
+  if (secConfig && secConfig.length > 1) {
+    wrap.style.display = 'block';
+    fields.innerHTML = secConfig.map((sec, i) => `
+      <div style="display:flex;flex-direction:column;gap:4px;min-width:140px;">
+        <label style="font-size:0.68rem;color:#0284c7;font-weight:700;">${(sec.name||'Section '+(i+1)).split(':')[0].substring(0,22)}</label>
+        <input type="number" id="editSecTimer_${i}" value="${sec.time_minutes||15}" min="5" max="180"
+          style="padding:8px 10px;border-radius:8px;border:1.5px solid #bae6fd;font-size:0.85rem;font-family:inherit;width:100%;"
+          onchange="syncEditTotalDuration(${secConfig.length})">
+      </div>`).join('');
+    window._editSecConfig = secConfig;
+  } else {
+    wrap.style.display = 'none';
+    fields.innerHTML = '';
+    window._editSecConfig = null;
+  }
+
   document.getElementById('editTestModal').classList.add('show');
+}
+
+function syncEditTotalDuration(count) {
+  let total = 0;
+  for (let i = 0; i < count; i++) {
+    const el = document.getElementById('editSecTimer_' + i);
+    if (el) total += parseInt(el.value) || 0;
+  }
+  document.getElementById('editTestDuration').value = total;
 }
 
 async function saveTestDetails(){
@@ -1096,6 +1180,16 @@ async function saveTestDetails(){
   const start=document.getElementById('editTestStart').value;
   const end=document.getElementById('editTestEnd').value;
   if (!name){showToast('Name daalo!','error');return;}
+
+  // Updated section_config agar hai toh
+  let updatedSectionConfig = undefined;
+  if (window._editSecConfig && window._editSecConfig.length > 1) {
+    updatedSectionConfig = window._editSecConfig.map((sec, i) => {
+      const el = document.getElementById('editSecTimer_' + i);
+      return { ...sec, time_minutes: el ? (parseInt(el.value) || sec.time_minutes) : sec.time_minutes };
+    });
+  }
+
   const {error}=await sb.from('live_tests').update({
     name,
     subject: document.getElementById('editTestSubject').value,
@@ -1104,7 +1198,8 @@ async function saveTestDetails(){
     duration_minutes: parseInt(document.getElementById('editTestDuration').value)||20,
     positive_marking: parseFloat(document.getElementById('editTestPos').value)||2,
     negative_marking: parseFloat(document.getElementById('editTestNeg').value)||0.5,
-    instructions: document.getElementById('editTestInstructions').value.trim()
+    instructions: document.getElementById('editTestInstructions').value.trim(),
+    ...(updatedSectionConfig !== undefined && { section_config: JSON.stringify(updatedSectionConfig) })
   }).eq('id',id);
   if (error){showToast('Save failed: '+error.message,'error');return;}
   showToast('✅ Test details save ho gaye!','success');
