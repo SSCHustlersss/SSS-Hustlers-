@@ -184,6 +184,12 @@ function renderAnalysisQuestion() {
   const body = document.getElementById('solBody'); // FIX: analysisBody nahi, HTML mein solBody hai
   if (!body) return;
 
+  // FIX: solCounter update karo
+  const solCounter = document.getElementById('solCounter');
+  if (solCounter && analysisFiltered.length > 0) {
+    solCounter.textContent = (analysisIdx + 1) + ' / ' + analysisFiltered.length;
+  }
+
   // Hide old Prev/Next/Counter — ab zarurat nahi
   const prev = document.getElementById('analysisPrev');
   const next = document.getElementById('analysisNext');
@@ -713,3 +719,12 @@ function setSolFilter(f) { setAnalysisFilter(f); }
 
 init();
 loadTheme();
+// FIX: HTML mein solPrev/solNext/solCounter hain — functions add karo
+function solPrev() {
+  if (analysisIdx > 0) { analysisIdx--; renderAnalysisQuestion(); }
+}
+function solNext() {
+  if (analysisIdx < analysisFiltered.length - 1) { analysisIdx++; renderAnalysisQuestion(); }
+}
+ analysisIdx++; renderAnalysisQuestion(); }
+}
