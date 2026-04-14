@@ -1450,22 +1450,25 @@ function updateMarksChart(myScore, topperScore, avgScore, totalMarks, rank, tota
 }
 
 function switchResultTab(tab) {
+  // FIX: HTML mein rtabLeaderboard / rtabSolutions IDs hain
   ['solutions','leaderboard'].forEach(t => {
     const content = document.getElementById('rtab' + t.charAt(0).toUpperCase() + t.slice(1));
-    const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
     if (content) content.style.display = t===tab ? (t==='solutions'?'flex':'block') : 'none';
-    if (btn) {
-      btn.style.color = t===tab ? '#3d6ef5' : '#888';
-      btn.style.borderBottomColor = t===tab ? '#3d6ef5' : 'transparent';
-      btn.style.fontWeight = t===tab ? '700' : '600';
-      btn.classList.toggle('active', t===tab);
-    }
+  });
+  // FIX: Buttons ko ID nahi hai — rtab-btn class se dhundho
+  document.querySelectorAll('.rtab-btn').forEach(btn => {
+    const onclickVal = btn.getAttribute('onclick') || '';
+    const isActive = onclickVal.includes("'" + tab + "'");
+    btn.classList.toggle('active', isActive);
+    btn.style.color = isActive ? '#0ea5e9' : '#64748b';
+    btn.style.borderBottomColor = isActive ? '#0ea5e9' : 'transparent';
+    btn.style.fontWeight = isActive ? '700' : '600';
   });
   if (tab === 'solutions') {
     analysisFilter = 'all';
     buildFilteredList();
-    renderAnalysisQuestion();  // list render
-    updateAnalysisTabs();      // tab counts update (no extra render inside)
+    renderAnalysisQuestion();
+    updateAnalysisTabs();
   }
 }
 
