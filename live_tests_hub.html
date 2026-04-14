@@ -217,6 +217,25 @@ let currentUser = null;
 let myAttempts = [];
 let allTests = [];
 
+// ── DEVICE FINGERPRINT (same as live_test.html) ──
+function getDeviceFingerprint() {
+  const raw = [
+    navigator.userAgent,
+    navigator.language,
+    screen.width + 'x' + screen.height,
+    screen.colorDepth,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+    navigator.hardwareConcurrency || '',
+    navigator.platform || ''
+  ].join('|');
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) {
+    hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+    hash |= 0;
+  }
+  return 'fp_' + Math.abs(hash).toString(36);
+}
+
 // ── INIT ──
 async function init() {
   const { data: { session } } = await sb.auth.getSession();
@@ -352,13 +371,31 @@ function buildLiveCard(t, status) {
 
 // ── LOAD MY ATTEMPTS ──
 async function loadMyAttempts() {
-  const { data } = await sb.from('live_test_attempts')
+  const fp = getDeviceFingerprint();
+
+  // Registered user ke attempts (user_id se)
+  const { data: regData } = await sb.from('live_test_attempts')
     .select('id, score, correct, wrong, skipped, submitted_at, live_test_id, participant_name, user_id, is_registered, answers')
     .eq('user_id', currentUser.id)
     .not('submitted_at', 'is', null)
     .order('submitted_at', { ascending: false });
 
-  myAttempts = data || [];
+  // Guest attempts bhi fetch karo (device_fingerprint se)
+  const { data: guestData } = await sb.from('live_test_attempts')
+    .select('id, score, correct, wrong, skipped, submitted_at, live_test_id, participant_name, user_id, is_registered, answers')
+    .eq('device_fingerprint', fp)
+    .not('submitted_at', 'is', null)
+    .order('submitted_at', { ascending: false });
+
+  // Dono merge karo, duplicate IDs hata do
+  const all = [...(regData || []), ...(guestData || [])];
+  const seen = new Set();
+  myAttempts = all.filter(a => {
+    if (seen.has(a.id)) return false;
+    seen.add(a.id);
+    return true;
+  });
+
   renderPastTests();
   renderStats();
 }
