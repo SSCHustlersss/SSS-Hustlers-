@@ -1039,7 +1039,7 @@ async function launchQuiz(selectedLang) {
   document.getElementById('langHI').classList.toggle('active', currentLang === 'hi');
   detectHindi();
   buildSections();
-  document.querySelector('.nta-body').style.display = 'flex';
+  const _ntaBody2 = document.querySelector('.nta-body'); if (_ntaBody2) _ntaBody2.style.display = 'flex';
   renderQNavDots(); showQuestion(currentQ); startTimer();
   document.getElementById('quizOverlay').classList.add('show');
   // FIX Bug #18: quiz-header show karo
@@ -1325,7 +1325,7 @@ async function submitQuiz() {
   document.getElementById('quizFooter').style.display = 'none';
   document.getElementById('qNavDots').style.display = 'none';
   document.getElementById('quizHeader').style.display = 'none';
-  document.querySelector('.nta-body').style.display = 'none';
+  const _ntaBody = document.querySelector('.nta-body'); if (_ntaBody) _ntaBody.style.display = 'none';
 
   document.getElementById('resultTestTitle').textContent = activeTestName;
   document.getElementById('resultScore').textContent = `${score.toFixed(1)}/${totalMarks}`;
@@ -1527,7 +1527,7 @@ async function viewResult(testName) {
   document.getElementById('quizBody').style.display = 'none';
   document.getElementById('quizFooter').style.display = 'none';
   document.getElementById('qNavDots').style.display = 'none';
-  document.querySelector('.nta-body').style.display = 'none';
+  const _ntaBody = document.querySelector('.nta-body'); if (_ntaBody) _ntaBody.style.display = 'none';
 
   document.getElementById('resultTestTitle').textContent = testName;
   document.getElementById('resultScore').textContent = `${score.toFixed?score.toFixed(1):score}/${totalMarks}`;
@@ -1608,7 +1608,7 @@ function exitQuiz() {
   document.getElementById('quizBody').style.display = 'block';
   document.getElementById('quizFooter').style.display = 'flex';
   document.getElementById('qNavDots').style.display = 'flex';
-  document.querySelector('.nta-body').style.display = 'flex';
+  const _ntaBody2 = document.querySelector('.nta-body'); if (_ntaBody2) _ntaBody2.style.display = 'flex';
   // FIX Bug #18: Quiz header properly reset — none kyunki quiz ke bahar dikhna nahi chahiye
   document.getElementById('quizHeader').style.display = 'none';
 
