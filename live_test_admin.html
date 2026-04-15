@@ -301,6 +301,7 @@ textarea{resize:vertical;min-height:70px;}
             <option value="english_only">📖 English Module — 45 questions, 1 section</option>
             <option value="mains_s1">🧠 Mains Section 1 — 60 Qs (Reasoning 30 | Maths 30), 60 min fixed</option>
             <option value="maths_only">🔢 Maths Module — 30 questions, 1 section</option>
+            <option value="maths_pre">📐 Maths Pre Module — 25 questions, 15 min, 1 section</option>
             <option value="mains_full">🏆 Mains Full Test — Section 1 (60 min: Reasoning 30 + Maths 30) + Section 2 (60 min: English 45 + GK 25)</option>
           </select>
           <div id="categoryInfo" style="margin-top:8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 12px;font-size:0.78rem;color:#0284c7;font-weight:600;display:none;"></div>
@@ -904,6 +905,12 @@ const CATEGORY_CONFIG = {
     info: '✅ 1 Section: Maths — 30 Questions, 30 min.',
     getSectionConfig: (total) => null // no sections
   },
+  maths_pre: {
+    subject: 'maths',
+    duration: 15,
+    info: '✅ 1 Section: Maths Prelims Module — 25 Questions, 15 min.',
+    getSectionConfig: (total) => null // no sections
+  },
   mains_full: {
     subject: 'full_test',
     duration: 120,
@@ -988,7 +995,7 @@ async function scheduleTest() {
   // Validate question count based on category
   const catCfg = CATEGORY_CONFIG[cat];
   const totalQ = parsedQuestions.length;
-  const minQ = { prelims_full:100, english_only:45, mains_s1:60, maths_only:30, mains_full:130 };
+  const minQ = { prelims_full:100, english_only:45, mains_s1:60, maths_only:30, mains_full:130, maths_pre:25 };
   if (totalQ < minQ[cat]) {
     showToast(`❌ ${cat} ke liye kam se kam ${minQ[cat]} questions chahiye! Abhi ${totalQ} hain.`, 'error');
     return;
