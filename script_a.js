@@ -1546,7 +1546,7 @@ async function viewResult(testName) {
   if (att.answer_map) {
     try {
       const parsed = JSON.parse(att.answer_map);
-      Object.entries(parsed).forEach(([k, v]) => { if (v) answers[k] = v; });
+      Object.entries(parsed).forEach(([k, v]) => { if (v) answers[parseInt(k)] = v; });
     } catch(e) {}
   }
 
