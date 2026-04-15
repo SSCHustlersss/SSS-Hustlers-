@@ -302,6 +302,16 @@ async function fetchQuestionStats(q, qIdx) {
 function analysisPrev() { /* deprecated */ }
 function analysisNext() { /* deprecated */ }
 
+// solPrev / solNext — HTML buttons ke liye (list mode mein scroll)
+function solPrev() {
+  const body = document.getElementById('solBody');
+  if (body) body.scrollTop -= 300;
+}
+function solNext() {
+  const body = document.getElementById('solBody');
+  if (body) body.scrollTop += 300;
+}
+
 // ============ REVIEW MODE ============
 function openReviewMode(idx) {
   window._reviewMode = true;
