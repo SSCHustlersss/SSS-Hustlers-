@@ -1177,7 +1177,7 @@ function buildSections() {
   }
 
   // ── Priority 1.5: Single-section categories (english_only, maths_only) ──
-  const SINGLE_SECTION_CATEGORIES = ['english_only', 'maths_only'];
+  const SINGLE_SECTION_CATEGORIES = ['english_only', 'maths_only', 'maths_pre'];
   if (liveTest.category && SINGLE_SECTION_CATEGORIES.includes(liveTest.category)) {
     sections = [{ name: 'all', label: 'All Questions', indices: questions.map((_,i)=>i) }];
     wrap.style.display = 'none';
