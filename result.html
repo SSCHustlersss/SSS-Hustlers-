@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Result | SSC Hustlers</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Poppins',sans-serif;background:#f0f9ff;min-height:100vh;}
+
+/* NAV */
+.nav{background:#1a1a2e;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.nav-logo{font-size:1rem;font-weight:900;color:#fff;text-decoration:none;letter-spacing:0.5px;}
+.nav-logo span{color:#ffd200;}
+.nav-back{padding:6px 14px;border-radius:8px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;}
+
+/* LOADING */
+#loadingState{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:16px;}
+.spinner{width:40px;height:40px;border:3px solid #e0f2fe;border-top-color:#0ea5e9;border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.load-text{font-size:0.85rem;color:#64748b;font-weight:600;}
+
+/* ERROR */
+#errorState{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:12px;padding:20px;text-align:center;}
+.err-icon{font-size:3rem;}
+.err-msg{font-size:0.9rem;color:#e63946;font-weight:700;}
+.err-sub{font-size:0.78rem;color:#94a3b8;}
+
+/* RESULT HEADER */
+.result-header{background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%);padding:28px 16px 24px;text-align:center;color:#fff;position:relative;overflow:hidden;}
+.result-header::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.06);}
+.result-header::after{content:'';position:absolute;bottom:-20px;left:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.05);}
+.rh-exam{font-size:0.7rem;font-weight:700;background:rgba(255,255,255,0.2);border-radius:20px;padding:3px 12px;display:inline-block;margin-bottom:8px;letter-spacing:0.5px;text-transform:uppercase;}
+.rh-title{font-size:0.9rem;color:rgba(255,255,255,0.85);margin-bottom:4px;font-weight:600;line-height:1.4;}
+.rh-user{font-size:0.72rem;color:rgba(255,255,255,0.7);margin-bottom:16px;}
+.rh-score{font-size:3rem;font-weight:900;color:#fff;line-height:1;letter-spacing:-1px;}
+.rh-score-lbl{font-size:0.72rem;color:rgba(255,255,255,0.7);margin-top:4px;font-weight:600;}
+
+/* STAT CARDS */
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px;}
+.stat-card{background:#fff;border-radius:14px;padding:14px 10px;text-align:center;border:1px solid #e0f2fe;box-shadow:0 2px 8px rgba(14,165,233,0.06);}
+.stat-val{font-size:1.4rem;font-weight:800;line-height:1;}
+.stat-lbl{font-size:0.65rem;color:#64748b;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;}
+
+/* RANK BAR */
+.rank-bar{display:flex;align-items:center;justify-content:center;gap:0;margin:0 16px 14px;background:#fff;border-radius:14px;border:1px solid #e0f2fe;overflow:hidden;}
+.rank-item{flex:1;text-align:center;padding:14px 8px;border-right:1px solid #e0f2fe;}
+.rank-item:last-child{border-right:none;}
+.rank-val{font-size:1.1rem;font-weight:800;color:#0ea5e9;}
+.rank-lbl{font-size:0.62rem;color:#94a3b8;font-weight:600;margin-top:2px;text-transform:uppercase;letter-spacing:0.3px;}
+
+/* SECTIONAL */
+.section-block{margin:0 16px 14px;background:#fff;border-radius:14px;border:1px solid #e0f2fe;padding:16px;}
+.section-title{font-size:0.72rem;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;}
+.sec-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.sec-row:last-child{margin-bottom:0;}
+.sec-name{font-size:0.72rem;font-weight:600;color:#374151;width:105px;flex-shrink:0;line-height:1.4;}
+.sec-track{flex:1;height:8px;background:#e0f2fe;border-radius:4px;overflow:hidden;}
+.sec-fill{height:100%;border-radius:4px;background:#0ea5e9;transition:width 0.8s ease;}
+.sec-score{font-size:0.72rem;font-weight:800;min-width:38px;text-align:right;color:#0284c7;}
+.sec-detail{font-size:0.62rem;color:#94a3b8;font-weight:600;min-width:65px;text-align:right;}
+
+/* CHART BLOCK */
+.chart-block{margin:0 16px 14px;background:#fff;border-radius:14px;border:1px solid #e0f2fe;padding:16px;}
+.chart-title{font-size:0.72rem;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:16px;}
+.bar-chart{display:flex;align-items:flex-end;justify-content:center;gap:24px;height:100px;}
+.bar-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;max-width:70px;}
+.bar-outer{width:100%;background:#e0f2fe;border-radius:6px 6px 0 0;display:flex;align-items:flex-end;height:80px;}
+.bar-inner{width:100%;border-radius:6px 6px 0 0;transition:height 0.8s ease;min-height:4px;}
+.bar-label{font-size:0.65rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.3px;}
+.bar-val{font-size:0.75rem;font-weight:800;}
+
+/* TABS */
+.tabs{display:flex;border-bottom:2px solid #e0f2fe;background:#fff;margin:0 16px 0;border-radius:14px 14px 0 0;overflow:hidden;}
+.tab-btn{flex:1;padding:13px 4px;border:none;background:transparent;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;color:#94a3b8;border-bottom:2px solid transparent;transition:all 0.2s;margin-bottom:-2px;}
+.tab-btn.active{color:#0ea5e9;border-bottom-color:#0ea5e9;background:#f0f9ff;}
+
+/* TAB CONTENT */
+.tab-content{display:none;margin:0 16px;background:#fff;border:1px solid #e0f2fe;border-top:none;border-radius:0 0 14px 14px;margin-bottom:16px;}
+.tab-content.active{display:block;}
+
+/* LEADERBOARD */
+.lb-podium{display:flex;justify-content:center;align-items:flex-end;gap:8px;padding:20px 16px 12px;}
+.lb-pod-item{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.lb-pod-medal{font-size:1.1rem;line-height:1;}
+.lb-pod-circle{border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.82rem;font-weight:800;color:#fff;overflow:hidden;}
+.lb-pod-circle img{width:100%;height:100%;object-fit:cover;}
+.lb-pod-1{width:52px;height:52px;background:linear-gradient(135deg,#ffd700,#ffa500);}
+.lb-pod-2{width:44px;height:44px;background:linear-gradient(135deg,#94a3b8,#64748b);}
+.lb-pod-3{width:40px;height:40px;background:linear-gradient(135deg,#cd7f32,#a0522d);}
+.lb-pod-name{font-size:0.65rem;font-weight:700;color:#475569;text-align:center;max-width:70px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lb-pod-score{font-size:0.7rem;font-weight:800;color:#0284c7;}
+.lb-row{display:flex;align-items:center;gap:10px;padding:11px 16px;border-top:1px solid #f1f5f9;font-size:0.82rem;}
+.lb-row.me{background:#e0f2fe;}
+.lb-pos{width:24px;font-weight:800;color:#94a3b8;font-size:0.75rem;}
+.lb-name{flex:1;font-weight:600;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lb-score{font-weight:800;color:#0ea5e9;white-space:nowrap;}
+.lb-empty{text-align:center;padding:30px;font-size:0.8rem;color:#94a3b8;}
+
+/* SOLUTIONS */
+.sol-filter{display:flex;border-bottom:1px solid #e0f2fe;position:sticky;top:0;z-index:5;background:#fff;}
+.sol-f-btn{flex:1;padding:11px 4px;border:none;background:transparent;font-size:0.7rem;font-weight:600;cursor:pointer;font-family:inherit;color:#94a3b8;border-bottom:2px solid transparent;}
+.sol-f-btn.active{color:#0ea5e9;border-bottom-color:#0ea5e9;font-weight:700;}
+.sol-list{padding:8px;}
+.q-card{background:#fff;border-radius:10px;margin-bottom:8px;padding:12px 14px;border:1.5px solid #f0f0f0;cursor:pointer;transition:border-color 0.15s;}
+.q-card:active{border-color:#bae6fd;background:#f0f9ff;}
+.q-card-top{display:flex;align-items:center;gap:7px;margin-bottom:6px;}
+.q-num-badge{min-width:26px;height:26px;border-radius:50%;font-size:0.7rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.q-status-badge{font-size:0.68rem;font-weight:700;padding:2px 9px;border-radius:20px;}
+.q-pct{font-size:0.64rem;font-weight:600;margin-left:auto;padding:2px 7px;border-radius:10px;}
+.q-preview{font-size:0.8rem;color:#374151;line-height:1.5;}
+.q-ans-line{margin-top:5px;font-size:0.7rem;}
+.sol-empty{text-align:center;padding:40px;font-size:0.82rem;color:#94a3b8;}
+
+/* REVIEW OVERLAY */
+.review-overlay{display:none;position:fixed;inset:0;z-index:200;background:#f0f9ff;overflow-y:auto;flex-direction:column;}
+.review-overlay.show{display:flex;}
+.review-top{background:#1a1a2e;padding:10px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;}
+.review-back{background:none;border:none;color:#fff;font-size:1rem;cursor:pointer;padding:4px 8px;}
+.review-title{color:#fff;font-size:0.85rem;font-weight:700;flex:1;}
+.review-counter{color:rgba(255,255,255,0.6);font-size:0.72rem;}
+.review-body{padding:16px;flex:1;}
+.review-q-hdr{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.review-status-badge{font-size:0.75rem;font-weight:700;padding:4px 12px;border-radius:20px;}
+.review-q-num{font-size:0.72rem;color:#94a3b8;font-weight:600;}
+.review-q-text{font-size:0.9rem;font-weight:600;color:#111827;line-height:1.7;margin-bottom:16px;white-space:pre-line;}
+.review-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.review-opt{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;border:1.5px solid #e0f2fe;font-size:0.84rem;color:#111827;}
+.review-opt.correct{border-color:#16a34a;background:#dcfce7;color:#15803d;font-weight:700;}
+.review-opt.wrong{border-color:#dc2626;background:#fee2e2;color:#dc2626;font-weight:700;}
+.review-opt.skipped-correct{border-color:#16a34a;background:#dcfce7;color:#15803d;font-weight:700;}
+.opt-label{width:26px;height:26px;border-radius:50%;background:#e0f2fe;display:flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:800;flex-shrink:0;color:#0284c7;}
+.review-opt.correct .opt-label,.review-opt.skipped-correct .opt-label{background:#16a34a;color:#fff;}
+.review-opt.wrong .opt-label{background:#dc2626;color:#fff;}
+.review-explanation{background:#f0f9ff;border:1.5px solid #0ea5e9;border-radius:10px;padding:12px 14px;font-size:0.8rem;line-height:1.6;color:#111827;}
+.review-explanation strong{color:#0284c7;}
+.review-nav{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-top:1px solid #e0f2fe;background:#fff;position:sticky;bottom:0;}
+.rnav-btn{padding:10px 20px;border-radius:9px;border:1.5px solid #cbd5e1;background:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;color:#111827;}
+.rnav-btn.next{border:none;background:#0ea5e9;color:#fff;}
+.rnav-btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* ACTION BTNS */
+.action-btns{display:flex;gap:10px;padding:4px 16px 20px;}
+.btn-share{flex:1;padding:14px;border-radius:12px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;border:none;background:#e0f2fe;color:#0284c7;}
+.btn-dashboard{flex:1;padding:14px;border-radius:12px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;border:none;background:#0ea5e9;color:#fff;}
+
+/* RESPONSIVE */
+@media(min-width:600px){
+  .stat-grid{max-width:480px;margin:0 auto;}
+  .rank-bar,.section-block,.chart-block,.tabs,.tab-content,.action-btns{max-width:480px;margin-left:auto;margin-right:auto;}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-logo" href="dashboard.html">SSC <span>HUSTLERS</span></a>
+  <a class="nav-back" href="dashboard.html">← Dashboard</a>
+</nav>
+
+<!-- LOADING -->
+<div id="loadingState">
+  <div class="spinner"></div>
+  <div class="load-text">Result load ho raha hai...</div>
+</div>
+
+<!-- ERROR -->
+<div id="errorState">
+  <div class="err-icon">⚠️</div>
+  <div class="err-msg" id="errMsg">Kuch galat ho gaya</div>
+  <div class="err-sub" id="errSub">Please refresh karein ya wapas jaayein</div>
+  <a href="dashboard.html" style="margin-top:12px;padding:10px 24px;background:#0ea5e9;color:#fff;border-radius:10px;font-weight:700;font-size:0.85rem;text-decoration:none;">← Dashboard</a>
+</div>
+
+<!-- MAIN RESULT (hidden until loaded) -->
+<div id="mainResult" style="display:none;">
+
+  <!-- Header -->
+  <div class="result-header">
+    <div class="rh-exam" id="rhExam">SSC CGL</div>
+    <div class="rh-title" id="rhTitle">Test</div>
+    <div class="rh-user" id="rhUser"></div>
+    <div class="rh-score" id="rhScore">0</div>
+    <div class="rh-score-lbl" id="rhScoreLbl">/ 0 Marks</div>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-val" style="color:#16a34a" id="sCorrect">0</div><div class="stat-lbl">Correct</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#dc2626" id="sWrong">0</div><div class="stat-lbl">Wrong</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#64748b" id="sSkip">0</div><div class="stat-lbl">Skipped</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#0ea5e9" id="sAccuracy">0%</div><div class="stat-lbl">Accuracy</div></div>
+    <div class="stat-card"><div class="stat-val" id="sAttempted">0</div><div class="stat-lbl">Attempted</div></div>
+    <div class="stat-card"><div class="stat-val" id="sTotal">0</div><div class="stat-lbl">Total Qs</div></div>
+  </div>
+
+  <!-- Rank Bar (hidden until loaded) -->
+  <div class="rank-bar" id="rankBar" style="display:none;">
+    <div class="rank-item"><div class="rank-val" id="rnkRank">--</div><div class="rank-lbl">Your Rank</div></div>
+    <div class="rank-item"><div class="rank-val" id="rnkTotal">--</div><div class="rank-lbl">Students</div></div>
+    <div class="rank-item"><div class="rank-val" id="rnkPct">--</div><div class="rank-lbl">Percentile</div></div>
+  </div>
+
+  <!-- Sectional Performance -->
+  <div class="section-block" id="sectionalBlock" style="display:none;">
+    <div class="section-title">📊 Sectional Performance</div>
+    <div id="sectionalList"></div>
+  </div>
+
+  <!-- Comparison Chart -->
+  <div class="chart-block" id="chartBlock" style="display:none;">
+    <div class="chart-title">📈 Score Comparison</div>
+    <div class="bar-chart">
+      <div class="bar-col">
+        <div class="bar-val" id="cYouVal" style="color:#0ea5e9;">0</div>
+        <div class="bar-outer"><div class="bar-inner" id="cYouBar" style="background:#0ea5e9;height:50%;"></div></div>
+        <div class="bar-label">You</div>
+      </div>
+      <div class="bar-col">
+        <div class="bar-val" id="cTopVal" style="color:#ffd700;">0</div>
+        <div class="bar-outer"><div class="bar-inner" id="cTopBar" style="background:#ffd700;height:80%;"></div></div>
+        <div class="bar-label">Topper</div>
+      </div>
+      <div class="bar-col">
+        <div class="bar-val" id="cAvgVal" style="color:#94a3b8;">0</div>
+        <div class="bar-outer"><div class="bar-inner" id="cAvgBar" style="background:#94a3b8;height:40%;"></div></div>
+        <div class="bar-label">Average</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs" id="tabsRow">
+    <button class="tab-btn active" onclick="switchTab('leaderboard',this)">🏆 Leaderboard</button>
+    <button class="tab-btn" onclick="switchTab('solutions',this)">🔍 Solutions</button>
+  </div>
+
+  <!-- Leaderboard Tab -->
+  <div class="tab-content active" id="tab-leaderboard">
+    <div id="lbContent"><div class="lb-empty">⏳ Leaderboard load ho raha hai...</div></div>
+  </div>
+
+  <!-- Solutions Tab -->
+  <div class="tab-content" id="tab-solutions">
+    <div class="sol-filter">
+      <button class="sol-f-btn active" onclick="setSolFilter('all',this)">All</button>
+      <button class="sol-f-btn" onclick="setSolFilter('correct',this)">✅ Correct</button>
+      <button class="sol-f-btn" onclick="setSolFilter('wrong',this)">❌ Wrong</button>
+      <button class="sol-f-btn" onclick="setSolFilter('skip',this)">⏭ Skipped</button>
+    </div>
+    <div class="sol-list" id="solList"></div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-btns">
+    <button class="btn-share" onclick="shareResult()">📤 Share</button>
+    <button class="btn-dashboard" onclick="location.href='dashboard.html'">← Dashboard</button>
+  </div>
+
+</div><!-- end mainResult -->
+
+<!-- REVIEW OVERLAY -->
+<div class="review-overlay" id="reviewOverlay">
+  <div class="review-top">
+    <button class="review-back" onclick="closeReview()">←</button>
+    <div class="review-title" id="reviewTitle">Review</div>
+    <div class="review-counter" id="reviewCounter">1/1</div>
+  </div>
+  <div class="review-body" id="reviewBody"></div>
+  <div class="review-nav">
+    <button class="rnav-btn" id="rnPrev" onclick="reviewNav(-1)">← Prev</button>
+    <button class="rnav-btn next" id="rnNext" onclick="reviewNav(1)">Next →</button>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://wwfhoyxqlversdkdqcgd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3ZmhveXhxbHZlcnNka2RxY2dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDAwMTMsImV4cCI6MjA4ODQ3NjAxM30.qaQp8LJXGxN6EfOoNPOgdhdNqY7M0nC2aR8fBSYejrw';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── State ──
+let questions = [];
+let answers = {};
+let currentUser = null;
+let attemptData = null;
+let testName = '';
+let examType = '';
+let solFilter = 'all';
+let reviewIdx = 0;
+let reviewFiltered = [];
+let currentSection_result = [];
+
+// ── Helpers ──
+function getParam(key) {
+  return new URLSearchParams(window.location.search).get(key) || '';
+}
+
+function showError(msg, sub) {
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('errorState').style.display = 'flex';
+  document.getElementById('errMsg').textContent = msg;
+  document.getElementById('errSub').textContent = sub || '';
+}
+
+function hasDevanagari(t) { return /[\u0900-\u097F]/.test(t||''); }
+
+function getLangText(text) {
+  if (!text) return '';
+  if (!hasDevanagari(text)) return text;
+  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+  const en = [], hi = [], neu = [];
+  for (const l of lines) {
+    if (/[\u0900-\u097F]/.test(l)) hi.push(l);
+    else if (!/[a-zA-Z]/.test(l)) neu.push(l);
+    else en.push(l);
+  }
+  const both = [...en, ...neu, ...hi].join('\n');
+  return both || text;
+}
+
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+const EXAM_LABELS = {
+  ssc_cgl:'SSC CGL', ssc_chsl:'SSC CHSL', ssc_mts:'SSC MTS', ssc_gd:'SSC GD',
+  ntpc:'NTPC', ssc_steno:'SSC Steno', ssc_phase14:'Phase XIV', civil:'Civil Exams'
+};
+
+// ── INIT ──
+async function init() {
+  testName = getParam('test') || getParam('test_name') || getParam('t') || '';
+  examType = getParam('exam') || getParam('exam_type') || 'ssc_cgl';
+
+  if (!testName) {
+    showError('Test name missing', 'URL mein ?test=TestName parameter chahiye');
+    return;
+  }
+
+  // Auth check
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    showError('Login required', 'Pehle login karo — quizzes.html pe jao');
+    return;
+  }
+  currentUser = session.user;
+
+  try {
+    await loadData();
+  } catch(e) {
+    console.error('Init error:', e);
+    showError('Load failed: ' + (e.message || 'Unknown error'), 'Network check karo aur refresh karo');
+  }
+}
+
+async function loadData() {
+  // 1. Fetch questions
+  const { data: qs, error: qErr } = await sb.from('quizzes')
+    .select('*').eq('exam_type', examType).eq('test_name', testName)
+    .order('q_order', { ascending: true });
+
+  if (qErr || !qs || qs.length === 0) {
+    showError('Questions nahi mile', 'Test "' + testName + '" ke questions Supabase mein nahi hain');
+    return;
+  }
+  questions = qs;
+
+  // 2. Fetch latest attempt
+  const { data: atts } = await sb.from('test_attempts').select('*')
+    .eq('user_id', currentUser.id).eq('test_name', testName)
+    .order('created_at', { ascending: false }).limit(1);
+
+  if (!atts || atts.length === 0) {
+    showError('Koi attempt nahi mila', 'Test abhi submit nahi hua — pehle test do');
+    return;
+  }
+  attemptData = atts[0];
+
+  // 3. Parse answers
+  answers = {};
+  if (attemptData.answer_map) {
+    try {
+      const parsed = JSON.parse(attemptData.answer_map);
+      Object.entries(parsed).forEach(([k, v]) => { if (v) answers[k] = v; });
+    } catch(e) {}
+  }
+
+  // 4. Render everything
+  renderHeader();
+  renderStats();
+  buildSectionalScores();
+  renderSolutions();
+  loadLeaderboard();
+
+  // Show result
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('mainResult').style.display = 'block';
+}
+
+// ── HEADER ──
+function renderHeader() {
+  const att = attemptData;
+  const score = att.score || 0;
+  const total = att.total_marks || questions.length;
+  const userName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Student';
+
+  document.getElementById('rhExam').textContent = EXAM_LABELS[examType] || examType.toUpperCase();
+  document.getElementById('rhTitle').textContent = testName;
+  document.getElementById('rhUser').textContent = '👤 ' + userName;
+  document.getElementById('rhScore').textContent = typeof score === 'number' ? score.toFixed(1) : score;
+  document.getElementById('rhScoreLbl').textContent = '/ ' + total + ' Marks';
+}
+
+// ── STATS ──
+function renderStats() {
+  const att = attemptData;
+  const correct = att.correct_answers || 0;
+  const wrong = att.wrong_answers || 0;
+  const attempted = att.questions_attempted || 0;
+  const skip = questions.length - attempted;
+  const accuracy = attempted > 0 ? Math.round((correct / attempted) * 100) : 0;
+
+  document.getElementById('sCorrect').textContent = correct;
+  document.getElementById('sWrong').textContent = wrong;
+  document.getElementById('sSkip').textContent = skip;
+  document.getElementById('sAccuracy').textContent = accuracy + '%';
+  document.getElementById('sAttempted').textContent = attempted;
+  document.getElementById('sTotal').textContent = questions.length;
+}
+
+// ── SECTIONAL SCORES ──
+function buildSectionalScores() {
+  // Only for full tests (50+ questions) — check if q.subject varies
+  const subjectSet = new Set(questions.map(q => q.subject).filter(Boolean));
+  if (subjectSet.size < 2) return;
+
+  const SECTION_ORDER = ['reasoning','quant','gk','ga','english'];
+  const SECTION_LABELS = {
+    reasoning: 'General Intelligence & Reasoning',
+    quant: 'Quantitative Aptitude',
+    gk: 'General Awareness',
+    ga: 'General Awareness',
+    english: 'English Comprehension'
+  };
+
+  const sections = {};
+  questions.forEach((q, i) => {
+    const subj = q.subject || 'other';
+    if (!sections[subj]) sections[subj] = { correct: 0, wrong: 0, total: 0, score: 0, maxScore: 0 };
+    sections[subj].total++;
+    sections[subj].maxScore += (attemptData.pos_marking || 1);
+    const ans = answers[i];
+    if (ans) {
+      if (ans === q.correct_answer) {
+        sections[subj].correct++;
+        sections[subj].score += (attemptData.pos_marking || 1);
+      } else {
+        sections[subj].wrong++;
+        sections[subj].score -= (attemptData.neg_marking || 0);
+      }
+    }
+  });
+
+  const SECTION_COLORS = {
+    reasoning: '#8b5cf6', quant: '#0ea5e9', gk: '#10b981', ga: '#10b981', english: '#f59e0b'
+  };
+
+  let html = '';
+  Object.entries(sections).forEach(([subj, data]) => {
+    const pct = data.maxScore > 0 ? Math.max(0, Math.round((data.score / data.maxScore) * 100)) : 0;
+    const color = SECTION_COLORS[subj] || '#0ea5e9';
+    const label = SECTION_LABELS[subj] || subj;
+    html += `<div class="sec-row">
+      <div class="sec-name">${label}</div>
+      <div class="sec-track"><div class="sec-fill" style="width:${pct}%;background:${color};"></div></div>
+      <div class="sec-score" style="color:${color};">${data.score.toFixed(1)}</div>
+      <div class="sec-detail">${data.correct}✅ ${data.wrong}❌</div>
+    </div>`;
+  });
+
+  if (html) {
+    document.getElementById('sectionalList').innerHTML = html;
+    document.getElementById('sectionalBlock').style.display = 'block';
+  }
+}
+
+// ── CHART UPDATE ──
+function updateChart(myScore, topScore, avgScore) {
+  const max = Math.max(myScore, topScore, avgScore, 1);
+  const pct = v => Math.max(5, Math.round((v / max) * 100));
+
+  document.getElementById('cYouVal').textContent = typeof myScore === 'number' ? myScore.toFixed(1) : myScore;
+  document.getElementById('cTopVal').textContent = typeof topScore === 'number' ? topScore.toFixed(1) : topScore;
+  document.getElementById('cAvgVal').textContent = typeof avgScore === 'number' ? avgScore.toFixed(1) : avgScore;
+
+  document.getElementById('cYouBar').style.height = pct(myScore) + '%';
+  document.getElementById('cTopBar').style.height = pct(topScore) + '%';
+  document.getElementById('cAvgBar').style.height = pct(avgScore) + '%';
+
+  document.getElementById('chartBlock').style.display = 'block';
+}
+
+// ── LEADERBOARD ──
+async function loadLeaderboard() {
+  const { data: allAtts } = await sb.from('test_attempts')
+    .select('user_id, score, full_name, avatar_url').eq('test_name', testName);
+
+  if (!allAtts || allAtts.length === 0) {
+    document.getElementById('lbContent').innerHTML = '<div class="lb-empty">Abhi koi leaderboard data nahi</div>';
+    return;
+  }
+
+  // Dedupe — best score per user
+  const best = {};
+  allAtts.forEach(r => {
+    if (!best[r.user_id] || r.score > best[r.user_id].score) best[r.user_id] = r;
+  });
+
+  // Fetch names from profiles if not available
+  const uniqueIds = Object.keys(best).filter(id => !best[id].full_name);
+  if (uniqueIds.length > 0) {
+    const { data: profiles } = await sb.from('profiles').select('id,full_name,avatar_url').in('id', uniqueIds);
+    if (profiles) profiles.forEach(p => {
+      if (best[p.id]) {
+        if (!best[p.id].full_name) best[p.id].full_name = p.full_name;
+        if (!best[p.id].avatar_url) best[p.id].avatar_url = p.avatar_url;
+      }
+    });
+  }
+
+  const sorted = Object.values(best).sort((a, b) => b.score - a.score);
+  const myScore = attemptData.score || 0;
+  const myId = currentUser.id;
+
+  // Ensure me in list
+  if (!sorted.find(u => u.user_id === myId)) {
+    sorted.push({ user_id: myId, score: myScore, full_name: currentUser.user_metadata?.full_name || 'You' });
+    sorted.sort((a, b) => b.score - a.score);
+  }
+
+  const rank = sorted.filter(u => u.score > myScore).length + 1;
+  const total = sorted.length;
+  const percentile = total > 1 ? Math.round(((total - rank) / (total - 1)) * 100) : 100;
+
+  // Rank bar
+  document.getElementById('rnkRank').textContent = '#' + rank;
+  document.getElementById('rnkTotal').textContent = total;
+  document.getElementById('rnkPct').textContent = percentile + '%';
+  document.getElementById('rnkPct').style.color = percentile >= 90 ? '#16a34a' : percentile >= 70 ? '#0ea5e9' : '#e63946';
+  document.getElementById('rankBar').style.display = 'flex';
+
+  // Chart
+  const scores = sorted.map(u => u.score);
+  const topScore = Math.max(...scores);
+  const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+  updateChart(myScore, topScore, avgScore);
+
+  // Render leaderboard
+  const top10 = sorted.slice(0, 10);
+  const medals = ['🥇', '🥈', '🥉'];
+  const top3 = top10.slice(0, 3);
+  const rest = top10.slice(3);
+
+  const podiumOrder = [
+    { idx: 1, cls: 'lb-pod-2' },
+    { idx: 0, cls: 'lb-pod-1' },
+    { idx: 2, cls: 'lb-pod-3' }
+  ];
+
+  function avatarHtml(r, cls) {
+    const cached = localStorage.getItem('avatar_' + r.user_id);
+    const url = cached || r.avatar_url;
+    const name = r.full_name || 'Student';
+    if (url) return `<div class="lb-pod-circle ${cls}"><img src="${esc(url)}" alt="${esc(name)}"></div>`;
+    return `<div class="lb-pod-circle ${cls}">${esc(name.slice(0,2).toUpperCase())}</div>`;
+  }
+
+  let podiumHtml = '';
+  if (top3.length >= 1) {
+    podiumHtml = `<div class="lb-podium">${podiumOrder.filter(p => top3[p.idx]).map(p => {
+      const r = top3[p.idx];
+      const isMe = r.user_id === myId;
+      const name = r.full_name || (isMe ? 'You' : 'Student');
+      return `<div class="lb-pod-item">
+        <div class="lb-pod-medal">${medals[p.idx] || ''}</div>
+        ${avatarHtml(r, p.cls)}
+        <div class="lb-pod-name">${esc(isMe ? '⭐ ' + name : name)}</div>
+        <div class="lb-pod-score">${typeof r.score === 'number' ? r.score.toFixed(1) : r.score} pts</div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  const restHtml = rest.map((r, i) => {
+    const isMe = r.user_id === myId;
+    const name = r.full_name || (isMe ? 'You' : 'Student ' + (i + 4));
+    return `<div class="lb-row${isMe ? ' me' : ''}">
+      <span class="lb-pos">#${i + 4}</span>
+      <span class="lb-name">${esc(isMe ? '⭐ ' + name : name)}</span>
+      <span class="lb-score">${typeof r.score === 'number' ? r.score.toFixed(1) : r.score} pts</span>
+    </div>`;
+  }).join('');
+
+  // If user not in top10, show their row at bottom
+  const myIdxInTop10 = top10.findIndex(u => u.user_id === myId);
+  let myRowHtml = '';
+  if (myIdxInTop10 === -1) {
+    const myEntry = sorted.find(u => u.user_id === myId);
+    const myName = myEntry?.full_name || 'You';
+    myRowHtml = `<div style="border-top:2px dashed #bae6fd;"></div>
+      <div class="lb-row me">
+        <span class="lb-pos">#${rank}</span>
+        <span class="lb-name">⭐ ${esc(myName)}</span>
+        <span class="lb-score">${typeof myScore === 'number' ? myScore.toFixed(1) : myScore} pts</span>
+      </div>`;
+  }
+
+  document.getElementById('lbContent').innerHTML = podiumHtml + restHtml + myRowHtml;
+
+  // Fireworks if rank <= 3
+  if (rank <= 3) launchFireworks();
+}
+
+// ── SOLUTIONS ──
+function buildFilteredList() {
+  const list = [];
+  questions.forEach((q, i) => {
+    const a = answers[i];
+    const status = !a ? 'skip' : a === q.correct_answer ? 'correct' : 'wrong';
+    if (solFilter === 'all' || solFilter === status) list.push({ q, i, status, userAns: a });
+  });
+  return list;
+}
+
+function renderSolutions() {
+  const filtered = buildFilteredList();
+  if (filtered.length === 0) {
+    document.getElementById('solList').innerHTML = '<div class="sol-empty">Is filter mein koi question nahi</div>';
+    return;
+  }
+
+  const html = filtered.map(({ q, i, status, userAns }) => {
+    const color = status === 'correct' ? '#16a34a' : status === 'wrong' ? '#dc2626' : '#94a3b8';
+    const bg = status === 'correct' ? '#dcfce7' : status === 'wrong' ? '#fee2e2' : '#f1f5f9';
+    const label = status === 'correct' ? '✅ Correct' : status === 'wrong' ? '❌ Wrong' : '⏭ Skipped';
+    const preview = getLangText(q.question_text || '').replace(/<[^>]+>/g, '').trim().slice(0, 90);
+    const wrongLine = status === 'wrong'
+      ? `<div class="q-ans-line" style="color:#dc2626;">Your: <b>${esc(userAns)}</b> &nbsp;·&nbsp; <span style="color:#16a34a;">Correct: <b>${esc(q.correct_answer)}</b></span></div>` : '';
+    const skipLine = status === 'skip'
+      ? `<div class="q-ans-line" style="color:#94a3b8;">Correct ans: <b style="color:#16a34a;">${esc(q.correct_answer)}</b></div>` : '';
+
+    return `<div class="q-card" onclick="openReview(${i})">
+      <div class="q-card-top">
+        <div class="q-num-badge" style="background:${bg};color:${color};border:1.5px solid ${color}33;">${i + 1}</div>
+        <span class="q-status-badge" style="background:${bg};color:${color};">${label}</span>
+        <span class="q-pct" id="pctStat_${i}" style="display:none;"></span>
+      </div>
+      <div class="q-preview">${esc(preview)}${preview.length >= 90 ? '...' : ''}</div>
+      ${wrongLine}${skipLine}
+    </div>`;
+  }).join('');
+
+  document.getElementById('solList').innerHTML = html;
+
+  // Load stats async
+  filtered.forEach(({ q, i }) => fetchQStat(q, i));
+}
+
+async function fetchQStat(q, idx) {
+  try {
+    const { data } = await sb.from('test_attempts').select('answer_map')
+      .eq('test_name', testName).not('answer_map', 'is', null);
+    const el = document.getElementById('pctStat_' + idx);
+    if (!data || !el) return;
+    let total = 0, correct = 0;
+    data.forEach(row => {
+      try {
+        const map = JSON.parse(row.answer_map);
+        const ans = map[idx];
+        if (ans) { total++; if (ans === q.correct_answer) correct++; }
+      } catch(e) {}
+    });
+    if (total === 0) return;
+    const pct = Math.round((correct / total) * 100);
+    const col = pct >= 70 ? '#16a34a' : pct >= 40 ? '#f59e0b' : '#dc2626';
+    el.style.cssText = `display:inline-flex;background:${col}18;color:${col};border-radius:10px;padding:2px 7px;`;
+    el.textContent = `✅ ${pct}% (${total})`;
+  } catch(e) {}
+}
+
+function setSolFilter(f, btn) {
+  solFilter = f;
+  document.querySelectorAll('.sol-f-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderSolutions();
+}
+
+// ── REVIEW MODE ──
+function openReview(startIdx) {
+  reviewFiltered = buildFilteredList();
+  const pos = reviewFiltered.findIndex(item => item.i === startIdx);
+  reviewIdx = pos >= 0 ? pos : 0;
+  renderReviewQ();
+  document.getElementById('reviewOverlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeReview() {
+  document.getElementById('reviewOverlay').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function reviewNav(dir) {
+  reviewIdx = Math.max(0, Math.min(reviewFiltered.length - 1, reviewIdx + dir));
+  renderReviewQ();
+}
+
+function renderReviewQ() {
+  if (!reviewFiltered.length) return;
+  const { q, i, status, userAns } = reviewFiltered[reviewIdx];
+
+  document.getElementById('reviewTitle').textContent = testName;
+  document.getElementById('reviewCounter').textContent = `${reviewIdx + 1} / ${reviewFiltered.length}`;
+
+  const color = status === 'correct' ? '#16a34a' : status === 'wrong' ? '#dc2626' : '#94a3b8';
+  const bg = status === 'correct' ? '#dcfce7' : status === 'wrong' ? '#fee2e2' : '#f1f5f9';
+  const label = status === 'correct' ? '✅ Correct' : status === 'wrong' ? '❌ Wrong' : '⏭ Skipped';
+
+  const opts = ['A', 'B', 'C', 'D'];
+  const optVals = [q.option_a, q.option_b, q.option_c, q.option_d];
+  let optsHtml = '';
+  opts.forEach((k, idx) => {
+    if (!optVals[idx]) return;
+    let cls = '';
+    if (k === q.correct_answer) cls = status === 'skip' ? 'skipped-correct' : 'correct';
+    else if (userAns && k === userAns && status === 'wrong') cls = 'wrong';
+    optsHtml += `<div class="review-opt ${cls}">
+      <div class="opt-label">${k}</div>
+      <div>${esc(getLangText(optVals[idx]))}</div>
+    </div>`;
+  });
+
+  const expHtml = q.explanation
+    ? `<div class="review-explanation"><strong>💡 Explanation:</strong> ${esc(getLangText(q.explanation))}</div>` : '';
+
+  document.getElementById('reviewBody').innerHTML = `
+    <div class="review-q-hdr">
+      <span class="review-status-badge" style="background:${bg};color:${color};">${label}</span>
+      <span class="review-q-num">Q${i + 1}</span>
+    </div>
+    <div class="review-q-text">${esc(getLangText(q.question_text || ''))}</div>
+    <div class="review-opts">${optsHtml}</div>
+    ${expHtml}
+  `;
+
+  document.getElementById('rnPrev').disabled = reviewIdx === 0;
+  document.getElementById('rnNext').disabled = reviewIdx === reviewFiltered.length - 1;
+}
+
+// ── TABS ──
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+// ── SHARE ──
+function shareResult() {
+  const score = document.getElementById('rhScore').textContent;
+  const scoreLbl = document.getElementById('rhScoreLbl').textContent;
+  const correct = document.getElementById('sCorrect').textContent;
+  const wrong = document.getElementById('sWrong').textContent;
+  const skip = document.getElementById('sSkip').textContent;
+  const rank = document.getElementById('rnkRank').textContent;
+  const pct = document.getElementById('rnkPct').textContent;
+
+  const msg = `🎯 *SSC Hustlers — Test Result*
+
+📝 Test: ${testName}
+🏆 Score: ${score} ${scoreLbl}
+${rank ? `📊 Rank: ${rank} | Percentile: ${pct}` : ''}
+
+✅ Correct: ${correct}  ❌ Wrong: ${wrong}  ⏭ Skipped: ${skip}
+
+🔗 Practice karo: ${window.location.origin}/quizzes.html`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'SSC Hustlers Result', text: msg }).catch(() => copyText(msg));
+  } else {
+    copyText(msg);
+  }
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    alert('✅ Result copy ho gaya! Paste karo jahan chahiye.');
+  }).catch(() => {
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+  });
+}
+
+// ── FIREWORKS ──
+function launchFireworks() {
+  let container = document.getElementById('fireworkContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'fireworkContainer';
+    container.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden;';
+    document.body.appendChild(container);
+  }
+  container.innerHTML = '';
+  const colors = ['#e63946','#ffd200','#00c853','#4285f4','#ff6b35','#a259ff','#fff'];
+  const style = document.createElement('style');
+  style.textContent = `.spark{position:absolute;width:6px;height:6px;border-radius:50%;animation:sparkAnim linear forwards;}
+    @keyframes sparkAnim{0%{transform:translate(0,0);opacity:1;}100%{transform:translate(var(--fx),var(--fy));opacity:0;}}`;
+  document.head.appendChild(style);
+  let count = 0;
+  const interval = setInterval(() => {
+    if (count++ > 5) { clearInterval(interval); setTimeout(() => container.innerHTML = '', 2000); return; }
+    const cx = 20 + Math.random() * 60;
+    const cy = 10 + Math.random() * 50;
+    for (let i = 0; i < 18; i++) {
+      const spark = document.createElement('div');
+      spark.className = 'spark';
+      const angle = (i / 18) * 360;
+      const dist = 60 + Math.random() * 80;
+      const fx = Math.cos(angle * Math.PI / 180) * dist + 'px';
+      const fy = Math.sin(angle * Math.PI / 180) * dist + 'px';
+      spark.style.cssText = `left:${cx}%;top:${cy}%;background:${colors[i % colors.length]};--fx:${fx};--fy:${fy};animation-delay:${Math.random() * 0.3}s;animation-duration:${0.7 + Math.random() * 0.5}s`;
+      container.appendChild(spark);
+    }
+  }, 400);
+}
+
+// ── START ──
+init();
+</script>
+</body>
+</html>
