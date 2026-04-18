@@ -1997,20 +1997,37 @@ document.getElementById('ltEnd').value=_now.toISOString().slice(0,16);
 // ══════════════════════════════════════════
 // LOCK SCREEN
 // ══════════════════════════════════════════
-// Password yahan set karo — string ke andar apna password likho
-const ADMIN_PASSWORD = 'sschustlers@2000';
 
-function unlockAdmin() {
-  const val = document.getElementById('lockInput').value;
-  if (val === ADMIN_PASSWORD) {
-    document.getElementById('lockScreen').style.display = 'none';
-    document.getElementById('adminContent').style.display = 'block';
-    sessionStorage.setItem('ssch_admin_auth', '1');
-  } else {
-    const err = document.getElementById('lockError');
-    err.textContent = '❌ Galat password! Dobara try karo.';
-    document.getElementById('lockInput').value = '';
-    document.getElementById('lockInput').focus();
+async function unlockAdmin() {
+  const val = document.getElementById('lockInput').value.trim();
+  const err = document.getElementById('lockError');
+  if (!val) return;
+
+  try {
+    const { data: cfg, error } = await supabase
+      .from('admin_config')
+      .select('value')
+      .eq('key', 'admin_password')
+      .single();
+
+    if (error || !cfg) {
+      err.textContent = '❌ Server error! Dobara try karo.';
+      setTimeout(() => err.textContent = '', 3000);
+      return;
+    }
+
+    if (val === cfg.value) {
+      document.getElementById('lockScreen').style.display = 'none';
+      document.getElementById('adminContent').style.display = 'block';
+      sessionStorage.setItem('ssch_admin_auth', '1');
+    } else {
+      err.textContent = '❌ Galat password! Dobara try karo.';
+      document.getElementById('lockInput').value = '';
+      document.getElementById('lockInput').focus();
+      setTimeout(() => err.textContent = '', 3000);
+    }
+  } catch (e) {
+    err.textContent = '❌ Network error! Dobara try karo.';
     setTimeout(() => err.textContent = '', 3000);
   }
 }
