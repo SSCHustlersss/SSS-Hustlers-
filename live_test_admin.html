@@ -2004,19 +2004,16 @@ async function unlockAdmin() {
   if (!val) return;
 
   try {
-    const { data: cfg, error } = await supabase
-      .from('admin_config')
-      .select('value')
-      .eq('key', 'admin_password')
-      .single();
+    const { data: isValid, error } = await supabase
+      .rpc('check_admin_password', { input_pass: val });
 
-    if (error || !cfg) {
+    if (error) {
       err.textContent = '❌ Server error! Dobara try karo.';
       setTimeout(() => err.textContent = '', 3000);
       return;
     }
 
-    if (val === cfg.value) {
+    if (isValid) {
       document.getElementById('lockScreen').style.display = 'none';
       document.getElementById('adminContent').style.display = 'block';
       sessionStorage.setItem('ssch_admin_auth', '1');
