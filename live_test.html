@@ -1657,6 +1657,7 @@ let allAttemptsForAccuracy = []; // for question-wise accuracy
 
 function openReview(idx) {
   reviewIdx = idx;
+  document.getElementById('resultScreen').style.display = 'none';
   const overlay = document.getElementById('reviewOverlay');
   overlay.style.display = 'flex';
   document.getElementById('reviewTestTitle').textContent = liveTest?.name || 'Solution Review';
@@ -1682,6 +1683,7 @@ function openReview(idx) {
 
 function closeReview() {
   document.getElementById('reviewOverlay').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'flex';
 }
 
 function renderReviewSidebar() {
