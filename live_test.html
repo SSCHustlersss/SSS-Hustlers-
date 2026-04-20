@@ -512,7 +512,7 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
 </div>
 
 <!-- ══ REVIEW OVERLAY (Testbook Style) ══ -->
-<div class="quiz-overlay" id="reviewOverlay" style="display:none;flex-direction:column;z-index:400;">
+<div class="quiz-overlay" id="reviewOverlay" style="display:none;flex-direction:column;z-index:9999;">
   <div class="review-header">
     <button class="review-back-btn" onclick="closeReview()">← Results</button>
     <div class="review-title" id="reviewTestTitle">Solution Review</div>
@@ -950,6 +950,7 @@ function startQuiz() {
   currentSectionTimer = sectionTimers[0] || timeLeft;
   if (hasSectionTimer) timeLeft = currentSectionTimer;
   showQuestion(0);
+  qStartTime = Date.now();
   buildDots();
   startTimer();
   // Auto-save every 10 seconds
@@ -1659,7 +1660,7 @@ function openReview(idx) {
   reviewIdx = idx;
   document.getElementById('resultScreen').style.display = 'none';
   const overlay = document.getElementById('reviewOverlay');
-  overlay.style.display = 'flex';
+  overlay.style.cssText = 'display:flex !important; flex-direction:column; position:fixed; inset:0; top:0; left:0; right:0; bottom:0; z-index:9999; background:#f0f9ff; overflow:hidden;';
   document.getElementById('reviewTestTitle').textContent = liveTest?.name || 'Solution Review';
   renderReviewSidebar();
   showReviewQuestion();
@@ -1682,7 +1683,8 @@ function openReview(idx) {
 }
 
 function closeReview() {
-  document.getElementById('reviewOverlay').style.display = 'none';
+  const overlay = document.getElementById('reviewOverlay');
+  overlay.style.cssText = 'display:none !important;';
   document.getElementById('resultScreen').style.display = 'flex';
 }
 
