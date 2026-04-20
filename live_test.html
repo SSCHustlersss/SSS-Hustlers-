@@ -128,7 +128,7 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
 .btn-toggle-panel{background:rgba(255,255,255,0.2);color:#fff;border:none;padding:6px 10px;border-radius:8px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;}
 
 /* ── RESULT SCREEN ── */
-.result-screen{display:none;position:fixed;inset:0;z-index:300;background:#f0f9ff;overflow-y:auto;flex-direction:column;}
+.result-screen{display:none;background:#f0f9ff;min-height:100vh;flex-direction:column;}
 .result-screen.show{display:flex;}
 .result-header{background:#0ea5e9;padding:24px 16px;text-align:center;color:#fff;flex-shrink:0;}
 .result-name{font-size:0.85rem;color:rgba(255,255,255,0.8);margin-bottom:4px;}
@@ -1537,7 +1537,9 @@ async function showResultScreen(score, correct, wrong, skipped, attempted, accur
     document.getElementById('sectionalScoresWrap').style.display = 'block';
   }
 
+  showScreen(null);
   document.getElementById('resultScreen').classList.add('show');
+  window.scrollTo(0, 0);
   await loadLeaderboard(score);
 }
 
