@@ -511,45 +511,48 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
   </div>
 </div>
 
-<!-- ══ REVIEW OVERLAY (Testbook Style) ══ -->
-<div class="quiz-overlay" id="reviewOverlay" style="display:none;flex-direction:column;z-index:9999;">
-  <div class="review-header">
-    <button class="review-back-btn" onclick="closeReview()">← Results</button>
-    <div class="review-title" id="reviewTestTitle">Solution Review</div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <div class="lang-toggle" id="reviewLangToggle">
-        <button class="lang-btn active" id="reviewLangEN" onclick="setReviewLang('en')">EN</button>
-        <button class="lang-btn" id="reviewLangHI" onclick="setReviewLang('hi')">HI</button>
-      </div>
-      <div class="review-counter" id="reviewCounter">1 / 1</div>
-    </div>
+<!-- ══ REVIEW SCREEN (works on all browsers) ══ -->
+<div class="screen" id="screenReview" style="min-height:100vh;background:#f0f9ff;">
+  <!-- Sticky Header -->
+  <div style="background:#0ea5e9;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:10;">
+    <button onclick="closeReview()" style="background:rgba(255,255,255,0.2);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">&#8592; Results</button>
+    <div style="color:#fff;font-size:0.88rem;font-weight:700;flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="reviewTestTitle">Solution Review</div>
+    <div style="color:rgba(255,255,255,0.85);font-size:0.78rem;font-weight:600;white-space:nowrap;" id="reviewCounter">1 / 1</div>
   </div>
-  <div class="quiz-progress"><div class="quiz-progress-fill" id="reviewProgressFill" style="width:0%"></div></div>
-  <div class="nta-body" style="flex:1;overflow:hidden;">
-    <div class="nta-left">
-      <div class="marks-bar" id="reviewStatusBar"></div>
-      <div class="quiz-body">
-        <div class="q-number" id="reviewQNum">Question 1</div>
-        <div class="q-text" id="reviewQText"></div>
-        <img id="reviewQImage" style="display:none;max-width:100%;border-radius:10px;margin:10px 0 6px;border:1.5px solid #e0f2fe;">
-        <div class="options-list" id="reviewOptions"></div>
-        <div class="explanation-box show" id="reviewExplanation" style="display:none;"></div>
+  <div style="background:#bae6fd;height:3px;"><div id="reviewProgressFill" style="height:100%;background:#0ea5e9;transition:width 0.3s;width:0%;"></div></div>
+
+  <!-- NTA style layout: left question + right sidebar -->
+  <div style="display:flex;min-height:calc(100vh - 50px);">
+
+    <!-- LEFT: Question panel -->
+    <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;min-width:0;">
+      <div style="background:#e0f2fe;padding:8px 16px;font-size:0.75rem;color:#111827;border-bottom:1px solid #bae6fd;" id="reviewStatusBar"></div>
+      <div style="padding:16px;background:#fff;flex:1;">
+        <div style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;" id="reviewQNum">Question 1</div>
+        <div style="font-size:0.92rem;font-weight:600;line-height:1.7;color:#111827;margin-bottom:16px;white-space:pre-line;" id="reviewQText"></div>
+        <img id="reviewQImage" style="display:none;max-width:100%;border-radius:10px;margin:0 0 12px;border:1.5px solid #e0f2fe;">
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;" id="reviewOptions"></div>
+        <div style="display:none;background:#f0f9ff;border:1.5px solid #0ea5e9;border-radius:10px;padding:12px 14px;font-size:0.82rem;line-height:1.6;color:#111827;" id="reviewExplanation"></div>
       </div>
-      <div class="quiz-footer">
-        <div class="quiz-nav">
-          <button class="btn-prev" onclick="reviewPrev()">← Prev</button>
-          <button class="btn-next" onclick="reviewNext()">Next →</button>
-        </div>
+      <!-- Nav footer -->
+      <div style="padding:12px 14px;border-top:1px solid #e0f2fe;background:#fff;display:flex;gap:6px;justify-content:center;">
+        <button onclick="reviewPrev()" style="padding:9px 18px;border-radius:8px;border:1.5px solid #cbd5e1;background:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;color:#111827;">&#8592; Prev</button>
+        <button onclick="reviewNext()" style="padding:9px 18px;border-radius:8px;border:none;background:#0ea5e9;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">Next &#8594;</button>
       </div>
     </div>
-    <div class="nta-sidebar" id="reviewSidebar">
-      <div class="nta-legend">
-        <div class="legend-row"><div class="ld-dot ld-green">✓</div> Correct</div>
-        <div class="legend-row"><div class="ld-dot ld-red">✗</div> Wrong</div>
-        <div class="legend-row"><div class="ld-dot ld-grey">—</div> Skipped</div>
+
+    <!-- RIGHT: Sidebar -->
+    <div style="width:160px;background:#fff;border-left:1px solid #e0f2fe;overflow-y:auto;flex-shrink:0;">
+      <!-- Legend -->
+      <div style="padding:10px 10px 6px;border-bottom:1px solid #e0f2fe;">
+        <div style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:#475569;margin-bottom:5px;"><div style="width:20px;height:20px;border-radius:4px;background:#dcfce7;border:1.5px solid #16a34a;"></div>Correct</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:#475569;margin-bottom:5px;"><div style="width:20px;height:20px;border-radius:4px;background:#fee2e2;border:1.5px solid #dc2626;"></div>Wrong</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:#475569;"><div style="width:20px;height:20px;border-radius:4px;background:#f1f5f9;border:1.5px solid #cbd5e1;"></div>Skipped</div>
       </div>
-      <div class="q-nav-dots" id="reviewDots"></div>
+      <!-- Dots -->
+      <div style="padding:8px;display:flex;flex-wrap:wrap;gap:5px;" id="reviewDotGrid"></div>
     </div>
+
   </div>
 </div>
 
@@ -1664,17 +1667,13 @@ let allAttemptsForAccuracy = []; // for question-wise accuracy
 
 function openReview(idx) {
   reviewIdx = idx;
+  // Use screen system - works on all browsers including Safari
+  document.getElementById('resultScreen').classList.remove('show');
   document.getElementById('resultScreen').style.display = 'none';
-  const overlay = document.getElementById('reviewOverlay');
-  overlay.style.cssText = 'display:flex !important; flex-direction:column; position:fixed; inset:0; top:0; left:0; right:0; bottom:0; z-index:9999; background:#f0f9ff; overflow:hidden;';
+  showScreen('screenReview');
   document.getElementById('reviewTestTitle').textContent = liveTest?.name || 'Solution Review';
-  // Lang toggle
-  const rlt = document.getElementById('reviewLangToggle');
-  if (rlt) rlt.style.display = hasHindi ? 'flex' : 'none';
-  document.getElementById('reviewLangEN')?.classList.toggle('active', currentLang === 'en');
-  document.getElementById('reviewLangHI')?.classList.toggle('active', currentLang === 'hi');
-  renderReviewSidebar();
   showReviewQuestion();
+  window.scrollTo(0, 0);
 
   // Fetch all attempts for question accuracy (once)
   if (allAttemptsForAccuracy.length === 0 && liveTest) {
@@ -1693,17 +1692,11 @@ function openReview(idx) {
   }
 }
 
-function setReviewLang(lang) {
-  currentLang = lang;
-  document.getElementById('reviewLangEN')?.classList.toggle('active', lang === 'en');
-  document.getElementById('reviewLangHI')?.classList.toggle('active', lang === 'hi');
-  showReviewQuestion();
-}
-
 function closeReview() {
-  const overlay = document.getElementById('reviewOverlay');
-  overlay.style.cssText = 'display:none !important;';
+  showScreen(null);
   document.getElementById('resultScreen').style.display = 'flex';
+  document.getElementById('resultScreen').classList.add('show');
+  window.scrollTo(0, 0);
 }
 
 function renderReviewSidebar() {
@@ -1717,7 +1710,7 @@ function renderReviewSidebar() {
 function reviewJump(idx) {
   reviewIdx = idx;
   showReviewQuestion();
-  renderReviewSidebar();
+  window.scrollTo(0, 0);
 }
 
 function showReviewQuestion() {
@@ -1759,20 +1752,21 @@ function showReviewQuestion() {
      <span style="margin-left:10px;color:#475569;">⏱ ${timeStr}</span>
      ${accuracyHtml}`;
 
-  // Question text - hamesha full text dikhao (bilingual)
+  // Question text - full bilingual
   document.getElementById('reviewQNum').textContent = `Question ${i + 1}`;
   document.getElementById('reviewQText').textContent = (q.question_text || '').trim();
 
   // Image
-  const reviewImg = document.getElementById('reviewQImage');
-  if (q.image_url) {
-    reviewImg.src = q.image_url;
-    reviewImg.style.display = 'block';
-  } else {
-    reviewImg.style.display = 'none';
+  const rImg = document.getElementById('reviewQImage');
+  if (rImg) {
+    if (q.image_url) { rImg.src = q.image_url; rImg.style.display = 'block'; }
+    else { rImg.style.display = 'none'; }
   }
 
-  // Options - hamesha full text
+  // Scroll to top on each question
+  window.scrollTo(0, 0);
+
+  // Options - full bilingual
   document.getElementById('reviewOptions').innerHTML = ['A','B','C','D'].map(l => {
     const val = (q['option_' + l.toLowerCase()] || '').trim();
     const isCorrect = l === correctAns;
@@ -1797,8 +1791,20 @@ function showReviewQuestion() {
     b.classList.toggle('current', idx === reviewIdx);
   });
 
-  // Sidebar dots update
-  renderReviewSidebar();
+  // Dot grid update
+  renderReviewDotGrid();
+}
+
+function renderReviewDotGrid() {
+  const grid = document.getElementById('reviewDotGrid');
+  if (!grid) return;
+  grid.innerHTML = reviewFiltered.map(({ i, status }, idx) => {
+    const bg = status === 'correct' ? '#dcfce7' : status === 'wrong' ? '#fee2e2' : '#f1f5f9';
+    const border = status === 'correct' ? '#16a34a' : status === 'wrong' ? '#dc2626' : '#cbd5e1';
+    const color = status === 'correct' ? '#15803d' : status === 'wrong' ? '#dc2626' : '#64748b';
+    const outline = idx === reviewIdx ? 'outline:3px solid #0ea5e9;outline-offset:1px;' : '';
+    return `<button onclick="reviewJump(${idx})" style="width:32px;height:32px;border-radius:6px;border:1.5px solid ${border};background:${bg};color:${color};font-size:0.7rem;font-weight:800;cursor:pointer;font-family:inherit;${outline}">${i + 1}</button>`;
+  }).join('');
 }
 
 function reviewNext() {
