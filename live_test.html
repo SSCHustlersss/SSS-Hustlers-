@@ -189,6 +189,21 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
 .ana-opt.wrong .ana-opt-label{background:#dc2626;color:#fff;}
 .ana-explanation{margin:0 14px 14px;background:#f0f9ff;border:1.5px solid #0ea5e9;border-radius:9px;padding:10px 12px;font-size:0.8rem;line-height:1.6;color:#111827;}
 
+/* ── REVIEW MODE (Testbook style) ── */
+.review-q-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:16px;}
+.review-q-btn{width:100%;aspect-ratio:1;border-radius:10px;border:none;font-size:0.82rem;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.review-q-btn.correct{background:#dcfce7;color:#15803d;border:2px solid #16a34a;}
+.review-q-btn.wrong{background:#fee2e2;color:#dc2626;border:2px solid #dc2626;}
+.review-q-btn.skip{background:#f1f5f9;color:#64748b;border:2px solid #cbd5e1;}
+.review-q-btn.current{outline:3px solid #0ea5e9;outline-offset:2px;}
+.review-legend{display:flex;gap:12px;padding:8px 16px 0;flex-wrap:wrap;}
+.review-legend-item{display:flex;align-items:center;gap:5px;font-size:0.72rem;font-weight:600;color:#475569;}
+.review-legend-dot{width:12px;height:12px;border-radius:3px;}
+.review-header{background:#0ea5e9;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.review-back-btn{background:rgba(255,255,255,0.2);color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;}
+.review-title{color:#fff;font-size:0.88rem;font-weight:700;flex:1;}
+.review-counter{color:rgba(255,255,255,0.85);font-size:0.78rem;font-weight:600;}
+
 /* Sectional Scores */
 .sectional-wrap{padding:0 16px 4px;}
 .sectional-title{font-size:0.78rem;font-weight:800;color:#475569;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;}
@@ -281,7 +296,7 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
 </head>
 <body>
 
-<div id="offlineBar">📡 Network nahi hai — answers locally save ho rahe hain</div>
+<div id="offlineBar">📡 No network — answers are being saved locally</div>
 
 <header class="header">
   <a class="logo" href="index.html">SSC <span>HUSTLERS</span></a>
@@ -294,12 +309,15 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
     <div class="name-card">
       <div class="name-crown">✏️</div>
       <div class="name-title" id="testDisplayName">Live Test</div>
-      <div class="name-sub" id="testInstructions">Apna naam daalkar test mein join karo. Koi login ki zaroorat nahi!</div>
+      <div class="name-sub" id="testInstructions">Enter your name to join the test. No login required!</div>
 
       <div class="test-info-pills" id="testInfoPills"></div>
 
-      <input class="name-input" type="text" id="participantName" placeholder="Apna naam likho..." maxlength="40" oninput="clearNameError()">
-      <div class="name-error" id="nameError">⚠️ Ye naam allowed nahi hai. Sahi naam likho.</div>
+      <input class="name-input" type="text" id="participantName" placeholder="Enter your name..." maxlength="40" oninput="clearNameError()">
+      <div style="margin-top:10px;">
+        <input class="name-input" type="number" id="phoneLast4" placeholder="Date of Birth (DDMM) e.g. 25 March → 2503" maxlength="4" oninput="clearNameError()" style="text-align:center;">
+      </div>
+      <div class="name-error" id="nameError">⚠️ This name is not allowed. Please enter a valid name.</div>
 
       <button class="btn-join" id="btnJoin" onclick="joinTest()">Join Test →</button>
     </div>
@@ -311,12 +329,12 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
   <div class="wait-screen">
     <div class="wait-card">
       <div class="wait-icon">⏳</div>
-      <div class="wait-title">Test shuru hone wala hai!</div>
+      <div class="wait-title">Test is about to begin!</div>
       <div class="countdown-box">
         <div class="countdown-label">TEST SHURU HOGA</div>
         <div class="countdown-time" id="countdownTime">--:--:--</div>
       </div>
-      <div class="wait-sub">Ye page khula rakho. Test automatically shuru ho jayega.</div>
+      <div class="wait-sub">Keep this page open. The test will start automatically.</div>
     </div>
   </div>
 </div>
@@ -326,8 +344,8 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
   <div class="ended-screen">
     <div class="ended-card">
       <div style="font-size:3rem;margin-bottom:16px;">⏰</div>
-      <div style="font-size:1.1rem;font-weight:800;color:#111827;margin-bottom:8px;">Test khatam ho gaya</div>
-      <div style="font-size:0.82rem;color:#64748b;line-height:1.6;">Ye live test schedule khatam ho chuka hai. Admin se naye test ke liye poochho.</div>
+      <div style="font-size:1.1rem;font-weight:800;color:#111827;margin-bottom:8px;">Test has ended</div>
+      <div style="font-size:0.82rem;color:#64748b;line-height:1.6;">This live test has ended. Contact admin for new tests.</div>
       <a href="index.html" style="display:inline-block;margin-top:20px;background:#0ea5e9;color:#fff;padding:12px 28px;border-radius:10px;font-weight:700;text-decoration:none;">← Home</a>
     </div>
   </div>
@@ -424,7 +442,7 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
   <div class="pause-box">
     <div class="pause-icon">⏸</div>
     <div class="pause-title">Test Paused</div>
-    <div class="pause-sub">Aapka progress save ho gaya hai.<br>Sirf aapka device resume kar sakta hai.</div>
+    <div class="pause-sub">Your progress has been saved.<br>Only your device can resume this test.</div>
     <button class="pause-resume-btn" onclick="resumeTest()">▶ Resume Test</button>
     <div class="pause-saved-badge" id="pauseSavedBadge">✅ Auto-saved</div>
   </div>
@@ -468,20 +486,20 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
     <div id="lbList" style="padding-bottom:16px;"></div>
   </div>
 
-  <!-- Solutions Tab -->
-  <div id="rtabSolutions" style="display:none;flex-direction:column;flex:1;">
+  <!-- Solutions Tab — Testbook Style Question Grid -->
+  <div id="rtabSolutions" style="display:none;flex-direction:column;flex:1;overflow-y:auto;">
     <div class="sol-filter-row">
       <button class="a-tab active" onclick="setSolFilter('all')">All</button>
       <button class="a-tab" onclick="setSolFilter('correct')">✅ Correct</button>
       <button class="a-tab" onclick="setSolFilter('wrong')">❌ Wrong</button>
       <button class="a-tab" onclick="setSolFilter('skip')">⏭ Skipped</button>
     </div>
-    <div class="sol-body" id="solBody"></div>
-    <div class="sol-nav">
-      <button class="sol-nav-btn" onclick="solPrev()">← Prev</button>
-      <span class="sol-counter" id="solCounter">1 / 1</span>
-      <button class="sol-nav-btn next-btn" onclick="solNext()">Next →</button>
+    <div class="review-legend">
+      <div class="review-legend-item"><div class="review-legend-dot" style="background:#dcfce7;border:1.5px solid #16a34a;"></div> Correct</div>
+      <div class="review-legend-item"><div class="review-legend-dot" style="background:#fee2e2;border:1.5px solid #dc2626;"></div> Wrong</div>
+      <div class="review-legend-item"><div class="review-legend-dot" style="background:#f1f5f9;border:1.5px solid #cbd5e1;"></div> Skipped</div>
     </div>
+    <div class="review-q-grid" id="reviewQGrid"></div>
   </div>
 
   <div class="result-btns">
@@ -493,6 +511,41 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
   </div>
 </div>
 
+<!-- ══ REVIEW OVERLAY (Testbook Style) ══ -->
+<div class="quiz-overlay" id="reviewOverlay" style="display:none;flex-direction:column;">
+  <div class="review-header">
+    <button class="review-back-btn" onclick="closeReview()">← Results</button>
+    <div class="review-title" id="reviewTestTitle">Solution Review</div>
+    <div class="review-counter" id="reviewCounter">1 / 1</div>
+  </div>
+  <div class="quiz-progress"><div class="quiz-progress-fill" id="reviewProgressFill" style="width:0%"></div></div>
+  <div class="nta-body" style="flex:1;overflow:hidden;">
+    <div class="nta-left">
+      <div class="marks-bar" id="reviewStatusBar"></div>
+      <div class="quiz-body">
+        <div class="q-number" id="reviewQNum">Question 1</div>
+        <div class="q-text" id="reviewQText"></div>
+        <div class="options-list" id="reviewOptions"></div>
+        <div class="explanation-box show" id="reviewExplanation" style="display:none;"></div>
+      </div>
+      <div class="quiz-footer">
+        <div class="quiz-nav">
+          <button class="btn-prev" onclick="reviewPrev()">← Prev</button>
+          <button class="btn-next" onclick="reviewNext()">Next →</button>
+        </div>
+      </div>
+    </div>
+    <div class="nta-sidebar" id="reviewSidebar">
+      <div class="nta-legend">
+        <div class="legend-row"><div class="ld-dot ld-green">✓</div> Correct</div>
+        <div class="legend-row"><div class="ld-dot ld-red">✗</div> Wrong</div>
+        <div class="legend-row"><div class="ld-dot ld-grey">—</div> Skipped</div>
+      </div>
+      <div class="q-nav-dots" id="reviewDots"></div>
+    </div>
+  </div>
+</div>
+
 <!-- SAVE TO ACCOUNT MODAL -->
 <div class="modal-overlay-save" id="saveModal">
   <div class="save-modal-box">
@@ -500,7 +553,7 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
     <div style="text-align:center;margin-bottom:20px;">
       <div style="font-size:2.5rem;margin-bottom:8px;">💾</div>
       <div style="font-size:1rem;font-weight:800;color:#111827;">Result Save Karo</div>
-      <div style="font-size:0.8rem;color:#64748b;margin-top:4px;">Apne account mein login karo ya naya account banao</div>
+      <div style="font-size:0.8rem;color:#64748b;margin-top:4px;">Login or create a new account</div>
     </div>
 
     <div id="saveModalContent">
@@ -514,11 +567,11 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
       <div id="saveLoginForm">
         <div class="save-input-group">
           <label>Email</label>
-          <input type="email" id="saveEmail" placeholder="apna email daalo" class="save-input">
+          <input type="email" id="saveEmail" placeholder="Enter your email" class="save-input">
         </div>
         <div class="save-input-group">
           <label>Password</label>
-          <input type="password" id="savePassword" placeholder="password daalo" class="save-input">
+          <input type="password" id="savePassword" placeholder="Enter password" class="save-input">
         </div>
         <div class="save-error" id="saveError"></div>
         <button class="save-btn-primary" id="saveBtnLogin" onclick="doLogin()">🔑 Login & Save</button>
@@ -528,11 +581,11 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
       <div id="saveSignupForm" style="display:none;">
         <div class="save-input-group">
           <label>Full Name</label>
-          <input type="text" id="signupName" placeholder="apna naam daalo" class="save-input">
+          <input type="text" id="signupName" placeholder="Enter your name" class="save-input">
         </div>
         <div class="save-input-group">
           <label>Email</label>
-          <input type="email" id="signupEmail" placeholder="apna email daalo" class="save-input">
+          <input type="email" id="signupEmail" placeholder="Enter your email" class="save-input">
         </div>
         <div class="save-input-group">
           <label>Password</label>
@@ -547,7 +600,7 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
     <div id="saveSuccessContent" style="display:none;text-align:center;padding:20px 0;">
       <div style="font-size:3rem;margin-bottom:12px;">🎉</div>
       <div style="font-size:1rem;font-weight:800;color:#111827;margin-bottom:6px;">Saved!</div>
-      <div style="font-size:0.82rem;color:#64748b;" id="saveSuccessMsg">Result aapke account mein save ho gaya.</div>
+      <div style="font-size:0.82rem;color:#64748b;" id="saveSuccessMsg">Your result has been saved to your account.</div>
       <button class="save-btn-primary" style="margin-top:16px;background:#16a34a;" onclick="window.location.href='dashboard.html'">Dashboard dekho →</button>
     </div>
   </div>
@@ -584,6 +637,7 @@ let answers = {};
 let isPaused = false;
 let autoSaveInterval = null;
 let deviceFingerprint = '';
+let phoneLast4 = '';
 let qStatus = {};
 let timeLeft = 0;
 let timerInterval = null;
@@ -596,6 +650,8 @@ let solFilter = 'all';
 let solIdx = 0;
 let solFiltered = [];
 let posMarking = 2, negMarking = 0.5;
+let timePerQuestion = {}; // { qIndex: seconds }
+let qStartTime = null;    // when current question was opened
 
 // ── SECTIONS ──
 let sections = [];       // [{name, label, indices:[]}]
@@ -680,7 +736,7 @@ function pauseTest() {
   clearInterval(timerInterval);
   saveProgress();
   document.getElementById('pauseOverlay').classList.add('show');
-  document.getElementById('pauseSavedBadge').textContent = '✅ Progress save ho gaya — ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('pauseSavedBadge').textContent = '✅ Progress saved at ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
 }
 
 function resumeTest() {
@@ -733,11 +789,17 @@ function clearNameError() { document.getElementById('nameError').classList.remov
 
 async function joinTest() {
   const nameInput = document.getElementById('participantName').value.trim();
-  if (!nameInput) { showNameError('Naam toh likho bhai!'); return; }
-  if (nameInput.length < 2) { showNameError('Naam thoda lamba likho.'); return; }
-  if (containsAbusive(nameInput)) { showNameError('⚠️ Ye naam allowed nahi hai. Sahi naam likho.'); return; }
+  if (!nameInput) { showNameError('Please enter your name!'); return; }
+  if (nameInput.length < 2) { showNameError('Name is too short.'); return; }
+  if (containsAbusive(nameInput)) { showNameError('⚠️ This name is not allowed. Please enter a valid name.'); return; }
+
+  const phone4Input = document.getElementById('phoneLast4').value.trim();
+  if (!phone4Input || phone4Input.length !== 4 || !/^\d{4}$/.test(phone4Input)) {
+    showNameError('Enter valid Date of Birth! (DDMM format, e.g. 2503)'); return;
+  }
 
   participantName = nameInput;
+  phoneLast4 = phone4Input;
   document.getElementById('btnJoin').disabled = true;
   document.getElementById('btnJoin').innerHTML = '<span class="spinner"></span> Joining...';
 
@@ -746,19 +808,19 @@ async function joinTest() {
     .select('*').eq('live_test_id', liveTest.id).order('q_order', { ascending: true });
 
   if (qErr || !qs || qs.length === 0) {
-    showNameError('Questions load nahi hue. Dobara try karo.');
+    showNameError('Questions could not be loaded. Please try again.');
     document.getElementById('btnJoin').disabled = false;
     document.getElementById('btnJoin').textContent = 'Join Test →';
     return;
   }
   questions = qs;
 
-  // ── Check if already submitted (same device + same name) ──
+  // ── Check if already submitted (same name + DOB) ──
   const { data: prevAttempt } = await sb.from('live_test_attempts')
     .select('id, score, correct, wrong, skipped, answers, submitted_at')
     .eq('live_test_id', liveTest.id)
     .eq('participant_name', participantName)
-    .eq('device_fingerprint', deviceFingerprint)
+    .eq('dob4', phoneLast4)
     .not('submitted_at', 'is', null)
     .order('submitted_at', { ascending: false })
     .limit(1)
@@ -933,7 +995,7 @@ function startTimer() {
           // Move to next section automatically
           const nextSec = sections[currentSection + 1];
           const nextSecName = nextSec ? nextSec.label : 'agla section';
-          alert(`⏰ Section ka time khatam!\n\n"${nextSecName}" ab shuru ho raha hai.`);
+          alert(`⏰ Section time is up!\n\n"${nextSecName}" is now starting.`);
           forceMoveNextSection();
         }
       }
@@ -982,6 +1044,13 @@ function updateTimerDisplay() {
 
 // ── QUESTION DISPLAY ──
 function showQuestion(idx) {
+  // Save time spent on previous question
+  if (qStartTime !== null && currentQ !== null) {
+    const elapsed = Math.floor((Date.now() - qStartTime) / 1000);
+    timePerQuestion[currentQ] = (timePerQuestion[currentQ] || 0) + elapsed;
+  }
+  qStartTime = Date.now();
+
   currentQ = idx;
   const q = questions[idx];
   if (!q) return;
@@ -1335,7 +1404,7 @@ document.addEventListener('click',      function(e) { closePanelIfOutside(e.targ
 document.addEventListener('touchstart', function(e) { closePanelIfOutside(e.target); }, { passive: true });
 
 function confirmExit() {
-  if (confirm('Test chod dena chahte ho? Progress save nahi hogi.')) {
+  if (confirm('Are you sure you want to exit? Progress will not be saved.')) {
     clearInterval(timerInterval);
     window.location.href = 'index.html';
   }
@@ -1378,6 +1447,13 @@ async function submitQuiz(autoSubmit = false) {
   document.getElementById('quizOverlay').classList.remove('show');
   document.getElementById('pauseOverlay').classList.remove('show');
 
+  // Save time for last question
+  if (qStartTime !== null && currentQ !== null) {
+    const elapsed = Math.floor((Date.now() - qStartTime) / 1000);
+    timePerQuestion[currentQ] = (timePerQuestion[currentQ] || 0) + elapsed;
+    qStartTime = null;
+  }
+
   // Calculate score
   let correct = 0, wrong = 0, skipped = 0, score = 0;
   questions.forEach((q, i) => {
@@ -1400,7 +1476,9 @@ async function submitQuiz(autoSubmit = false) {
       answers:            JSON.stringify(answers),
       submitted_at:       new Date().toISOString(),
       is_registered:      false,
-      device_fingerprint: deviceFingerprint
+      device_fingerprint: deviceFingerprint,
+      dob4:               phoneLast4,
+      time_per_question:  JSON.stringify(timePerQuestion)
     }).select('id').single();
     if (attempt) attemptId = attempt.id;
   } catch(e) { console.error('Save error:', e); }
@@ -1528,76 +1606,181 @@ async function loadLeaderboard(myScore) {
     }).join('');
 
     el.innerHTML = all.length === 0
-      ? '<div style="text-align:center;padding:24px;color:#94a3b8;font-size:0.82rem;">Abhi koi result nahi</div>'
+      ? '<div style="text-align:center;padding:24px;color:#94a3b8;font-size:0.82rem;">No results yet</div>'
       : podiumHtml + restHtml;
 
   } catch(e) {
-    el.innerHTML = '<div style="text-align:center;padding:20px;color:#dc2626;font-size:0.82rem;">Leaderboard load nahi hua</div>';
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:#dc2626;font-size:0.82rem;">Could not load leaderboard</div>';
   }
 }
 
-// ── SOLUTIONS ──
+// ── SOLUTIONS (Testbook Style) ──
+let reviewFiltered = []; // filtered question indices
+let reviewIdx = 0;       // current index in reviewFiltered
+
 function setSolFilter(filter) {
   document.querySelectorAll('.a-tab').forEach(b => b.classList.remove('active'));
   event.target.classList.add('active');
   solFilter = filter;
-  solIdx = 0;
-  buildSolList();
-  showSolution();
+  buildReviewGrid();
 }
 
-function buildSolList() {
-  solFiltered = questions.map((q, i) => ({ q, i, ans: answers[i] })).filter(({ q, ans }) => {
+function buildSolList() {} // kept for compatibility
+
+function buildReviewGrid() {
+  // Build filtered list
+  reviewFiltered = questions.map((q, i) => {
     const correctAns = (q.correct_answer || '').toString().trim().toUpperCase();
+    const ans = answers[i];
+    let status = 'skip';
+    if (ans) status = ans.toUpperCase() === correctAns ? 'correct' : 'wrong';
+    return { q, i, ans, status };
+  }).filter(({ status }) => {
     if (solFilter === 'all') return true;
-    if (solFilter === 'correct') return ans && ans.toUpperCase() === correctAns;
-    if (solFilter === 'wrong')   return ans && ans.toUpperCase() !== correctAns;
-    if (solFilter === 'skip')    return !ans;
-    return true;
+    return status === solFilter;
   });
-}
 
-function showSolution() {
-  const el = document.getElementById('solBody');
-  if (solFiltered.length === 0) {
-    el.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">Koi question nahi is filter mein</div>';
-    document.getElementById('solCounter').textContent = '0 / 0';
+  const grid = document.getElementById('reviewQGrid');
+  if (reviewFiltered.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#94a3b8;font-size:0.82rem;">No questions in this filter</div>';
     return;
   }
 
-  const item = solFiltered[solIdx];
-  const { q, i, ans } = item;
-  const correctAns = (q.correct_answer || '').toString().trim().toUpperCase();
-  const correct = ans && ans.toUpperCase() === correctAns;
-  const skipped = !ans;
-  const statusCls = skipped ? 'skip' : correct ? 'correct' : 'wrong';
-  const statusLbl = skipped ? '⏭ Skipped' : correct ? '✅ Correct' : '❌ Wrong';
-
-  el.innerHTML = `<div class="ana-q-card">
-    <div class="ana-q-header">
-      <span class="ana-status-badge ${statusCls}">${statusLbl}</span>
-      <span class="ana-q-num">Q${i+1}</span>
-    </div>
-    <div class="ana-q-text">${esc(getLangText(q.question_text))}</div>
-    <div class="ana-opts">
-      ${['A','B','C','D'].map(l => {
-        const val = getLangText(q['option_' + l.toLowerCase()]);
-        const isCorrect = l === correctAns;
-        const isWrong   = l === (ans||'').toUpperCase() && !isCorrect;
-        return `<div class="ana-opt ${isCorrect ? 'correct' : isWrong ? 'wrong' : ''}">
-          <span class="ana-opt-label">${l}</span>
-          <span>${esc(val)}</span>
-        </div>`;
-      }).join('')}
-    </div>
-    ${q.explanation ? `<div class="ana-explanation">💡 <strong>Explanation:</strong> ${esc(q.explanation)}</div>` : ''}
-  </div>`;
-
-  document.getElementById('solCounter').textContent = `${solIdx + 1} / ${solFiltered.length}`;
+  grid.innerHTML = reviewFiltered.map(({ i, status }, idx) =>
+    `<button class="review-q-btn ${status}" onclick="openReview(${idx})" id="rqb_${idx}">
+      ${i + 1}
+    </button>`
+  ).join('');
 }
 
-function solNext() { if (solIdx < solFiltered.length - 1) { solIdx++; showSolution(); } }
-function solPrev() { if (solIdx > 0) { solIdx--; showSolution(); } }
+let allAttemptsForAccuracy = []; // for question-wise accuracy
+
+function openReview(idx) {
+  reviewIdx = idx;
+  const overlay = document.getElementById('reviewOverlay');
+  overlay.style.display = 'flex';
+  document.getElementById('reviewTestTitle').textContent = liveTest?.name || 'Solution Review';
+  renderReviewSidebar();
+  showReviewQuestion();
+
+  // Fetch all attempts for question accuracy (once)
+  if (allAttemptsForAccuracy.length === 0 && liveTest) {
+    sb.from('live_test_attempts')
+      .select('answers')
+      .eq('live_test_id', liveTest.id)
+      .not('submitted_at', 'is', null)
+      .then(({ data }) => {
+        if (data) {
+          allAttemptsForAccuracy = data.map(a => {
+            try { return JSON.parse(a.answers || '{}'); } catch(e) { return {}; }
+          });
+          showReviewQuestion(); // re-render with accuracy
+        }
+      });
+  }
+}
+
+function closeReview() {
+  document.getElementById('reviewOverlay').style.display = 'none';
+}
+
+function renderReviewSidebar() {
+  const dots = document.getElementById('reviewDots');
+  dots.innerHTML = reviewFiltered.map(({ i, status }, idx) =>
+    `<div class="q-dot ${status === 'correct' ? 'answered' : status === 'wrong' ? 'not-answered' : ''} ${idx === reviewIdx ? 'current' : ''}"
+      onclick="reviewJump(${idx})">${i + 1}</div>`
+  ).join('');
+}
+
+function reviewJump(idx) {
+  reviewIdx = idx;
+  showReviewQuestion();
+  renderReviewSidebar();
+}
+
+function showReviewQuestion() {
+  const item = reviewFiltered[reviewIdx];
+  if (!item) return;
+  const { q, i, ans, status } = item;
+  const correctAns = (q.correct_answer || '').toString().trim().toUpperCase();
+
+  // Counter & progress
+  document.getElementById('reviewCounter').textContent = `${reviewIdx + 1} / ${reviewFiltered.length}`;
+  const pct = Math.round(((reviewIdx + 1) / reviewFiltered.length) * 100);
+  document.getElementById('reviewProgressFill').style.width = pct + '%';
+
+  // Status bar with time + accuracy
+  const statusLabel = status === 'correct' ? '✅ Correct' : status === 'wrong' ? '❌ Wrong' : '⏭ Skipped';
+  const statusColor = status === 'correct' ? '#15803d' : status === 'wrong' ? '#dc2626' : '#64748b';
+
+  // Time taken
+  const secs = timePerQuestion[i] || 0;
+  const timeStr = secs >= 60
+    ? `${Math.floor(secs/60)}m ${secs%60}s`
+    : `${secs}s`;
+
+  // Class accuracy for this question
+  let accuracyHtml = '';
+  if (allAttemptsForAccuracy.length > 0) {
+    const correctAnsUp = correctAns;
+    const total = allAttemptsForAccuracy.length;
+    const correctCount = allAttemptsForAccuracy.filter(a => {
+      const studentAns = (a[i] || '').toString().trim().toUpperCase();
+      return studentAns === correctAnsUp;
+    }).length;
+    const pct = Math.round((correctCount / total) * 100);
+    accuracyHtml = `<span style="margin-left:10px;color:#0284c7;font-weight:700;">👥 ${pct}% students correct</span>`;
+  }
+
+  document.getElementById('reviewStatusBar').innerHTML =
+    `<span style="color:${statusColor};font-weight:700;">Q${i+1} — ${statusLabel}</span>
+     <span style="margin-left:10px;color:#475569;">⏱ ${timeStr}</span>
+     ${accuracyHtml}`;
+
+  // Question text
+  document.getElementById('reviewQNum').textContent = `Question ${i + 1}`;
+  document.getElementById('reviewQText').textContent = getLangText(q.question_text);
+
+  // Options
+  document.getElementById('reviewOptions').innerHTML = ['A','B','C','D'].map(l => {
+    const val = getLangText(q['option_' + l.toLowerCase()]);
+    const isCorrect = l === correctAns;
+    const isWrong   = l === (ans||'').toUpperCase() && !isCorrect;
+    return `<button class="option-btn ${isCorrect ? 'correct' : isWrong ? 'wrong' : ''}" style="cursor:default;">
+      <span class="option-label">${l}</span>
+      <span>${esc(val)}</span>
+    </button>`;
+  }).join('');
+
+  // Explanation
+  const expEl = document.getElementById('reviewExplanation');
+  if (q.explanation) {
+    expEl.style.display = 'block';
+    expEl.innerHTML = `💡 <strong>Explanation:</strong> ${esc(q.explanation)}`;
+  } else {
+    expEl.style.display = 'none';
+  }
+
+  // Highlight current in grid
+  document.querySelectorAll('.review-q-btn').forEach((b, idx) => {
+    b.classList.toggle('current', idx === reviewIdx);
+  });
+
+  // Sidebar dots update
+  renderReviewSidebar();
+}
+
+function reviewNext() {
+  if (reviewIdx < reviewFiltered.length - 1) { reviewIdx++; showReviewQuestion(); }
+}
+function reviewPrev() {
+  if (reviewIdx > 0) { reviewIdx--; showReviewQuestion(); }
+}
+
+// Keep old functions for tab switch compatibility
+function showSolution() {}
+function solNext() {}
+function solPrev() {}
 
 // ── RESULT TABS ──
 function switchResultTab(tab) {
@@ -1605,7 +1788,7 @@ function switchResultTab(tab) {
   event.target.classList.add('active');
   document.getElementById('rtabLeaderboard').style.display = tab === 'leaderboard' ? 'block' : 'none';
   document.getElementById('rtabSolutions').style.display   = tab === 'solutions'   ? 'flex'  : 'none';
-  if (tab === 'solutions') { buildSolList(); showSolution(); }
+  if (tab === 'solutions') { buildReviewGrid(); }
 }
 
 // ── SHARE ──
@@ -1656,7 +1839,7 @@ async function doLogin() {
   const errEl    = document.getElementById('saveError');
   const btn      = document.getElementById('saveBtnLogin');
 
-  if (!email || !password) { errEl.textContent = 'Email aur password daalo!'; return; }
+  if (!email || !password) { errEl.textContent = 'Please enter email and password!'; return; }
   btn.disabled = true; btn.textContent = 'Logging in...';
   errEl.textContent = '';
 
@@ -1695,7 +1878,7 @@ async function doSignup() {
 
 async function linkAttemptToUser(userId, email) {
   if (!attemptId) {
-    showSaveSuccess('Result save ho gaya! Dashboard pe dekho.');
+    showSaveSuccess('Result saved! Check your dashboard.');
     return;
   }
 
@@ -1710,7 +1893,7 @@ async function linkAttemptToUser(userId, email) {
     return;
   }
 
-  showSaveSuccess(`✅ Saved! ${email} ke account mein result link ho gaya.`);
+  showSaveSuccess(`✅ Saved! ${email} account linked with result successfully.`);
   document.getElementById('btnSaveAccount').textContent = '✅ Saved to Account';
   document.getElementById('btnSaveAccount').classList.add('saved');
 }
