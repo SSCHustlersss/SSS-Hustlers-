@@ -516,7 +516,13 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
   <div class="review-header">
     <button class="review-back-btn" onclick="closeReview()">← Results</button>
     <div class="review-title" id="reviewTestTitle">Solution Review</div>
-    <div class="review-counter" id="reviewCounter">1 / 1</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="lang-toggle" id="reviewLangToggle">
+        <button class="lang-btn active" id="reviewLangEN" onclick="setReviewLang('en')">EN</button>
+        <button class="lang-btn" id="reviewLangHI" onclick="setReviewLang('hi')">HI</button>
+      </div>
+      <div class="review-counter" id="reviewCounter">1 / 1</div>
+    </div>
   </div>
   <div class="quiz-progress"><div class="quiz-progress-fill" id="reviewProgressFill" style="width:0%"></div></div>
   <div class="nta-body" style="flex:1;overflow:hidden;">
@@ -525,6 +531,7 @@ body{font-family:'Poppins',sans-serif;background:#f0f9ff;color:#111827;min-heigh
       <div class="quiz-body">
         <div class="q-number" id="reviewQNum">Question 1</div>
         <div class="q-text" id="reviewQText"></div>
+        <img id="reviewQImage" style="display:none;max-width:100%;border-radius:10px;margin:10px 0 6px;border:1.5px solid #e0f2fe;">
         <div class="options-list" id="reviewOptions"></div>
         <div class="explanation-box show" id="reviewExplanation" style="display:none;"></div>
       </div>
@@ -950,7 +957,6 @@ function startQuiz() {
   currentSectionTimer = sectionTimers[0] || timeLeft;
   if (hasSectionTimer) timeLeft = currentSectionTimer;
   showQuestion(0);
-  qStartTime = Date.now();
   buildDots();
   startTimer();
   // Auto-save every 10 seconds
@@ -1662,6 +1668,11 @@ function openReview(idx) {
   const overlay = document.getElementById('reviewOverlay');
   overlay.style.cssText = 'display:flex !important; flex-direction:column; position:fixed; inset:0; top:0; left:0; right:0; bottom:0; z-index:9999; background:#f0f9ff; overflow:hidden;';
   document.getElementById('reviewTestTitle').textContent = liveTest?.name || 'Solution Review';
+  // Lang toggle
+  const rlt = document.getElementById('reviewLangToggle');
+  if (rlt) rlt.style.display = hasHindi ? 'flex' : 'none';
+  document.getElementById('reviewLangEN')?.classList.toggle('active', currentLang === 'en');
+  document.getElementById('reviewLangHI')?.classList.toggle('active', currentLang === 'hi');
   renderReviewSidebar();
   showReviewQuestion();
 
@@ -1680,6 +1691,13 @@ function openReview(idx) {
         }
       });
   }
+}
+
+function setReviewLang(lang) {
+  currentLang = lang;
+  document.getElementById('reviewLangEN')?.classList.toggle('active', lang === 'en');
+  document.getElementById('reviewLangHI')?.classList.toggle('active', lang === 'hi');
+  showReviewQuestion();
 }
 
 function closeReview() {
@@ -1741,13 +1759,22 @@ function showReviewQuestion() {
      <span style="margin-left:10px;color:#475569;">⏱ ${timeStr}</span>
      ${accuracyHtml}`;
 
-  // Question text
+  // Question text - hamesha full text dikhao (bilingual)
   document.getElementById('reviewQNum').textContent = `Question ${i + 1}`;
-  document.getElementById('reviewQText').textContent = getLangText(q.question_text);
+  document.getElementById('reviewQText').textContent = (q.question_text || '').trim();
 
-  // Options
+  // Image
+  const reviewImg = document.getElementById('reviewQImage');
+  if (q.image_url) {
+    reviewImg.src = q.image_url;
+    reviewImg.style.display = 'block';
+  } else {
+    reviewImg.style.display = 'none';
+  }
+
+  // Options - hamesha full text
   document.getElementById('reviewOptions').innerHTML = ['A','B','C','D'].map(l => {
-    const val = getLangText(q['option_' + l.toLowerCase()]);
+    const val = (q['option_' + l.toLowerCase()] || '').trim();
     const isCorrect = l === correctAns;
     const isWrong   = l === (ans||'').toUpperCase() && !isCorrect;
     return `<button class="option-btn ${isCorrect ? 'correct' : isWrong ? 'wrong' : ''}" style="cursor:default;">
