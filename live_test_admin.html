@@ -2066,7 +2066,7 @@ async function loadAnalytics(){
   el.innerHTML='<div class="empty-state"><span class="spinner"></span> Loading analytics...</div>';
   const [{data:attempts},{data:questions}]=await Promise.all([
     sb.from('live_test_attempts').select('*').eq('live_test_id',testId),
-    sb.from('live_test_questions').select('id,q_order,correct_answer,difficulty').eq('live_test_id',testId).order('q_order')
+    sb.from('live_test_questions').select('id,q_order,correct_answer,difficulty,question_text').eq('live_test_id',testId).order('q_order')
   ]);
   if (!attempts||!attempts.length){el.innerHTML='<div class="empty-state"><div>📊</div>Abhi koi attempts nahi hue is test mein.</div>';return;}
   const submitted=attempts.filter(a=>a.submitted_at);
@@ -2074,80 +2074,283 @@ async function loadAnalytics(){
   const maxScore=submitted.length>0?Math.max(...submitted.map(a=>a.score)):0;
   const minScore=submitted.length>0?Math.min(...submitted.map(a=>a.score)):0;
   const totalQ=questions?questions.length:0;
-  // Difficulty breakdown
-  const diffCounts={easy:0,medium:0,hard:0};
-  if (questions) questions.forEach(q=>{if (diffCounts[q.difficulty]!==undefined) diffCounts[q.difficulty]++;});
+  const n=submitted.length;
+
   // Score distribution
-  const scoreBuckets=[0,0,0,0,0]; // 0-20%,20-40%,40-60%,60-80%,80-100%
+  const scoreBuckets=[0,0,0,0,0];
   submitted.forEach(a=>{
     const pct=(a.score/(totalQ*2))*100;
     const idx=Math.min(Math.floor(pct/20),4);
     scoreBuckets[idx]++;
   });
+
+  // Per-question analytics from answers jsonb
+  // answers = {"0":"A","1":"B",...} key is 0-indexed (q_order - 1)
+  const qStats={};
+  if(questions) questions.forEach(q=>{
+    qStats[q.q_order]={
+      q_order:q.q_order,
+      question_text:q.question_text,
+      correct_answer:q.correct_answer,
+      opts:{A:0,B:0,C:0,D:0},
+      correct_count:0,
+      wrong_count:0,
+      skip_count:0,
+      total:n
+    };
+  });
+
+  submitted.forEach(a=>{
+    let ans={};
+    try{ ans=typeof a.answers==='string'?JSON.parse(a.answers):(a.answers||{}); }catch(e){}
+    if(!questions) return;
+    questions.forEach(q=>{
+      const key=String(q.q_order-1);
+      const chosen=ans[key];
+      const st=qStats[q.q_order];
+      if(!st) return;
+      if(!chosen||chosen===''){
+        st.skip_count++;
+      } else {
+        if(st.opts[chosen]!==undefined) st.opts[chosen]++;
+        if(chosen===q.correct_answer) st.correct_count++;
+        else st.wrong_count++;
+      }
+    });
+  });
+
+  // Store for PDF
+  const testName=document.getElementById('analyticsTestSelect').options[document.getElementById('analyticsTestSelect').selectedIndex].text;
+  window._lastAnalyticsData={submitted,questions,qStats,testId,testName,avg,maxScore,minScore,totalQ,n,scoreBuckets};
+
+  const qArr=Object.values(qStats);
+  const withAcc=qArr.map(q=>({...q,accuracy:n>0?Math.round(q.correct_count/n*100):0}));
+  const toughest=[...withAcc].sort((a,b)=>a.accuracy-b.accuracy).slice(0,5);
+  const easiest=[...withAcc].sort((a,b)=>b.accuracy-a.accuracy).slice(0,5);
+  const mostSkipped=[...withAcc].sort((a,b)=>b.skip_count-a.skip_count).slice(0,5);
+
   el.innerHTML=`
   <div class="analytics-grid">
     <div class="analytics-card">
       <div class="ac-title">📊 Overview</div>
       <div class="info-row">👥 Total Participants: <strong>${attempts.length}</strong></div>
-      <div class="info-row">✅ Submitted: <strong>${submitted.length}</strong></div>
-      <div class="info-row">⏳ Not Submitted: <strong>${attempts.length-submitted.length}</strong></div>
+      <div class="info-row">✅ Submitted: <strong>${n}</strong></div>
+      <div class="info-row">⏳ Not Submitted: <strong>${attempts.length-n}</strong></div>
       <div class="info-row">📈 Avg Score: <strong>${avg}</strong></div>
-      <div class="info-row">🏆 Highest Score: <strong>${maxScore}</strong></div>
-      <div class="info-row">📉 Lowest Score: <strong>${minScore}</strong></div>
+      <div class="info-row">🏆 Highest: <strong>${maxScore}</strong></div>
+      <div class="info-row">📉 Lowest: <strong>${minScore}</strong></div>
     </div>
     <div class="analytics-card">
       <div class="ac-title">📊 Score Distribution</div>
-      ${['0–20%','20–40%','40–60%','60–80%','80–100%'].map((lbl,i)=>{
-        const pct=submitted.length?Math.round(scoreBuckets[i]/submitted.length*100):0;
-        return `<div class="q-accuracy-bar">
-          <span class="q-acc-label" style="width:50px;font-size:0.68rem;">${lbl}</span>
-          <div class="q-acc-track"><div class="q-acc-fill" style="width:${pct}%;background:#0ea5e9;"></div></div>
-          <span class="q-acc-pct" style="color:#0ea5e9;">${scoreBuckets[i]}</span>
-        </div>`;
-      }).join('')}
+      ${["0–20%","20–40%","40–60%","60–80%","80–100%"].map((lbl,i)=>{
+        const pct=n?Math.round(scoreBuckets[i]/n*100):0;
+        return "<div class=\"q-accuracy-bar\">"+
+          "<span class=\"q-acc-label\" style=\"width:50px;font-size:0.68rem;\">"+lbl+"</span>"+
+          "<div class=\"q-acc-track\"><div class=\"q-acc-fill\" style=\"width:"+pct+"%;background:#0ea5e9;\"></div></div>"+
+          "<span class=\"q-acc-pct\" style=\"color:#0ea5e9;\">"+scoreBuckets[i]+"</span>"+
+          "</div>";
+      }).join("")}
     </div>
     <div class="analytics-card">
-      <div class="ac-title">🎯 Difficulty Breakdown</div>
-      ${Object.entries(diffCounts).map(([diff,cnt])=>{
-        const colors={easy:'#16a34a',medium:'#b45309',hard:'#dc2626'};
-        const pct=totalQ?Math.round(cnt/totalQ*100):0;
-        return `<div class="q-accuracy-bar">
-          <span class="q-acc-label" style="width:50px;font-size:0.7rem;color:${colors[diff]};text-transform:capitalize;">${diff}</span>
-          <div class="q-acc-track"><div class="q-acc-fill" style="width:${pct}%;background:${colors[diff]};"></div></div>
-          <span class="q-acc-pct" style="color:${colors[diff]};">${cnt}Q</span>
-        </div>`;
-      }).join('')}
+      <div class="ac-title">🔴 Toughest Questions</div>
+      ${toughest.map(q=>
+        "<div class=\"q-accuracy-bar\">"+
+        "<span class=\"q-acc-label\" style=\"width:28px;font-weight:700;color:#dc2626;\">Q"+q.q_order+"</span>"+
+        "<div class=\"q-acc-track\"><div class=\"q-acc-fill\" style=\"width:"+q.accuracy+"%;background:#dc2626;\"></div></div>"+
+        "<span class=\"q-acc-pct\" style=\"color:#dc2626;\">"+q.accuracy+"%</span>"+
+        "</div>"
+      ).join("")}
+    </div>
+    <div class="analytics-card">
+      <div class="ac-title">🟢 Easiest Questions</div>
+      ${easiest.map(q=>
+        "<div class=\"q-accuracy-bar\">"+
+        "<span class=\"q-acc-label\" style=\"width:28px;font-weight:700;color:#16a34a;\">Q"+q.q_order+"</span>"+
+        "<div class=\"q-acc-track\"><div class=\"q-acc-fill\" style=\"width:"+q.accuracy+"%;background:#16a34a;\"></div></div>"+
+        "<span class=\"q-acc-pct\" style=\"color:#16a34a;\">"+q.accuracy+"%</span>"+
+        "</div>"
+      ).join("")}
+    </div>
+    <div class="analytics-card">
+      <div class="ac-title">⏭ Most Skipped Questions</div>
+      ${mostSkipped.map(q=>{
+        const sp=n?Math.round(q.skip_count/n*100):0;
+        return "<div class=\"q-accuracy-bar\">"+
+          "<span class=\"q-acc-label\" style=\"width:28px;font-weight:700;color:#b45309;\">Q"+q.q_order+"</span>"+
+          "<div class=\"q-acc-track\"><div class=\"q-acc-fill\" style=\"width:"+sp+"%;background:#f59e0b;\"></div></div>"+
+          "<span class=\"q-acc-pct\" style=\"color:#b45309;\">"+q.skip_count+" skipped</span>"+
+          "</div>";
+      }).join("")}
     </div>
     <div class="analytics-card">
       <div class="ac-title">🏆 Top 5 Performers</div>
-      ${submitted.sort((a,b)=>b.score-a.score).slice(0,5).map((s,i)=>`
-        <div class="info-row">${i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`} ${s.participant_name}: <strong>${s.score}</strong></div>`).join('')}
+      ${[...submitted].sort((a,b)=>b.score-a.score).slice(0,5).map((s,i)=>
+        "<div class=\"info-row\">"+
+        (i===0?"🥇":i===1?"🥈":i===2?"🥉":"#"+(i+1))+
+        " "+s.participant_name+": <strong>"+s.score+"</strong></div>"
+      ).join("")}
     </div>
   </div>
+
+  <div class="card" style="margin-top:0;">
+    <div class="section-title" style="margin-bottom:12px;">📋 Per-Question Breakdown</div>
+    <div style="overflow-x:auto;">
+      <table class="preview-table">
+        <thead><tr><th>Q#</th><th>Correct</th><th>Accuracy</th><th>A</th><th>B</th><th>C</th><th>D</th><th>Skipped</th></tr></thead>
+        <tbody>
+          ${withAcc.map(q=>{
+            const accColor=q.accuracy>=70?"#16a34a":q.accuracy>=40?"#b45309":"#dc2626";
+            return "<tr>"+
+              "<td><strong>Q"+q.q_order+"</strong></td>"+
+              "<td style=\"font-weight:800;color:#0ea5e9;\">"+q.correct_answer+"</td>"+
+              "<td style=\"font-weight:800;color:"+accColor+"\">"+q.accuracy+"%</td>"+
+              "<td style=\"color:"+(q.correct_answer==="A"?"#16a34a":"#111827")+";font-weight:"+(q.correct_answer==="A"?"800":"400")+"\">"+q.opts.A+"</td>"+
+              "<td style=\"color:"+(q.correct_answer==="B"?"#16a34a":"#111827")+";font-weight:"+(q.correct_answer==="B"?"800":"400")+"\">"+q.opts.B+"</td>"+
+              "<td style=\"color:"+(q.correct_answer==="C"?"#16a34a":"#111827")+";font-weight:"+(q.correct_answer==="C"?"800":"400")+"\">"+q.opts.C+"</td>"+
+              "<td style=\"color:"+(q.correct_answer==="D"?"#16a34a":"#111827")+";font-weight:"+(q.correct_answer==="D"?"800":"400")+"\">"+q.opts.D+"</td>"+
+              "<td style=\"color:#64748b;\">"+q.skip_count+"</td>"+
+              "</tr>";
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <div class="card" style="margin-top:0;">
     <div class="section-title" style="margin-bottom:12px;">📥 Export</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn-sm btn-green" onclick="exportAnalyticsExcel('${testId}')">⬇️ Full Analytics Excel</button>
+      <button class="btn-sm btn-purple" onclick="downloadAnalyticsPDF()">📄 Analytics PDF</button>
     </div>
   </div>`;
 }
 
-async function exportAnalyticsExcel(testId){
-  showToast('Analytics Excel ban raha hai...','');
-  const {data}=await sb.from('live_test_attempts').select('*').eq('live_test_id',testId).order('score',{ascending:false});
-  if (!data||!data.length){showToast('Koi data nahi!','error');return;}
-  const rows=data.map((a,i)=>({
-    Rank:i+1,Name:a.participant_name,Score:a.score,
-    Correct:a.correct,Wrong:a.wrong,Skipped:a.skipped,
-    Submitted:a.submitted_at?'Yes':'No',
-    'Submit Time':a.submitted_at?new Date(a.submitted_at).toLocaleString('en-IN'):'-'
-  }));
-  const ws=XLSX.utils.json_to_sheet(rows);
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'Analytics');
-  XLSX.writeFile(wb,'Test_Analytics.xlsx');
-  showToast('✅ Analytics Excel download ho gaya!','success');
+async function downloadAnalyticsPDF(){
+  const d=window._lastAnalyticsData;
+  if(!d){showToast('Pehle analytics load karo!','error');return;}
+  showToast('Analytics PDF ban raha hai...','');
+  if (!window.jspdf){
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload=res;s.onerror=rej;
+      document.head.appendChild(s);
+    });
+  }
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const PW=210,PH=297;
+  const NAVY=[10,22,40],GOLD=[201,168,76],WHITE=[255,255,255],MED=[200,200,200];
+  let pageNum=0;
+
+  function addHeader(isFirst){
+    pageNum++;
+    doc.setFillColor(...NAVY);
+    doc.rect(0,0,PW,isFirst?48:18,'F');
+    if(isFirst){
+      doc.setFont('helvetica','bold');doc.setFontSize(20);doc.setTextColor(...GOLD);
+      doc.text('SSC HUSTLERS',PW/2,14,{align:'center'});
+      doc.setFontSize(8);doc.setFont('helvetica','normal');
+      doc.text('sschustlers.com',PW/2,20,{align:'center'});
+      doc.setDrawColor(...GOLD);doc.setLineWidth(0.5);doc.line(14,23,PW-14,23);
+      doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(...WHITE);
+      const tn=d.testName.length>50?d.testName.substring(0,49)+'…':d.testName;
+      doc.text(tn,PW/2,31,{align:'center'});
+      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...GOLD);
+      doc.text('Question Analytics Report',PW/2,38,{align:'center'});
+      doc.line(14,42,PW-14,42);
+    } else {
+      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...GOLD);
+      doc.text('SSC HUSTLERS — Question Analytics',PW/2,12,{align:'center'});
+    }
+    doc.setFontSize(7.5);doc.setTextColor(...NAVY);
+    doc.text('SSC Hustlers | sschustlers.com | Keep Hustling! ■ Page '+pageNum,PW/2,PH-6,{align:'center'});
+    doc.setDrawColor(...GOLD);doc.setLineWidth(0.3);doc.line(14,PH-9,PW-14,PH-9);
+  }
+
+  addHeader(true);
+  let y=52;
+
+  // Overview boxes
+  const overviewItems=[
+    ['Total Participants',d.submitted.length+' submitted'],
+    ['Avg Score',d.avg],
+    ['Highest Score',d.maxScore],
+    ['Lowest Score',d.minScore],
+    ['Total Questions',d.totalQ],
+  ];
+  const bw=36,bh=16,gap=3;
+  const startX=14;
+  overviewItems.forEach((item,i)=>{
+    const bx=startX+i*(bw+gap);
+    doc.setFillColor(240,249,255);
+    doc.setDrawColor(186,230,253);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(bx,y,bw,bh,2,2,'FD');
+    doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(14,165,233);
+    doc.text(String(item[1]),bx+bw/2,y+8,{align:'center'});
+    doc.setFont('helvetica','normal');doc.setFontSize(6);doc.setTextColor(100,116,139);
+    doc.text(item[0],bx+bw/2,y+13,{align:'center'});
+  });
+  y+=bh+8;
+
+  // Per-question table header
+  doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...NAVY);
+  doc.text('Per-Question Breakdown',14,y);
+  y+=5;
+
+  const cols=[14,28,75,100,120,134,148,162,176];
+  const headers=['Q#','Question (short)','Accuracy','Correct Ans','A','B','C','D','Skipped'];
+
+  function drawTHeader(yy){
+    doc.setFillColor(...NAVY);
+    doc.rect(14,yy,PW-28,7,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...WHITE);
+    headers.forEach((h,i)=>doc.text(h,cols[i],yy+4.8));
+    return yy+7;
+  }
+  y=drawTHeader(y);
+
+  const qArr=Object.values(d.qStats).sort((a,b)=>a.q_order-b.q_order);
+  qArr.forEach((q,i)=>{
+    if(y>PH-18){doc.addPage();addHeader(false);y=22;y=drawTHeader(y);}
+    const acc=d.n>0?Math.round(q.correct_count/d.n*100):0;
+    const accColor=acc>=70?[22,163,74]:acc>=40?[180,83,9]:[220,38,38];
+    const isEven=i%2===0;
+    doc.setFillColor(isEven?245:255,isEven?245:255,isEven?245:255);
+    doc.rect(14,y,PW-28,7,'F');
+    // Q#
+    doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...NAVY);
+    doc.text('Q'+q.q_order,cols[0],y+4.8);
+    // Short question text
+    doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(71,85,105);
+    const qt=q.question_text?q.question_text.substring(0,28)+(q.question_text.length>28?'…':''):'—';
+    doc.text(qt,cols[1],y+4.8);
+    // Accuracy
+    doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...accColor);
+    doc.text(acc+'%',cols[2],y+4.8);
+    // Correct answer
+    doc.setTextColor(14,165,233);
+    doc.text(q.correct_answer,cols[3],y+4.8);
+    // Options A B C D
+    ['A','B','C','D'].forEach((opt,oi)=>{
+      const isCorrect=opt===q.correct_answer;
+      doc.setTextColor(isCorrect?22:100,isCorrect?163:116,isCorrect?74:139);
+      doc.setFont('helvetica',isCorrect?'bold':'normal');
+      doc.text(String(q.opts[opt]),cols[4+oi],y+4.8);
+    });
+    // Skipped
+    doc.setFont('helvetica','normal');doc.setTextColor(100,116,139);
+    doc.text(String(q.skip_count),cols[8],y+4.8);
+    // Row border
+    doc.setDrawColor(...MED);doc.setLineWidth(0.1);doc.line(14,y+7,PW-14,y+7);
+    y+=7;
+  });
+
+  const safeName=(d.testName||'Analytics').replace(/[^a-zA-Z0-9_\- ]/g,'').substring(0,40);
+  doc.save(safeName+'_Analytics.pdf');
+  showToast('✅ Analytics PDF download ho gaya!','success');
 }
+
 
 // ══════════════════════════════════════════
 // NOTIFICATIONS TAB
