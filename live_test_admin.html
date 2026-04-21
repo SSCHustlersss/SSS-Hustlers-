@@ -2066,7 +2066,7 @@ async function loadAnalytics(){
   el.innerHTML='<div class="empty-state"><span class="spinner"></span> Loading analytics...</div>';
   const [{data:attempts},{data:questions}]=await Promise.all([
     sb.from('live_test_attempts').select('*').eq('live_test_id',testId),
-    sb.from('live_test_questions').select('id,q_order,correct_answer,difficulty,question_text').eq('live_test_id',testId).order('q_order')
+    sb.from('live_test_questions').select('id,q_order,correct_answer,difficulty,question_text,image_url,option_a,option_b,option_c,option_d').eq('live_test_id',testId).order('q_order')
   ]);
   if (!attempts||!attempts.length){el.innerHTML='<div class="empty-state"><div>📊</div>Abhi koi attempts nahi hue is test mein.</div>';return;}
   const submitted=attempts.filter(a=>a.submitted_at);
@@ -2227,130 +2227,159 @@ async function loadAnalytics(){
 async function downloadAnalyticsPDF(){
   const d=window._lastAnalyticsData;
   if(!d){showToast('Pehle analytics load karo!','error');return;}
-  showToast('Analytics PDF ban raha hai...','');
-  if (!window.jspdf){
-    await new Promise((res,rej)=>{
-      const s=document.createElement('script');
-      s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-      s.onload=res;s.onerror=rej;
-      document.head.appendChild(s);
-    });
-  }
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  const PW=210,PH=297;
-  const NAVY=[10,22,40],GOLD=[201,168,76],WHITE=[255,255,255],MED=[200,200,200];
-  let pageNum=0;
+  showToast('PDF ban raha hai...','');
 
-  function addHeader(isFirst){
-    pageNum++;
-    doc.setFillColor(...NAVY);
-    doc.rect(0,0,PW,isFirst?48:18,'F');
-    if(isFirst){
-      doc.setFont('helvetica','bold');doc.setFontSize(20);doc.setTextColor(...GOLD);
-      doc.text('SSC HUSTLERS',PW/2,14,{align:'center'});
-      doc.setFontSize(8);doc.setFont('helvetica','normal');
-      doc.text('sschustlers.com',PW/2,20,{align:'center'});
-      doc.setDrawColor(...GOLD);doc.setLineWidth(0.5);doc.line(14,23,PW-14,23);
-      doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(...WHITE);
-      const tn=d.testName.length>50?d.testName.substring(0,49)+'…':d.testName;
-      doc.text(tn,PW/2,31,{align:'center'});
-      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...GOLD);
-      doc.text('Question Analytics Report',PW/2,38,{align:'center'});
-      doc.line(14,42,PW-14,42);
-    } else {
-      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...GOLD);
-      doc.text('SSC HUSTLERS — Question Analytics',PW/2,12,{align:'center'});
+  // Sort questions: toughest first (lowest accuracy)
+  const qArr=Object.values(d.qStats).map(q=>({
+    ...q,
+    accuracy:d.n>0?Math.round(q.correct_count/d.n*100):0,
+    image_url:(d.questions||[]).find(x=>x.q_order===q.q_order)?.image_url||'',
+    option_a:(d.questions||[]).find(x=>x.q_order===q.q_order)?.option_a||'',
+    option_b:(d.questions||[]).find(x=>x.q_order===q.q_order)?.option_b||'',
+    option_c:(d.questions||[]).find(x=>x.q_order===q.q_order)?.option_c||'',
+    option_d:(d.questions||[]).find(x=>x.q_order===q.q_order)?.option_d||'',
+  })).sort((a,b)=>a.accuracy-b.accuracy); // toughest first
+
+  const testName=d.testName||'Test';
+  const n=d.n;
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>${testName} — Analytics</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#111827;font-size:13px;}
+    .page-header{background:#0A1628;padding:18px 24px;text-align:center;}
+    .brand{color:#C9A84C;font-size:22px;font-weight:900;letter-spacing:1px;}
+    .site{color:#C9A84C;font-size:10px;margin-top:2px;opacity:0.8;}
+    .gold-line{border:none;border-top:1.5px solid #C9A84C;margin:8px 24px;}
+    .test-name{color:#fff;font-size:15px;font-weight:700;margin-top:6px;}
+    .report-label{color:#C9A84C;font-size:10px;margin-top:2px;}
+
+    .overview{display:flex;gap:10px;padding:14px 20px;background:#f0f9ff;border-bottom:1px solid #e0f2fe;flex-wrap:wrap;}
+    .ov-box{flex:1;min-width:100px;background:#fff;border:1.5px solid #bae6fd;border-radius:10px;padding:10px;text-align:center;}
+    .ov-val{font-size:18px;font-weight:800;color:#0ea5e9;}
+    .ov-lbl{font-size:10px;color:#64748b;margin-top:2px;}
+
+    .q-section{padding:16px 20px;}
+    .q-card{border:1.5px solid #e0e0e0;border-radius:10px;margin-bottom:16px;overflow:hidden;page-break-inside:avoid;}
+    .q-header{padding:10px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #e0e0e0;}
+    .q-num{background:#0A1628;color:#C9A84C;font-size:11px;font-weight:800;padding:3px 10px;border-radius:50px;white-space:nowrap;}
+    .accuracy-badge{font-size:12px;font-weight:800;padding:3px 10px;border-radius:50px;margin-left:auto;white-space:nowrap;}
+    .acc-green{background:#dcfce7;color:#15803d;}
+    .acc-orange{background:#fef3c7;color:#b45309;}
+    .acc-red{background:#fee2e2;color:#dc2626;}
+    .q-body{padding:12px 14px;}
+    .q-text{font-size:13px;line-height:1.6;color:#111827;margin-bottom:10px;}
+    .q-img{display:block;max-width:100%;max-height:260px;object-fit:contain;margin:8px 0 12px;border-radius:6px;border:1px solid #e0e0e0;}
+    .opts-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
+    .opt{padding:6px 10px;border:1.5px solid #e0e0e0;border-radius:7px;font-size:12px;}
+    .opt.correct{border-color:#16a34a;background:#f0fdf4;color:#15803d;font-weight:700;}
+    .opt-label{font-weight:700;margin-right:4px;}
+    .stats-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+    .stat-chip{font-size:11px;padding:3px 10px;border-radius:50px;font-weight:600;}
+    .chip-blue{background:#e0f2fe;color:#0284c7;}
+    .chip-green{background:#dcfce7;color:#15803d;}
+    .chip-red{background:#fee2e2;color:#dc2626;}
+    .chip-gray{background:#f1f5f9;color:#475569;}
+    .opt-dist{margin-top:8px;border-top:1px solid #f0f0f0;padding-top:8px;}
+    .opt-dist-title{font-size:10px;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}
+    .opt-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+    .opt-bar-label{width:18px;font-size:11px;font-weight:700;}
+    .opt-bar-track{flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden;}
+    .opt-bar-fill{height:100%;border-radius:4px;}
+    .opt-bar-count{font-size:11px;font-weight:600;min-width:28px;text-align:right;color:#475569;}
+
+    .footer{background:#0A1628;padding:8px 20px;text-align:center;color:#C9A84C;font-size:9px;margin-top:20px;}
+
+    @media print{
+      body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      .q-card{page-break-inside:avoid;}
     }
-    doc.setFontSize(7.5);doc.setTextColor(...NAVY);
-    doc.text('SSC Hustlers | sschustlers.com | Keep Hustling! ■ Page '+pageNum,PW/2,PH-6,{align:'center'});
-    doc.setDrawColor(...GOLD);doc.setLineWidth(0.3);doc.line(14,PH-9,PW-14,PH-9);
-  }
+  </style></head><body>
 
-  addHeader(true);
-  let y=52;
+  <div class="page-header">
+    <div class="brand">SSC HUSTLERS</div>
+    <div class="site">sschustlers.com</div>
+    <hr class="gold-line">
+    <div class="test-name">${testName}</div>
+    <div class="report-label">Question Analytics Report — Toughest to Easiest</div>
+  </div>
 
-  // Overview boxes
-  const overviewItems=[
-    ['Total Participants',d.submitted.length+' submitted'],
-    ['Avg Score',d.avg],
-    ['Highest Score',d.maxScore],
-    ['Lowest Score',d.minScore],
-    ['Total Questions',d.totalQ],
-  ];
-  const bw=36,bh=16,gap=3;
-  const startX=14;
-  overviewItems.forEach((item,i)=>{
-    const bx=startX+i*(bw+gap);
-    doc.setFillColor(240,249,255);
-    doc.setDrawColor(186,230,253);
-    doc.setLineWidth(0.4);
-    doc.roundedRect(bx,y,bw,bh,2,2,'FD');
-    doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(14,165,233);
-    doc.text(String(item[1]),bx+bw/2,y+8,{align:'center'});
-    doc.setFont('helvetica','normal');doc.setFontSize(6);doc.setTextColor(100,116,139);
-    doc.text(item[0],bx+bw/2,y+13,{align:'center'});
+  <div class="overview">
+    <div class="ov-box"><div class="ov-val">${n}</div><div class="ov-lbl">Submitted</div></div>
+    <div class="ov-box"><div class="ov-val">${d.avg}</div><div class="ov-lbl">Avg Score</div></div>
+    <div class="ov-box"><div class="ov-val">${d.maxScore}</div><div class="ov-lbl">Highest</div></div>
+    <div class="ov-box"><div class="ov-val">${d.minScore}</div><div class="ov-lbl">Lowest</div></div>
+    <div class="ov-box"><div class="ov-val">${d.totalQ}</div><div class="ov-lbl">Questions</div></div>
+  </div>
+
+  <div class="q-section">
+    ${qArr.map((q,i)=>{
+      const acc=q.accuracy;
+      const accClass=acc>=70?'acc-green':acc>=40?'acc-orange':'acc-red';
+      const opts=[
+        {label:'A',text:q.option_a},
+        {label:'B',text:q.option_b},
+        {label:'C',text:q.option_c},
+        {label:'D',text:q.option_d},
+      ];
+      const maxOpt=Math.max(q.opts.A,q.opts.B,q.opts.C,q.opts.D,1);
+      return \`<div class="q-card">
+        <div class="q-header">
+          <span class="q-num">Q\${q.q_order}</span>
+          <span style="font-size:11px;color:#64748b;">Rank \${i+1} (Toughest to Easiest)</span>
+          <span class="accuracy-badge \${accClass}">\${acc}% Accuracy</span>
+        </div>
+        <div class="q-body">
+          <div class="q-text">\${q.question_text||''}</div>
+          \${q.image_url?\`<img class="q-img" src="\${q.image_url}" crossorigin="anonymous"/>\`:''}
+          <div class="opts-grid">
+            \${opts.map(o=>\`<div class="opt \${o.label===q.correct_answer?'correct':''}">
+              <span class="opt-label">(\${o.label})</span>\${o.text||''}
+            </div>\`).join('')}
+          </div>
+          <div class="stats-row">
+            <span class="stat-chip chip-blue">Correct Ans: \${q.correct_answer}</span>
+            <span class="stat-chip chip-green">✓ \${q.correct_count} correct</span>
+            <span class="stat-chip chip-red">✗ \${q.wrong_count} wrong</span>
+            <span class="stat-chip chip-gray">⏭ \${q.skip_count} skipped</span>
+          </div>
+          <div class="opt-dist">
+            <div class="opt-dist-title">Option Distribution</div>
+            \${['A','B','C','D'].map(opt=>{
+              const cnt=q.opts[opt];
+              const pct=Math.round(cnt/Math.max(n,1)*100);
+              const barColor=opt===q.correct_answer?'#16a34a':'#0ea5e9';
+              return \`<div class="opt-bar-row">
+                <span class="opt-bar-label" style="color:\${opt===q.correct_answer?'#16a34a':'#374151'};font-weight:\${opt===q.correct_answer?'800':'600'}">\${opt}</span>
+                <div class="opt-bar-track"><div class="opt-bar-fill" style="width:\${pct}%;background:\${barColor};"></div></div>
+                <span class="opt-bar-count">\${cnt}</span>
+              </div>\`;
+            }).join('')}
+          </div>
+        </div>
+      </div>\`;
+    }).join('')}
+  </div>
+
+  <div class="footer">SSC Hustlers | sschustlers.com | Keep Hustling!</div>
+  </body></html>`;
+
+  const w=window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  const imgs=w.document.querySelectorAll('img');
+  if(!imgs.length){setTimeout(()=>w.print(),400);return;}
+  let loaded=0;
+  const total=imgs.length;
+  const tryPrint=()=>{loaded++;if(loaded>=total)setTimeout(()=>w.print(),400);};
+  imgs.forEach(img=>{
+    if(img.complete)tryPrint();
+    else{img.onload=tryPrint;img.onerror=tryPrint;}
   });
-  y+=bh+8;
-
-  // Per-question table header
-  doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...NAVY);
-  doc.text('Per-Question Breakdown',14,y);
-  y+=5;
-
-  const cols=[14,28,75,100,120,134,148,162,176];
-  const headers=['Q#','Question (short)','Accuracy','Correct Ans','A','B','C','D','Skipped'];
-
-  function drawTHeader(yy){
-    doc.setFillColor(...NAVY);
-    doc.rect(14,yy,PW-28,7,'F');
-    doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...WHITE);
-    headers.forEach((h,i)=>doc.text(h,cols[i],yy+4.8));
-    return yy+7;
-  }
-  y=drawTHeader(y);
-
-  const qArr=Object.values(d.qStats).sort((a,b)=>a.q_order-b.q_order);
-  qArr.forEach((q,i)=>{
-    if(y>PH-18){doc.addPage();addHeader(false);y=22;y=drawTHeader(y);}
-    const acc=d.n>0?Math.round(q.correct_count/d.n*100):0;
-    const accColor=acc>=70?[22,163,74]:acc>=40?[180,83,9]:[220,38,38];
-    const isEven=i%2===0;
-    doc.setFillColor(isEven?245:255,isEven?245:255,isEven?245:255);
-    doc.rect(14,y,PW-28,7,'F');
-    // Q#
-    doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...NAVY);
-    doc.text('Q'+q.q_order,cols[0],y+4.8);
-    // Short question text
-    doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(71,85,105);
-    const qt=q.question_text?q.question_text.substring(0,28)+(q.question_text.length>28?'…':''):'—';
-    doc.text(qt,cols[1],y+4.8);
-    // Accuracy
-    doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...accColor);
-    doc.text(acc+'%',cols[2],y+4.8);
-    // Correct answer
-    doc.setTextColor(14,165,233);
-    doc.text(q.correct_answer,cols[3],y+4.8);
-    // Options A B C D
-    ['A','B','C','D'].forEach((opt,oi)=>{
-      const isCorrect=opt===q.correct_answer;
-      doc.setTextColor(isCorrect?22:100,isCorrect?163:116,isCorrect?74:139);
-      doc.setFont('helvetica',isCorrect?'bold':'normal');
-      doc.text(String(q.opts[opt]),cols[4+oi],y+4.8);
-    });
-    // Skipped
-    doc.setFont('helvetica','normal');doc.setTextColor(100,116,139);
-    doc.text(String(q.skip_count),cols[8],y+4.8);
-    // Row border
-    doc.setDrawColor(...MED);doc.setLineWidth(0.1);doc.line(14,y+7,PW-14,y+7);
-    y+=7;
-  });
-
-  const safeName=(d.testName||'Analytics').replace(/[^a-zA-Z0-9_\- ]/g,'').substring(0,40);
-  doc.save(safeName+'_Analytics.pdf');
-  showToast('✅ Analytics PDF download ho gaya!','success');
+  showToast('✅ Print window open ho gaya!','success');
 }
-
 
 // ══════════════════════════════════════════
 // NOTIFICATIONS TAB
