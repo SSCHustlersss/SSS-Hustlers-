@@ -2324,41 +2324,41 @@ async function downloadAnalyticsPDF(){
         {label:'D',text:q.option_d},
       ];
       const maxOpt=Math.max(q.opts.A,q.opts.B,q.opts.C,q.opts.D,1);
-      return \`<div class="q-card">
+      return `<div class="q-card">
         <div class="q-header">
-          <span class="q-num">Q\${q.q_order}</span>
-          <span style="font-size:11px;color:#64748b;">Rank \${i+1} (Toughest to Easiest)</span>
-          <span class="accuracy-badge \${accClass}">\${acc}% Accuracy</span>
+          <span class="q-num">Q${q.q_order}</span>
+          <span style="font-size:11px;color:#64748b;">Rank ${i+1} (Toughest to Easiest)</span>
+          <span class="accuracy-badge ${accClass}">${acc}% Accuracy</span>
         </div>
         <div class="q-body">
-          <div class="q-text">\${q.question_text||''}</div>
-          \${q.image_url?\`<img class="q-img" src="\${q.image_url}" crossorigin="anonymous"/>\`:''}
+          <div class="q-text">${q.question_text||''}</div>
+          ${q.image_url?`<img class="q-img" src="${q.image_url}" crossorigin="anonymous"/>`:''}
           <div class="opts-grid">
-            \${opts.map(o=>\`<div class="opt \${o.label===q.correct_answer?'correct':''}">
-              <span class="opt-label">(\${o.label})</span>\${o.text||''}
-            </div>\`).join('')}
+            ${opts.map(o=>`<div class="opt ${o.label===q.correct_answer?'correct':''}">
+              <span class="opt-label">(${o.label})</span>${o.text||''}
+            </div>`).join('')}
           </div>
           <div class="stats-row">
-            <span class="stat-chip chip-blue">Correct Ans: \${q.correct_answer}</span>
-            <span class="stat-chip chip-green">✓ \${q.correct_count} correct</span>
-            <span class="stat-chip chip-red">✗ \${q.wrong_count} wrong</span>
-            <span class="stat-chip chip-gray">⏭ \${q.skip_count} skipped</span>
+            <span class="stat-chip chip-blue">Correct Ans: ${q.correct_answer}</span>
+            <span class="stat-chip chip-green">✓ ${q.correct_count} correct</span>
+            <span class="stat-chip chip-red">✗ ${q.wrong_count} wrong</span>
+            <span class="stat-chip chip-gray">⏭ ${q.skip_count} skipped</span>
           </div>
           <div class="opt-dist">
             <div class="opt-dist-title">Option Distribution</div>
-            \${['A','B','C','D'].map(opt=>{
+            ${['A','B','C','D'].map(opt=>{
               const cnt=q.opts[opt];
               const pct=Math.round(cnt/Math.max(n,1)*100);
               const barColor=opt===q.correct_answer?'#16a34a':'#0ea5e9';
-              return \`<div class="opt-bar-row">
-                <span class="opt-bar-label" style="color:\${opt===q.correct_answer?'#16a34a':'#374151'};font-weight:\${opt===q.correct_answer?'800':'600'}">\${opt}</span>
-                <div class="opt-bar-track"><div class="opt-bar-fill" style="width:\${pct}%;background:\${barColor};"></div></div>
-                <span class="opt-bar-count">\${cnt}</span>
-              </div>\`;
+              return `<div class="opt-bar-row">
+                <span class="opt-bar-label" style="color:${opt===q.correct_answer?'#16a34a':'#374151'};font-weight:${opt===q.correct_answer?'800':'600'}">${opt}</span>
+                <div class="opt-bar-track"><div class="opt-bar-fill" style="width:${pct}%;background:${barColor};"></div></div>
+                <span class="opt-bar-count">${cnt}</span>
+              </div>`;
             }).join('')}
           </div>
         </div>
-      </div>\`;
+      </div>`;
     }).join('')}
   </div>
 
