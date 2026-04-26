@@ -68,6 +68,8 @@ textarea{resize:vertical;min-height:70px;}
 .btn-gray:hover{background:#e2e8f0;}
 .btn-teal{background:#ccfbf1;color:#0f766e;}
 .btn-teal:hover{background:#99f6e4;}
+.btn-indigo{background:#e0e7ff;color:#3730a3;}
+.btn-indigo:hover{background:#c7d2fe;}
 
 /* Live Test Items */
 .live-test-item{background:#fff;border:1.5px solid #e0f2fe;border-radius:12px;padding:16px;margin-bottom:10px;transition:all 0.2s;}
@@ -144,6 +146,10 @@ textarea{resize:vertical;min-height:70px;}
 .q-acc-fill{height:100%;border-radius:4px;transition:width 0.5s;}
 .q-acc-pct{font-weight:700;font-size:0.72rem;min-width:32px;text-align:right;}
 .perf-badge{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;font-size:0.78rem;font-weight:700;}
+
+/* Recalculate banner */
+.recalc-banner{background:#fef3c7;border:1.5px solid #fbbf24;border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.recalc-banner-text{font-size:0.82rem;font-weight:700;color:#92400e;}
 
 /* Modals */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;align-items:center;justify-content:center;padding:16px;}
@@ -493,7 +499,15 @@ textarea{resize:vertical;min-height:70px;}
             <button class="btn-sm btn-green" onclick="downloadQuestionsExcel()">⬇️ Excel</button>
             <button class="btn-sm btn-teal" onclick="downloadTestPDF()">📄 PDF</button>
             <button class="btn-sm btn-purple" onclick="openAddModal()">➕ Add Q</button>
+            <!-- ✅ NEW: Recalculate Scores button -->
+            <button class="btn-sm btn-indigo" id="btnRecalculate" onclick="recalculateScores(currentEditTestId)">🔄 Recalculate Scores</button>
           </div>
+        </div>
+
+        <!-- ✅ NEW: Recalculate info banner -->
+        <div class="recalc-banner" id="recalcBanner" style="display:none;">
+          <span class="recalc-banner-text">⚠️ Answer key change hui hai! Purane attempts ke scores galat ho sakte hain.</span>
+          <button class="btn-sm btn-yellow" onclick="recalculateScores(currentEditTestId)">🔄 Abhi Recalculate Karo</button>
         </div>
 
         <!-- Search -->
@@ -889,7 +903,7 @@ const CATEGORY_CONFIG = {
     subject: 'english',
     duration: 45,
     info: '✅ 1 Section: English — 45 Questions, 45 min.',
-    getSectionConfig: (total) => null // no sections
+    getSectionConfig: (total) => null
   },
   mains_s1: {
     subject: 'full_test',
@@ -904,13 +918,13 @@ const CATEGORY_CONFIG = {
     subject: 'maths',
     duration: 30,
     info: '✅ 1 Section: Maths — 30 Questions, 30 min.',
-    getSectionConfig: (total) => null // no sections
+    getSectionConfig: (total) => null
   },
   maths_pre: {
     subject: 'maths',
     duration: 15,
     info: '✅ 1 Section: Maths Prelims Module — 25 Questions, 15 min.',
-    getSectionConfig: (total) => null // no sections
+    getSectionConfig: (total) => null
   },
   mains_full: {
     subject: 'full_test',
@@ -933,7 +947,6 @@ function onCategoryChange() {
   document.getElementById('ltSubject').value = cfg.subject;
   document.getElementById('ltDuration').value = cfg.duration;
 
-  // Section timer fields
   const secConfig = cfg.getSectionConfig(100);
   const wrap = document.getElementById('sectionTimerWrap');
   const fields = document.getElementById('sectionTimerFields');
@@ -993,7 +1006,6 @@ async function scheduleTest() {
   if (!parsedQuestions.length){showToast('Excel file upload karo!','error');return;}
   if (new Date(end)<=new Date(start)){showToast('End time start se baad hona chahiye!','error');return;}
 
-  // Validate question count based on category
   const catCfg = CATEGORY_CONFIG[cat];
   const totalQ = parsedQuestions.length;
   const minQ = { prelims_full:100, english_only:45, mains_s1:60, maths_only:30, mains_full:130, maths_pre:25 };
@@ -1002,7 +1014,6 @@ async function scheduleTest() {
     return;
   }
 
-  // Build section_config — UI se custom timers padhlo
   let sectionConfig = catCfg.getSectionConfig(totalQ);
   if (sectionConfig) {
     sectionConfig = sectionConfig.map((sec, i) => {
@@ -1055,7 +1066,6 @@ async function loadLiveTests() {
   const filterVal = document.getElementById('filterStatus').value;
   let query = sb.from('live_tests').select('*').order('start_time',{ascending:false}).limit(50);
   if (filterVal==='archived') query=query.eq('is_archived',true);
-  else if (filterVal!=='all') query=query.eq('is_archived',false);
   else query=query.eq('is_archived',false);
 
   const {data,error}=await query;
@@ -1109,7 +1119,7 @@ function copyLink(link){
 }
 
 async function archiveTest(id){
-  if (!confirm('Ye test archive karna chahte ho? Manage tab se restore bhi kar sakte ho.')) return;
+  if (!confirm('Ye test archive karna chahte ho?')) return;
   await sb.from('live_tests').update({is_archived:true}).eq('id',id);
   showToast('Test archived!','success');
   loadLiveTests();
@@ -1144,7 +1154,6 @@ async function openEditTestModal(id){
   document.getElementById('editTestNeg').value=data.negative_marking||0.5;
   document.getElementById('editTestInstructions').value=data.instructions||'';
 
-  // Section timer fields
   const wrap = document.getElementById('editSectionTimerWrap');
   const fields = document.getElementById('editSectionTimerFields');
   let secConfig = null;
@@ -1189,7 +1198,6 @@ async function saveTestDetails(){
   const end=document.getElementById('editTestEnd').value;
   if (!name){showToast('Name daalo!','error');return;}
 
-  // Updated section_config agar hai toh
   let updatedSectionConfig = undefined;
   if (window._editSecConfig && window._editSecConfig.length > 1) {
     updatedSectionConfig = window._editSecConfig.map((sec, i) => {
@@ -1240,7 +1248,6 @@ async function duplicateTest(){
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Copying...';
 
   try {
-    // Get source test
     const {data:src}=await sb.from('live_tests').select('*').eq('id',srcId).single();
     if (!src) throw new Error('Source test nahi mila');
     const code=name.toLowerCase().replace(/[^a-z0-9]/g,'_')+'_'+Date.now();
@@ -1252,7 +1259,6 @@ async function duplicateTest(){
     }).select('id').single();
     if (tErr) throw tErr;
 
-    // Copy questions
     const {data:qs}=await sb.from('live_test_questions').select('*').eq('live_test_id',srcId).order('q_order');
     if (qs&&qs.length){
       const newQs=qs.map(q=>({...q,id:undefined,live_test_id:newTest.id,created_at:undefined}));
@@ -1448,7 +1454,6 @@ async function downloadLeaderboardPDF(){
   const testName=currentMonitorTestName||'Test';
   const total=submitted.length;
 
-  // Load jsPDF from CDN if not already loaded
   if (!window.jspdf){
     await new Promise((res,rej)=>{
       const s=document.createElement('script');
@@ -1497,7 +1502,6 @@ async function downloadLeaderboardPDF(){
       doc.text(`SSC HUSTLERS — ${shortName} Results`,PW/2,12,{align:'center'});
     }
 
-    // Footer
     doc.setFontSize(8);
     doc.setTextColor(...NAVY);
     doc.text(`SSC Hustlers | sschustlers.com | Keep Hustling! ■ Page ${pageNum}`,PW/2,PH-6,{align:'center'});
@@ -1506,33 +1510,28 @@ async function downloadLeaderboardPDF(){
     doc.line(14,PH-9,PW-14,PH-9);
   }
 
-  // ── PAGE 1 ──
   addHeader(true);
 
-  // TOP RANKERS heading
   doc.setFont('helvetica','bold');
   doc.setFontSize(10);
   doc.setTextColor(...GOLD);
   doc.text('■ TOP RANKERS ■',PW/2,54,{align:'center'});
 
-  // Top 3 podium circles
   const top3=submitted.slice(0,3);
   const badges=['TOPPER','2ND PLACE','3RD PLACE'];
   const circleY=82;
   const positions=[
-    {x:PW/2,      r:22},   // #1 center
-    {x:PW/2-54,   r:18},   // #2 left
-    {x:PW/2+54,   r:18},   // #3 right
+    {x:PW/2,      r:22},
+    {x:PW/2-54,   r:18},
+    {x:PW/2+54,   r:18},
   ];
 
-  // Draw 2,3 first then 1 so #1 appears on top
   [1,2,0].forEach(idx=>{
     if(!top3[idx]) return;
     const p=positions[idx];
     const s=top3[idx];
     const isBig=idx===0;
 
-    // Outer glow ring for #1
     if(isBig){
       doc.setFillColor(201,168,76,0.15);
       doc.setDrawColor(...GOLD);
@@ -1540,44 +1539,37 @@ async function downloadLeaderboardPDF(){
       doc.circle(p.x,p.y||circleY,p.r+3,'D');
     }
 
-    // Circle
     doc.setFillColor(...NAVY);
     doc.setDrawColor(...GOLD);
     doc.setLineWidth(isBig?1.5:1);
     doc.circle(p.x,circleY,p.r,'FD');
 
-    // Rank
     doc.setFont('helvetica','bold');
     doc.setFontSize(isBig?9:8);
     doc.setTextColor(...GOLD);
     doc.text(`#${idx+1}`,p.x,circleY-p.r*0.5,{align:'center'});
 
-    // Name
     const nm=s.participant_name.length>13?s.participant_name.substring(0,12)+'…':s.participant_name;
     doc.setFontSize(isBig?8:7);
     doc.setTextColor(...WHITE);
     doc.text(nm,p.x,circleY-p.r*0.1,{align:'center'});
 
-    // Score value
     doc.setFontSize(isBig?15:12);
     doc.setTextColor(...GOLD);
     doc.text(String(s.score),p.x,circleY+p.r*0.42,{align:'center'});
 
-    // SCORE label
     doc.setFontSize(5.5);
     doc.setFont('helvetica','normal');
     doc.setTextColor(...MED);
     doc.text('SCORE',p.x,circleY+p.r*0.62,{align:'center'});
   });
 
-  // Stats + badge below each circle
   [0,1,2].forEach(idx=>{
     if(!top3[idx]) return;
     const p=positions[idx];
     const s=top3[idx];
     const belowY=circleY+p.r+7;
 
-    // ✓ correct  ✗ wrong
     doc.setFont('helvetica','bold');
     doc.setFontSize(7.5);
     doc.setTextColor(22,163,74);
@@ -1585,7 +1577,6 @@ async function downloadLeaderboardPDF(){
     doc.setTextColor(220,38,38);
     doc.text(`\u2717${s.wrong}`,p.x+8,belowY,{align:'center'});
 
-    // Badge pill
     doc.setFillColor(...GOLD);
     doc.roundedRect(p.x-20,belowY+3,40,7,2,2,'F');
     doc.setFont('helvetica','bold');
@@ -1594,7 +1585,6 @@ async function downloadLeaderboardPDF(){
     doc.text(badges[idx],p.x,belowY+7.8,{align:'center'});
   });
 
-  // ── FULL RANKINGS heading ──
   let y=circleY+positions[0].r+28;
   doc.setFont('helvetica','bold');
   doc.setFontSize(9);
@@ -1602,7 +1592,6 @@ async function downloadLeaderboardPDF(){
   doc.text('— Full Rankings —',PW/2,y,{align:'center'});
   y+=6;
 
-  // Table header
   const hx=[17,31,115,147,165,180,193];
   const headers=['Rank','Name','Score','Correct','Wrong','Skipped'];
 
@@ -1618,7 +1607,6 @@ async function downloadLeaderboardPDF(){
 
   y=drawTableHeader(y);
 
-  // Table rows
   submitted.forEach((s,i)=>{
     if(y>PH-18){
       doc.addPage();
@@ -1633,34 +1621,26 @@ async function downloadLeaderboardPDF(){
 
     const nm=s.participant_name.length>30?s.participant_name.substring(0,29)+'…':s.participant_name;
 
-    // Rank
     doc.setFont('helvetica',i<3?'bold':'normal');
     doc.setFontSize(8);
     doc.setTextColor(...NAVY);
     doc.text(String(i+1),17,y+4.8);
-
-    // Name
     doc.text(nm,31,y+4.8);
 
-    // Score (blue)
     doc.setFont('helvetica','bold');
     doc.setTextColor(14,165,233);
     doc.text(String(s.score),115,y+4.8);
 
-    // Correct (green)
     doc.setFont('helvetica','normal');
     doc.setTextColor(22,163,74);
     doc.text(String(s.correct),165,y+4.8);
 
-    // Wrong (red)
     doc.setTextColor(220,38,38);
     doc.text(String(s.wrong),180,y+4.8);
 
-    // Skipped (gray)
     doc.setTextColor(100,116,139);
     doc.text(String(s.skipped),193,y+4.8);
 
-    // Row border
     doc.setDrawColor(...MED);
     doc.setLineWidth(0.1);
     doc.line(14,y+7,PW-14,y+7);
@@ -1698,6 +1678,9 @@ async function loadEditQuestions(){
   const el=document.getElementById('editQList');
   el.innerHTML='<div style="text-align:center;padding:20px;"><span class="spinner"></span> Loading questions...</div>';
   document.getElementById('editQuestionsSection').style.display='block';
+  // Hide recalc banner on fresh load
+  document.getElementById('recalcBanner').style.display='none';
+
   const {data,error}=await sb.from('live_test_questions')
     .select('*').eq('live_test_id',testId).order('q_order',{ascending:true});
   if (error||!data||!data.length){
@@ -1778,6 +1761,8 @@ async function applyBulkAnswer(){
   const {error}=await sb.from('live_test_questions').update({correct_answer:ans}).in('id',ids);
   if (error){showToast('Bulk update failed!','error');return;}
   showToast(`✅ ${ids.length} questions ka answer ${ans} set ho gaya!`,'success');
+  // ✅ Show recalculate banner after bulk answer change
+  document.getElementById('recalcBanner').style.display='flex';
   selectedQIds.clear();
   await loadEditQuestions();
 }
@@ -1813,10 +1798,8 @@ async function drop2(e,targetId){
   if (srcIdx<0||tgtIdx<0) return;
   const moved=filteredQuestions.splice(srcIdx,1)[0];
   filteredQuestions.splice(tgtIdx,0,moved);
-  // Update q_order
   filteredQuestions.forEach((q,i)=>q.q_order=i+1);
   renderEditQuestions();
-  // Save to DB
   const updates=filteredQuestions.map(q=>sb.from('live_test_questions').update({q_order:q.q_order}).eq('id',q.id));
   await Promise.all(updates);
   showToast('✅ Order save ho gaya!','success');
@@ -1824,22 +1807,133 @@ async function drop2(e,targetId){
 }
 
 // ══════════════════════════════════════════
-// QUICK ANSWER UPDATE
+// QUICK ANSWER UPDATE — ✅ NOW WITH AUTO RECALCULATE PROMPT
 // ══════════════════════════════════════════
-async function quickUpdateAnswer(qId,newAnswer){
-  const sel=document.querySelector(`select[data-qid="${qId}"]`);
-  if (sel){sel.disabled=true;sel.style.opacity='0.5';}
-  const {error}=await sb.from('live_test_questions').update({correct_answer:newAnswer}).eq('id',qId);
-  if (sel){sel.disabled=false;sel.style.opacity='1';}
-  if (error){showToast('❌ Save failed: '+error.message,'error');return;}
-  const q=editQuestions.find(x=>x.id===qId);
-  if (q) q.correct_answer=newAnswer;
-  const item=document.getElementById(`qitem_${qId}`);
-  if (item){
-    item.style.borderColor='#16a34a';item.style.background='#f0fdf4';
-    setTimeout(()=>{item.style.borderColor='';item.style.background='';},1200);
+async function quickUpdateAnswer(qId, newAnswer) {
+  const sel = document.querySelector(`select[data-qid="${qId}"]`);
+  if (sel) { sel.disabled = true; sel.style.opacity = '0.5'; }
+
+  const { error } = await sb.from('live_test_questions').update({ correct_answer: newAnswer }).eq('id', qId);
+
+  if (sel) { sel.disabled = false; sel.style.opacity = '1'; }
+
+  if (error) { showToast('❌ Save failed: ' + error.message, 'error'); return; }
+
+  // Update local state
+  const q = editQuestions.find(x => x.id === qId);
+  if (q) q.correct_answer = newAnswer;
+
+  // Visual feedback on the item
+  const item = document.getElementById(`qitem_${qId}`);
+  if (item) {
+    item.style.borderColor = '#16a34a'; item.style.background = '#f0fdf4';
+    setTimeout(() => { item.style.borderColor = ''; item.style.background = ''; }, 1200);
   }
-  showToast(`✅ Q${q?.q_order} → Answer: ${newAnswer} saved!`,'success');
+
+  showToast(`✅ Q${q?.q_order} → Answer: ${newAnswer} saved!`, 'success');
+
+  // ✅ Show recalculate banner — admin ko yaad dilao
+  document.getElementById('recalcBanner').style.display = 'flex';
+}
+
+// ══════════════════════════════════════════
+// ✅ NEW: RECALCULATE ALL SCORES FOR A TEST
+// ══════════════════════════════════════════
+async function recalculateScores(testId, showConfirm = true) {
+  if (!testId) { showToast('Test select karo!', 'error'); return; }
+  if (showConfirm && !confirm('Saare submitted attempts ke scores naye correct answers se recalculate honge. Continue?')) return;
+
+  const btn = document.getElementById('btnRecalculate');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Recalculating...'; }
+
+  try {
+    // 1. Get all questions with current correct answers
+    const { data: questions, error: qErr } = await sb
+      .from('live_test_questions')
+      .select('q_order, correct_answer')
+      .eq('live_test_id', testId);
+    if (qErr) throw qErr;
+
+    if (!questions || !questions.length) {
+      showToast('Koi questions nahi mile!', 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = '🔄 Recalculate Scores'; }
+      return;
+    }
+
+    // 2. Get test marking scheme
+    const { data: testData, error: tErr } = await sb
+      .from('live_tests')
+      .select('positive_marking, negative_marking')
+      .eq('id', testId)
+      .single();
+    if (tErr) throw tErr;
+
+    const posMarks = parseFloat(testData.positive_marking) || 2;
+    const negMarks = parseFloat(testData.negative_marking) || 0.5;
+    const totalQ = questions.length;
+
+    // Build answer key: { "0": "A", "1": "B", ... } (0-indexed)
+    const answerKey = {};
+    questions.forEach(q => { answerKey[String(q.q_order - 1)] = q.correct_answer; });
+
+    // 3. Get all SUBMITTED attempts
+    const { data: attempts, error: aErr } = await sb
+      .from('live_test_attempts')
+      .select('id, answers')
+      .eq('live_test_id', testId)
+      .not('submitted_at', 'is', null);
+    if (aErr) throw aErr;
+
+    if (!attempts || !attempts.length) {
+      showToast('Koi submitted attempt nahi mila!', 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = '🔄 Recalculate Scores'; }
+      return;
+    }
+
+    // 4. Recalculate each attempt
+    let updated = 0;
+    for (const attempt of attempts) {
+      let answers = {};
+      try {
+        answers = typeof attempt.answers === 'string'
+          ? JSON.parse(attempt.answers)
+          : (attempt.answers || {});
+      } catch (e) {}
+
+      let correct = 0, wrong = 0, skipped = 0;
+
+      for (let i = 0; i < totalQ; i++) {
+        const key = String(i);
+        const chosen = answers[key];
+        const rightAns = answerKey[key];
+        if (!chosen || chosen === '') {
+          skipped++;
+        } else if (chosen === rightAns) {
+          correct++;
+        } else {
+          wrong++;
+        }
+      }
+
+      const score = parseFloat(((correct * posMarks) - (wrong * negMarks)).toFixed(2));
+
+      const { error: uErr } = await sb
+        .from('live_test_attempts')
+        .update({ score, correct, wrong, skipped })
+        .eq('id', attempt.id);
+
+      if (!uErr) updated++;
+    }
+
+    // Hide the banner after successful recalculation
+    document.getElementById('recalcBanner').style.display = 'none';
+
+    showToast(`✅ ${updated} / ${attempts.length} attempts recalculate ho gaye!`, 'success');
+  } catch (err) {
+    showToast('Recalculate failed: ' + err.message, 'error');
+  }
+
+  if (btn) { btn.disabled = false; btn.innerHTML = '🔄 Recalculate Scores'; }
 }
 
 // ══════════════════════════════════════════
@@ -1910,7 +2004,6 @@ async function downloadTestPDF(){
   w.document.write(html);
   w.document.close();
   w.focus();
-  // Wait for all images to load before printing
   w.addEventListener('load',()=>{
     const imgs=w.document.querySelectorAll('img');
     if(!imgs.length){setTimeout(()=>w.print(),300);return;}
@@ -2027,6 +2120,8 @@ async function saveQuestion(){
       const {error}=await sb.from('live_test_questions').update(payload).eq('id',qId);
       if (error) throw error;
       showToast('✅ Question save ho gaya!','success');
+      // ✅ Show recalculate banner when answer changed via modal
+      document.getElementById('recalcBanner').style.display='flex';
     }
     closeModal();
     await loadEditQuestions();
@@ -2076,7 +2171,6 @@ async function loadAnalytics(){
   const totalQ=questions?questions.length:0;
   const n=submitted.length;
 
-  // Score distribution
   const scoreBuckets=[0,0,0,0,0];
   submitted.forEach(a=>{
     const pct=(a.score/(totalQ*2))*100;
@@ -2084,8 +2178,6 @@ async function loadAnalytics(){
     scoreBuckets[idx]++;
   });
 
-  // Per-question analytics from answers jsonb
-  // answers = {"0":"A","1":"B",...} key is 0-indexed (q_order - 1)
   const qStats={};
   if(questions) questions.forEach(q=>{
     qStats[q.q_order]={
@@ -2119,7 +2211,6 @@ async function loadAnalytics(){
     });
   });
 
-  // Store for PDF
   const testName=document.getElementById('analyticsTestSelect').options[document.getElementById('analyticsTestSelect').selectedIndex].text;
   window._lastAnalyticsData={submitted,questions,qStats,testId,testName,avg,maxScore,minScore,totalQ,n,scoreBuckets};
 
@@ -2229,7 +2320,6 @@ async function downloadAnalyticsPDF(){
   if(!d){showToast('Pehle analytics load karo!','error');return;}
   showToast('PDF ban raha hai...','');
 
-  // Sort questions: toughest first (lowest accuracy)
   const qArr=Object.values(d.qStats).map(q=>({
     ...q,
     accuracy:d.n>0?Math.round(q.correct_count/d.n*100):0,
@@ -2238,7 +2328,7 @@ async function downloadAnalyticsPDF(){
     option_b:(d.questions||[]).find(x=>x.q_order===q.q_order)?.option_b||'',
     option_c:(d.questions||[]).find(x=>x.q_order===q.q_order)?.option_c||'',
     option_d:(d.questions||[]).find(x=>x.q_order===q.q_order)?.option_d||'',
-  })).sort((a,b)=>a.accuracy-b.accuracy); // toughest first
+  })).sort((a,b)=>a.accuracy-b.accuracy);
 
   const testName=d.testName||'Test';
   const n=d.n;
@@ -2254,12 +2344,10 @@ async function downloadAnalyticsPDF(){
     .gold-line{border:none;border-top:1.5px solid #C9A84C;margin:8px 24px;}
     .test-name{color:#fff;font-size:15px;font-weight:700;margin-top:6px;}
     .report-label{color:#C9A84C;font-size:10px;margin-top:2px;}
-
     .overview{display:flex;gap:10px;padding:14px 20px;background:#f0f9ff;border-bottom:1px solid #e0f2fe;flex-wrap:wrap;}
     .ov-box{flex:1;min-width:100px;background:#fff;border:1.5px solid #bae6fd;border-radius:10px;padding:10px;text-align:center;}
     .ov-val{font-size:18px;font-weight:800;color:#0ea5e9;}
     .ov-lbl{font-size:10px;color:#64748b;margin-top:2px;}
-
     .q-section{padding:16px 20px;}
     .q-card{border:1.5px solid #e0e0e0;border-radius:10px;margin-bottom:16px;overflow:hidden;page-break-inside:avoid;}
     .q-header{padding:10px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #e0e0e0;}
@@ -2288,15 +2376,9 @@ async function downloadAnalyticsPDF(){
     .opt-bar-track{flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden;}
     .opt-bar-fill{height:100%;border-radius:4px;}
     .opt-bar-count{font-size:11px;font-weight:600;min-width:28px;text-align:right;color:#475569;}
-
     .footer{background:#0A1628;padding:8px 20px;text-align:center;color:#C9A84C;font-size:9px;margin-top:20px;}
-
-    @media print{
-      body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-      .q-card{page-break-inside:avoid;}
-    }
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.q-card{page-break-inside:avoid;}}
   </style></head><body>
-
   <div class="page-header">
     <div class="brand">SSC HUSTLERS</div>
     <div class="site">sschustlers.com</div>
@@ -2304,7 +2386,6 @@ async function downloadAnalyticsPDF(){
     <div class="test-name">${testName}</div>
     <div class="report-label">Question Analytics Report — Toughest to Easiest</div>
   </div>
-
   <div class="overview">
     <div class="ov-box"><div class="ov-val">${n}</div><div class="ov-lbl">Submitted</div></div>
     <div class="ov-box"><div class="ov-val">${d.avg}</div><div class="ov-lbl">Avg Score</div></div>
@@ -2312,17 +2393,11 @@ async function downloadAnalyticsPDF(){
     <div class="ov-box"><div class="ov-val">${d.minScore}</div><div class="ov-lbl">Lowest</div></div>
     <div class="ov-box"><div class="ov-val">${d.totalQ}</div><div class="ov-lbl">Questions</div></div>
   </div>
-
   <div class="q-section">
     ${qArr.map((q,i)=>{
       const acc=q.accuracy;
       const accClass=acc>=70?'acc-green':acc>=40?'acc-orange':'acc-red';
-      const opts=[
-        {label:'A',text:q.option_a},
-        {label:'B',text:q.option_b},
-        {label:'C',text:q.option_c},
-        {label:'D',text:q.option_d},
-      ];
+      const opts=[{label:'A',text:q.option_a},{label:'B',text:q.option_b},{label:'C',text:q.option_c},{label:'D',text:q.option_d}];
       const maxOpt=Math.max(q.opts.A,q.opts.B,q.opts.C,q.opts.D,1);
       return `<div class="q-card">
         <div class="q-header">
@@ -2361,7 +2436,6 @@ async function downloadAnalyticsPDF(){
       </div>`;
     }).join('')}
   </div>
-
   <div class="footer">SSC Hustlers | sschustlers.com | Keep Hustling!</div>
   </body></html>`;
 
@@ -2468,14 +2542,12 @@ function showToast(msg,type=''){
   setTimeout(()=>t.classList.remove('show'),3500);
 }
 
-// Close modals on overlay click
 ['editModal','extendModal','editTestModal','duplicateModal'].forEach(id=>{
   document.getElementById(id).addEventListener('click',function(e){
     if (e.target===this) this.classList.remove('show');
   });
 });
 
-// Default times
 const _now=new Date();
 _now.setMinutes(_now.getMinutes()+10);
 document.getElementById('ltStart').value=_now.toISOString().slice(0,16);
@@ -2485,7 +2557,6 @@ document.getElementById('ltEnd').value=_now.toISOString().slice(0,16);
 // ══════════════════════════════════════════
 // LOCK SCREEN
 // ══════════════════════════════════════════
-
 async function unlockAdmin() {
   const val = document.getElementById('lockInput').value.trim();
   const err = document.getElementById('lockError');
@@ -2520,7 +2591,6 @@ async function unlockAdmin() {
   }
 }
 
-// Agar same session mein already login hai toh seedha open karo
 if (sessionStorage.getItem('ssch_admin_auth') === '1') {
   document.getElementById('lockScreen').style.display = 'none';
   document.getElementById('adminContent').style.display = 'block';
